@@ -1569,6 +1569,9 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                         { code: 'B02', name: `Xây dựng kế hoạch dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THCS`, credits: 2, type: 'mandatory' },
                                         { code: 'B03', name: `Tổ chức dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THCS`, credits: 2, type: 'mandatory' },
                                         { code: 'B04', name: `Thực hành dạy học [${profile?.teachingSubject || 'Môn học'}] cấp THCS ở trường sư phạm`, credits: 3, type: 'mandatory' },
+                                        { code: 'B05', name: 'Thực hành kỹ năng giáo dục ở trường THCS', credits: 2, type: 'practice' },
+                                        { code: 'B06', name: 'Thực tập sư phạm 1 ở trường THCS', credits: 2, type: 'practice' },
+                                        { code: 'B07', name: 'Thực tập sư phạm 2 ở trường THCS', credits: 2, type: 'practice' },
                                     ].map(tpl => (
                                         <button
                                             key={tpl.code}
@@ -1582,6 +1585,44 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                                     credits: tpl.credits,
                                                     type: tpl.type,
                                                     category: 'B'
+                                                });
+                                            }}
+                                            className="px-2.5 py-1 text-xs bg-white border border-brand-cerulean/40 hover:border-brand-cerulean hover:bg-blue-100/80 text-brand-cerulean font-bold transition-all rounded shadow-xs"
+                                        >
+                                            + Mẫu {tpl.code} ({tpl.credits} TC)
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {modForm.category === 'C' && (
+                            <div className="p-3 bg-blue-50/80 border border-brand-cerulean/30 rounded space-y-2">
+                                <label className="block text-xs font-serif-title font-bold text-brand-cerulean">
+                                    Mẫu học phần chuẩn Nhánh C {profile?.teachingSubject ? `(Áp dụng môn: ${profile.teachingSubject})` : ''}:
+                                </label>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {[
+                                        { code: 'C01', name: `Phương pháp dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THPT`, credits: 2, type: 'mandatory' },
+                                        { code: 'C02', name: `Xây dựng kế hoạch dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THPT`, credits: 2, type: 'mandatory' },
+                                        { code: 'C03', name: `Tổ chức dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THPT`, credits: 2, type: 'mandatory' },
+                                        { code: 'C04', name: `Thực hành dạy học [${profile?.teachingSubject || 'Môn học'}] cấp THPT ở trường sư phạm`, credits: 3, type: 'mandatory' },
+                                        { code: 'C05', name: 'Thực hành kỹ năng giáo dục ở trường THPT', credits: 2, type: 'practice' },
+                                        { code: 'C06', name: 'Thực tập sư phạm 1 ở trường THPT', credits: 2, type: 'practice' },
+                                        { code: 'C07', name: 'Thực tập sư phạm 2 ở trường THPT', credits: 2, type: 'practice' },
+                                    ].map(tpl => (
+                                        <button
+                                            key={tpl.code}
+                                            type="button"
+                                            onClick={() => {
+                                                const formattedName = formatModuleName(tpl.name, profile?.teachingSubject || profile?.major);
+                                                setModForm({
+                                                    ...modForm,
+                                                    code: tpl.code,
+                                                    name: formattedName,
+                                                    credits: tpl.credits,
+                                                    type: tpl.type,
+                                                    category: 'C'
                                                 });
                                             }}
                                             className="px-2.5 py-1 text-xs bg-white border border-brand-cerulean/40 hover:border-brand-cerulean hover:bg-blue-100/80 text-brand-cerulean font-bold transition-all rounded shadow-xs"
@@ -3500,17 +3541,23 @@ const ProfileView = ({ profile, programs, onUpdateProfile, onOpenCertificate }) 
                             </div>
                             <div>
                                 <EditorialSelect
-                                    label="Môn đăng ký giảng dạy (Nhánh B)"
+                                    label="Môn đăng ký giảng dạy (Nhánh B & C)"
                                     value={formData.teachingSubject || ''}
                                     onChange={val => setFormData({ ...formData, teachingSubject: val })}
                                     options={[
                                         { label: 'Toán', value: 'Toán' },
                                         { label: 'Tin học', value: 'Tin học' },
-                                        { label: 'Tiếng Anh', value: 'Tiếng Anh' },
+                                        { label: 'Vật lý', value: 'Vật lý' },
+                                        { label: 'Hóa học', value: 'Hóa học' },
+                                        { label: 'Sinh học', value: 'Sinh học' },
                                         { label: 'Ngữ văn', value: 'Ngữ văn' },
+                                        { label: 'Tiếng Anh', value: 'Tiếng Anh' },
+                                        { label: 'Giáo dục Quốc phòng', value: 'Giáo dục Quốc phòng' },
                                         { label: 'Giáo dục kinh tế và pháp luật', value: 'Giáo dục kinh tế và pháp luật' },
-                                        { label: 'Khoa học tự nhiên (KHTN)', value: 'Khoa học tự nhiên' },
+                                        { label: 'Lịch sử', value: 'Lịch sử' },
+                                        { label: 'Địa lý', value: 'Địa lý' },
                                         { label: 'Lịch sử và Địa lý', value: 'Lịch sử và Địa lý' },
+                                        { label: 'Khoa học tự nhiên (KHTN)', value: 'Khoa học tự nhiên' },
                                         { label: 'Tiếng Trung', value: 'Tiếng Trung' },
                                         { label: 'Tiếng Nga', value: 'Tiếng Nga' },
                                         { label: 'Tiếng Pháp', value: 'Tiếng Pháp' },
@@ -3552,7 +3599,7 @@ const ProfileView = ({ profile, programs, onUpdateProfile, onOpenCertificate }) 
                                 <span className="text-lg font-serif-title text-brand-cerulean font-bold">{profile.major}</span>
                             </div>
                             <div>
-                                <span className="text-xs uppercase font-bold text-gray-400 block">Môn đăng ký giảng dạy (Nhánh B)</span>
+                                <span className="text-xs uppercase font-bold text-gray-400 block">Môn đăng ký giảng dạy (Nhánh B & C)</span>
                                 <span className="text-base font-serif-title font-bold text-brand-jasper">
                                     {profile.teachingSubject ? `Môn ${profile.teachingSubject}` : 'Chưa chọn môn dạy (Nhấp Chỉnh sửa để chọn)'}
                                 </span>
