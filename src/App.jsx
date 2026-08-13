@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import vietnamLocations from './vietnamLocations.json';
 import {
     X,
@@ -427,16 +428,17 @@ const EditorialTimePicker = ({ label, value, onChange, className = "" }) => {
 // --- MODAL COMPONENT ---
 const Modal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-ink/50 backdrop-blur-sm animate-backdrop-in">
-            <div className="bg-brand-cream border-editorial p-6 w-full max-w-2xl max-h-[90vh] overflow-visible shadow-editorial relative animate-modal-pop-in">
+    return createPortal(
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-brand-ink/60 backdrop-blur-md animate-backdrop-in">
+            <div className="bg-brand-cream border-editorial p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-editorial relative animate-modal-pop-in">
                 <button onClick={onClose} className="absolute top-4 right-4 text-brand-cerulean hover:text-brand-jasper transition-colors p-1">
                     <X size={20} />
                 </button>
                 <h2 className="text-3xl font-serif-title text-brand-cerulean mb-6 pb-2 border-b border-brand-cerulean/30">{title}</h2>
                 {children}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
@@ -449,10 +451,10 @@ const CertificateModal = ({ isOpen, onClose, profile, program, overall }) => {
     const certNo = `NV ${profile?.studentId?.replace(/[^0-9]/g, '') || '13861'}`;
     const issueNo = `01/QĐ11022K18HN${profile?.studentId?.replace(/[^0-9]/g, '') || '185'}`;
 
-    return (
+    return createPortal(
         <div
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-            className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-3 md:p-6 bg-black/80 backdrop-blur-md overflow-y-auto animate-backdrop-in"
+            className="fixed inset-0 z-[300] flex flex-col items-center justify-center p-3 md:p-6 bg-black/80 backdrop-blur-md overflow-y-auto animate-backdrop-in"
         >
             {/* Inject Landscape Print Rule */}
             <style>{`
@@ -464,7 +466,7 @@ const CertificateModal = ({ isOpen, onClose, profile, program, overall }) => {
             `}</style>
 
             {/* FIXED TOP FLOATING ACTION BAR (Always visible & fixed above scroll area) */}
-            <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[210] flex items-center justify-between gap-4 bg-gray-900/90 text-white px-5 py-2.5 rounded-full shadow-2xl backdrop-blur-md max-w-4xl w-[92vw] md:w-auto print:hidden border border-white/20">
+            <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[310] flex items-center justify-between gap-4 bg-gray-900/90 text-white px-5 py-2.5 rounded-full shadow-2xl backdrop-blur-md max-w-4xl w-[92vw] md:w-auto print:hidden border border-white/20">
                 <div className="flex items-center gap-2 text-[#D4AF37] font-bold font-serif-title text-sm truncate">
                     <Award size={18} />
                     <span className="truncate">Chứng chỉ tốt nghiệp Nghiệp vụ Sư phạm</span>
@@ -541,24 +543,24 @@ const CertificateModal = ({ isOpen, onClose, profile, program, overall }) => {
 
                         <div className="text-center relative min-w-[240px]">
                             <p className="text-[11px] md:text-xs text-gray-600 italic mb-1">{formattedDate}</p>
-                            <p className="text-xs md:text-sm font-bold uppercase tracking-wider text-gray-900">HIỆU TRƯỞNG</p>
-
-                            {/* Red Stamp SVG Simulation Overlay */}
-                            <div className="relative flex justify-center items-center my-1">
+                            <p className="text-xs md:text-sm font-bold text-gray-800 uppercase">TL. HIỆU TRƯỞNG</p>
+                            <p className="text-[11px] md:text-xs font-bold text-gray-700 uppercase">TRƯỞNG PHÒNG ĐÀO TẠO</p>
+                            <div className="h-16 md:h-20 flex items-center justify-center my-1 relative">
+                                {/* Red Stamp Simulation */}
                                 <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-red-600 flex items-center justify-center text-red-600 text-[9px] md:text-[10px] font-bold text-center leading-tight rotate-[-12deg] p-1.5 shadow-sm opacity-90 border-dashed">
-                                    <span>TRƯỜNG ĐẠI HỌC SƯ PHẠM THÀNH PHỐ HỒ CHÍ MINH</span>
+                                    ĐẠI HỌC SƯ PHẠM THÀNH PHỐ HỒ CHÍ MINH ★
                                 </div>
                                 <span className="absolute font-serif italic text-blue-900 text-xl md:text-2xl font-bold rotate-[-10deg] pointer-events-none select-none drop-shadow">
-                                    Huỳnh Văn Sơn
+                                    Nguyễn Văn A
                                 </span>
                             </div>
-
                             <p className="text-xs md:text-sm font-bold text-gray-900 mt-0.5">GS.TS Huỳnh Văn Sơn</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
@@ -4496,13 +4498,14 @@ if (!user) {
             </main>
 
             {/* Auth Login / Logout Transition Overlay */}
-            {authLoadingState && (
-                <div className="fixed inset-0 z-[300] bg-brand-cream/90 backdrop-blur-md flex flex-col items-center justify-center space-y-4 animate-backdrop-in">
+            {authLoadingState && createPortal(
+                <div className="fixed inset-0 z-[400] bg-brand-cream/90 backdrop-blur-md flex flex-col items-center justify-center space-y-4 animate-backdrop-in">
                     <div className="w-14 h-14 border-4 border-brand-cerulean/30 border-t-brand-cerulean rounded-full animate-spin"></div>
                     <p className="text-xl font-serif-title font-bold text-brand-cerulean animate-pulse">
                         {authLoadingState === 'logging_in' ? 'Đang kết nối tài khoản Google...' : 'Đang đăng xuất an toàn...'}
                     </p>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Certificate Modal */}
