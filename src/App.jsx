@@ -3604,7 +3604,7 @@ const ProfileView = ({ profile, programs, onUpdateProfile, onOpenCertificate }) 
                             </div>
                             <div>
                                 <EditorialSelect
-                                    label="Môn đăng ký giảng dạy (Nhánh B & C)"
+                                    label="Môn đăng ký giảng dạy"
                                     value={formData.teachingSubject || ''}
                                     onChange={val => setFormData({ ...formData, teachingSubject: val })}
                                     options={[
