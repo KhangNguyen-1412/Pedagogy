@@ -4245,12 +4245,6 @@ if (!user) {
                         >
                             Đăng xuất
                         </button>
-                        <button 
-                            onClick={handleMigrateRealData} 
-                            className="w-full bg-brand-jasper text-white text-xs py-2 font-bold shadow-md hover:bg-red-800 transition-colors"
-                        >
-                            Đẩy Data Local Lên Cloud
-                        </button>
                     </div>
                 )}
             </aside>
