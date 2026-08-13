@@ -36,9 +36,8 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
-const appId = 'pedagogy-app-v1';
-export const getCollectionRef = (userId, colName) => collection(db, 'artifacts', appId, 'users', userId, colName);
-export const getDocRef = (userId, colName, docId) => doc(db, 'artifacts', appId, 'users', userId, colName, docId);
+export const getCollectionRef = (userId, colName) => collection(db, colName);
+export const getDocRef = (userId, colName, docId) => doc(db, colName, docId === 'main' ? userId : docId);
 export { onAuthStateChanged, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, collection, doc, signInWithPopup, signOut, setPersistence, browserSessionPersistence };
 
 // ─── Collection names ───────────────────────────────────────────────────────
