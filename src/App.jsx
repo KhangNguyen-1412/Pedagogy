@@ -125,12 +125,33 @@ if (typeof window !== 'undefined' && localStorage.getItem('pedagogy_real_data_on
 }
 
 // --- CUSTOM EDITORIAL DROPDOWN / SELECT COMPONENT ---
-const EditorialSelect = ({ label, value, onChange, options, className = "", placeholder, direction = "auto" }) => {
+const EditorialSelect = ({ label, value, onChange, options, className = "", placeholder, direction = "auto", isMulti = false }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [openUpward, setOpenUpward] = useState(false);
     const dropdownRef = useRef(null);
 
-    const selectedOption = options.find(opt => opt.value === value) || { label: placeholder || value, value };
+    // Normalize value array when isMulti is active
+    const selectedValues = isMulti
+        ? (Array.isArray(value)
+            ? value
+            : (value ? String(value).split(', ').map(s => s.trim()).filter(Boolean) : []))
+        : [];
+
+    const selectedOption = !isMulti
+        ? (options.find(opt => opt.value === value) || { label: placeholder || value, value })
+        : null;
+
+    let displayLabel = placeholder || 'Chọn...';
+    if (isMulti) {
+        if (selectedValues.length > 0) {
+            const labels = options
+                .filter(opt => selectedValues.includes(opt.value))
+                .map(opt => opt.label);
+            displayLabel = labels.length > 0 ? labels.join(', ') : selectedValues.join(', ');
+        }
+    } else {
+        displayLabel = selectedOption?.label || selectedOption?.value || value || (placeholder || 'Chọn...');
+    }
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -169,6 +190,21 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
         setIsOpen(!isOpen);
     };
 
+    const handleSelectOption = (optValue) => {
+        if (isMulti) {
+            let updated;
+            if (selectedValues.includes(optValue)) {
+                updated = selectedValues.filter(v => v !== optValue);
+            } else {
+                updated = [...selectedValues, optValue];
+            }
+            onChange(updated);
+        } else {
+            onChange(optValue);
+            setIsOpen(false);
+        }
+    };
+
     return (
         <div className={`relative ${className}`} ref={dropdownRef}>
             {label && (
@@ -181,29 +217,39 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
                 onClick={handleToggle}
                 className="w-full flex items-center justify-between py-2 border-b border-brand-cerulean font-body text-brand-ink text-left hover:border-brand-jasper focus:outline-none transition-colors bg-transparent group"
             >
-                <span className="truncate text-lg">{selectedOption?.label || selectedOption?.value || value}</span>
-                <ChevronDown size={16} className={`text-brand-cerulean group-hover:text-brand-jasper transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                <span className="truncate text-lg" title={typeof displayLabel === 'string' ? displayLabel : ''}>{displayLabel}</span>
+                <ChevronDown size={16} className={`text-brand-cerulean group-hover:text-brand-jasper transition-transform duration-200 shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (
                 <div className={`absolute z-[100] left-0 right-0 ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'} bg-brand-cream border-editorial shadow-editorial max-h-56 overflow-y-auto animate-fade-in-down`}>
-                    {options.map((opt) => (
-                        <div
-                            key={opt.value}
-                            onClick={() => {
-                                onChange(opt.value);
-                                setIsOpen(false);
-                            }}
-                            className={`px-4 py-2.5 text-base font-body cursor-pointer flex items-center justify-between transition-colors ${
-                                value === opt.value
-                                    ? 'bg-brand-cerulean text-brand-cream font-semibold'
-                                    : 'text-brand-ink hover:bg-brand-cerulean/10 hover:text-brand-jasper'
-                            }`}
-                        >
-                            <span>{opt.label || opt.value}</span>
-                            {value === opt.value && <Check size={14} className="text-brand-cream" />}
-                        </div>
-                    ))}
+                    {options.map((opt) => {
+                        const isSelected = isMulti ? selectedValues.includes(opt.value) : value === opt.value;
+                        return (
+                            <div
+                                key={opt.value}
+                                onClick={() => handleSelectOption(opt.value)}
+                                className={`px-4 py-2.5 text-base font-body cursor-pointer flex items-center justify-between transition-colors ${
+                                    isSelected
+                                        ? 'bg-brand-cerulean text-brand-cream font-semibold'
+                                        : 'text-brand-ink hover:bg-brand-cerulean/10 hover:text-brand-jasper'
+                                }`}
+                            >
+                                <span className="flex items-center gap-2 truncate">
+                                    {isMulti && (
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => {}}
+                                            className="accent-brand-jasper w-4 h-4 cursor-pointer shrink-0"
+                                        />
+                                    )}
+                                    <span className="truncate">{opt.label}</span>
+                                </span>
+                                {isSelected && <Check size={16} className="shrink-0 ml-2 text-brand-cream" />}
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>
@@ -3549,10 +3595,11 @@ const ProfileView = ({ profile, programs, onUpdateProfile, onOpenCertificate }) 
                             <div>
                                 <EditorialSelect
                                     label="Chương trình bồi dưỡng"
-                                    value={formData.major || (programOptions[0]?.value || '')}
+                                    value={formData.major || ''}
                                     onChange={val => setFormData({ ...formData, major: val })}
                                     options={programOptions}
-                                    placeholder="Chọn chương trình bồi dưỡng..."
+                                    placeholder="Chọn chương trình bồi dưỡng (có thể chọn nhiều)..."
+                                    isMulti={true}
                                 />
                             </div>
                             <div>
@@ -3580,7 +3627,8 @@ const ProfileView = ({ profile, programs, onUpdateProfile, onOpenCertificate }) 
                                         { label: 'Công nghệ', value: 'Công nghệ' },
                                         { label: 'Giáo dục thể chất', value: 'Giáo dục thể chất' },
                                     ]}
-                                    placeholder="Chọn môn giảng dạy..."
+                                    placeholder="Chọn môn giảng dạy (có thể chọn nhiều)..."
+                                    isMulti={true}
                                 />
                             </div>
                             <div>
@@ -3612,12 +3660,16 @@ const ProfileView = ({ profile, programs, onUpdateProfile, onOpenCertificate }) 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-brand-cream/40 p-5 border border-brand-cerulean/20">
                             <div>
                                 <span className="text-xs uppercase font-bold text-gray-400 block">Chương trình học</span>
-                                <span className="text-lg font-serif-title text-brand-cerulean font-bold">{profile.major}</span>
+                                <span className="text-lg font-serif-title text-brand-cerulean font-bold">
+                                    {Array.isArray(profile.major) ? profile.major.join(', ') : (profile.major || 'Chưa cập nhật')}
+                                </span>
                             </div>
                             <div>
                                 <span className="text-xs uppercase font-bold text-gray-400 block">Môn đăng ký giảng dạy (Nhánh B & C)</span>
                                 <span className="text-base font-serif-title font-bold text-brand-jasper">
-                                    {profile.teachingSubject ? `Môn ${profile.teachingSubject}` : 'Chưa chọn môn dạy (Nhấp Chỉnh sửa để chọn)'}
+                                    {profile.teachingSubject
+                                        ? (Array.isArray(profile.teachingSubject) ? `Môn: ${profile.teachingSubject.join(', ')}` : `Môn ${profile.teachingSubject}`)
+                                        : 'Chưa chọn môn dạy (Nhấp Chỉnh sửa để chọn)'}
                                 </span>
                             </div>
                             <div>
