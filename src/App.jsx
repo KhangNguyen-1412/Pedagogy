@@ -627,6 +627,77 @@ const ToastNotification = ({ toast, onClose }) => {
     );
 };
 
+// --- RULE VALIDATION PANEL COMPONENT ---
+const RuleValidationPanel = ({ program, modules }) => {
+    const breakdown = calculateRuleBreakdown(program, modules);
+    if (!breakdown) return null;
+    const { evalType, blocks, totalEarned, totalTarget, unit, missingBlocks, isComplete } = breakdown;
+
+    return (
+        <div className="bg-white border-editorial p-6 shadow-editorial space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-brand-cerulean/20 pb-3">
+                <div className="flex items-center gap-3">
+                    <div className={`p-2.5 rounded-full ${isComplete ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                        {isComplete ? <CheckCircle2 size={22} /> : <AlertTriangle size={22} />}
+                    </div>
+                    <div>
+                        <h4 className="text-xl font-serif-title text-brand-cerulean font-bold">
+                            Quy tắc Phân bổ & Kiểm tra Định mức ({evalType === 'credits' ? 'Hệ Tín chỉ' : evalType === 'modules' ? 'Hệ Chuyên đề' : 'Hệ Tiết học'})
+                        </h4>
+                        <p className="text-xs text-gray-500 font-sans mt-0.5">
+                            {isComplete 
+                                ? '✓ Tất cả các khối học phần đã đáp ứng đầy đủ định mức quy định!' 
+                                : `⚠️ Còn ${missingBlocks.map(b => `${b.label}: thiếu ${b.target - b.current} ${b.unit}`).join(', ')}`}
+                        </p>
+                    </div>
+                </div>
+                <div className={`px-4 py-2 font-serif-title font-bold text-sm border rounded shrink-0 ${
+                    isComplete ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-amber-50 text-amber-800 border-amber-300'
+                }`}>
+                    Tổng tích lũy: {totalEarned} / {totalTarget} {unit}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {blocks.map(b => {
+                    const isOk = b.current >= b.target && b.target > 0;
+                    const isShort = b.current < b.target && b.target > 0;
+                    const isOver = b.current > b.target && b.target > 0;
+                    const diff = b.target - b.current;
+
+                    return (
+                        <div key={b.id || b.label} className={`p-3.5 border rounded-sm text-xs font-sans space-y-1.5 transition-all ${
+                            isOk 
+                                ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950' 
+                                : isShort 
+                                    ? 'bg-amber-50/80 border-amber-300 text-amber-950' 
+                                    : isOver
+                                        ? 'bg-blue-50/80 border-blue-300 text-blue-950'
+                                        : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}>
+                            <div className="font-serif-title font-bold text-xs truncate">{b.label}</div>
+                            <div className="text-lg font-bold font-serif-title text-brand-cerulean">
+                                {b.current} <span className="text-xs text-gray-500 font-normal">/ {b.target} {b.unit}</span>
+                            </div>
+                            <div className="font-bold text-[11px]">
+                                {b.target === 0 ? (
+                                    <span className="text-gray-400 font-normal">Không quy định</span>
+                                ) : isOk && !isOver ? (
+                                    <span className="text-emerald-700">✓ Đã đủ định mức</span>
+                                ) : isOver ? (
+                                    <span className="text-blue-700">ℹ️ Vượt {b.current - b.target} {b.unit}</span>
+                                ) : (
+                                    <span className="text-amber-700">⚠️ Thiếu {diff} {b.unit}</span>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
 // --- CERTIFICATE MODAL COMPONENT ---
 const CertificateModal = ({ isOpen, onClose, profile, program, overall }) => {
     if (!isOpen) return null;
@@ -783,6 +854,8 @@ const DEFAULT_PROGRAMS = [
         id: "prog_nvsp_thcs_2026",
         name: "Nghiệp vụ sư phạm THCS 2026",
         description: "Khóa đào tạo bồi dưỡng nghiệp vụ sư phạm cấp THCS dành cho cử nhân các chuyên ngành phù hợp.",
+        category: "nhanh_a",
+        evaluationType: "credits",
         totalCreditsRequired: 34,
         status: "active",
         isEnrolled: true,
@@ -792,12 +865,136 @@ const DEFAULT_PROGRAMS = [
         id: "prog_nvsp_thpt_2026",
         name: "Nghiệp vụ sư phạm THPT 2026",
         description: "Khóa đào tạo bồi dưỡng nghiệp vụ sư phạm cấp THPT chuẩn quy định mới của Bộ Giáo dục & Đào tạo.",
+        category: "nhanh_a",
+        evaluationType: "credits",
         totalCreditsRequired: 36,
         status: "active",
         isEnrolled: true,
         rules: { mandatoryA: 15, electiveA: 2, mandatoryB: 11, practiceB: 6, electiveB: 2 }
     }
 ];
+
+const getCategoryPresets = (category) => {
+    if (category === 'nhanh_b') {
+        return {
+            evaluationType: 'modules',
+            totalCreditsRequired: 6,
+            rules: { mandatoryA: 4, electiveA: 2, mandatoryB: 0, practiceB: 0, electiveB: 0 }
+        };
+    }
+    if (category === 'nhanh_c') {
+        return {
+            evaluationType: 'hours',
+            totalCreditsRequired: 120,
+            rules: { mandatoryA: 80, electiveA: 40, mandatoryB: 0, practiceB: 0, electiveB: 0 }
+        };
+    }
+    // nhanh_a (default NVSP)
+    return {
+        evaluationType: 'credits',
+        totalCreditsRequired: 34,
+        rules: { mandatoryA: 15, electiveA: 2, mandatoryB: 9, practiceB: 6, electiveB: 2 }
+    };
+};
+
+const normalizeProgram = (prog) => {
+    if (!prog) return prog;
+    const category = prog.category || (prog.rules ? 'nhanh_a' : 'nhanh_b');
+    let defaultEval = 'credits';
+    if (category === 'nhanh_b') defaultEval = 'modules';
+    else if (category === 'nhanh_c') defaultEval = 'hours';
+    return {
+        ...prog,
+        category,
+        evaluationType: prog.evaluationType || defaultEval
+    };
+};
+
+const calculateRuleBreakdown = (program, modules = []) => {
+    if (!program) return null;
+    const progModules = modules.filter(m => isModuleInProgram(m, program.id));
+    const evalType = program.evaluationType || (program.category === 'nhanh_b' ? 'modules' : program.category === 'nhanh_c' ? 'hours' : 'credits');
+    const rules = program.rules || { mandatoryA: 15, electiveA: 2, mandatoryB: 9, practiceB: 6, electiveB: 2 };
+
+    if (evalType === 'credits') {
+        const activeMods = progModules.filter(m => m.type !== 'elective' || m.isSelected);
+
+        const currentMandatoryA = activeMods.filter(m => (m.category === 'A' || !m.category) && m.type === 'mandatory').reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentElectiveA = activeMods.filter(m => (m.category === 'A' || !m.category) && m.type === 'elective').reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentMandatoryB = activeMods.filter(m => m.category === 'B' && m.type === 'mandatory').reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentPracticeB = activeMods.filter(m => m.category === 'B' && m.type === 'practice').reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentElectiveB = activeMods.filter(m => m.category === 'B' && m.type === 'elective').reduce((s, m) => s + Number(m.credits || 0), 0);
+
+        const targetMandatoryA = rules.mandatoryA ?? 15;
+        const targetElectiveA = rules.electiveA ?? 2;
+        const targetMandatoryB = rules.mandatoryB ?? 9;
+        const targetPracticeB = rules.practiceB ?? 6;
+        const targetElectiveB = rules.electiveB ?? 2;
+
+        const totalEarned = currentMandatoryA + currentElectiveA + currentMandatoryB + currentPracticeB + currentElectiveB;
+        const totalTarget = program.totalCreditsRequired || (targetMandatoryA + targetElectiveA + targetMandatoryB + targetPracticeB + targetElectiveB);
+
+        const blocks = [
+            { id: 'mandatoryA', label: 'Khối A Bắt buộc', current: currentMandatoryA, target: targetMandatoryA, unit: 'TC' },
+            { id: 'electiveA', label: 'Khối A Tự chọn', current: currentElectiveA, target: targetElectiveA, unit: 'TC' },
+            { id: 'mandatoryB', label: 'Khối B Bắt buộc', current: currentMandatoryB, target: targetMandatoryB, unit: 'TC' },
+            { id: 'practiceB', label: 'Khối B Thực hành', current: currentPracticeB, target: targetPracticeB, unit: 'TC' },
+            { id: 'electiveB', label: 'Khối B Tự chọn', current: currentElectiveB, target: targetElectiveB, unit: 'TC' },
+        ];
+
+        const missingBlocks = blocks.filter(b => b.target > 0 && b.current < b.target);
+        const isComplete = missingBlocks.length === 0 && totalEarned >= totalTarget;
+
+        return {
+            evalType,
+            blocks,
+            totalEarned,
+            totalTarget,
+            unit: 'TC',
+            missingBlocks,
+            isComplete
+        };
+    }
+
+    if (evalType === 'modules') {
+        const passedCount = progModules.filter(m => {
+            const final = calculateModuleFinal(m.grades, m.syllabus?.weights);
+            return (final.score10 && final.score10 >= 5.0) || m.status === 'completed';
+        }).length;
+        const totalCount = progModules.length;
+        const targetCount = program.totalCreditsRequired || rules.mandatoryA || 6;
+        const isComplete = passedCount >= targetCount && totalCount >= targetCount;
+
+        return {
+            evalType,
+            blocks: [
+                { id: 'modules', label: 'Số chuyên đề đã hoàn thành', current: passedCount, target: targetCount, unit: 'môn' }
+            ],
+            totalEarned: passedCount,
+            totalTarget: targetCount,
+            unit: 'môn',
+            missingBlocks: passedCount < targetCount ? [{ label: 'Chuyên đề', current: passedCount, target: targetCount, unit: 'môn' }] : [],
+            isComplete
+        };
+    }
+
+    // hours
+    const totalHoursLearned = progModules.filter(m => m.status === 'completed' || calculateModuleFinal(m.grades, m.syllabus?.weights).score10 >= 5.0).reduce((s, m) => s + (Number(m.credits || 3) * 15), 0);
+    const targetHours = program.totalCreditsRequired || 120;
+    const isComplete = totalHoursLearned >= targetHours;
+
+    return {
+        evalType,
+        blocks: [
+            { id: 'hours', label: 'Thời lượng tích lũy', current: totalHoursLearned, target: targetHours, unit: 'tiết' }
+        ],
+        totalEarned: totalHoursLearned,
+        totalTarget: targetHours,
+        unit: 'tiết',
+        missingBlocks: totalHoursLearned < targetHours ? [{ label: 'Thời lượng', current: totalHoursLearned, target: targetHours, unit: 'tiết' }] : [],
+        isComplete
+    };
+};
 
 // Normalize legacy programId (string) → programIds (array) for shared module support
 const normalizeModuleProgramIds = (mod) => {
@@ -928,34 +1125,30 @@ const calculateOverallGPA = (modules, programs = [], selectedProgramFilter = 'al
 // ─── VIEWS ─────────────────────────────────────────────────────────────────
 
 // 1. DASHBOARD VIEW
-const DashboardView = ({ programs, modules, events, studyLogs, navigate, onOpenCertificate, selectedProgramFilter = 'all' }) => {
+const DashboardView = ({ programs, modules, events, studyLogs, navigate, onOpenCertificate, selectedProgramFilter = 'all', setSelectedProgramFilter }) => {
+    const normalizedPrograms = programs.map(normalizeProgram);
     const activePrograms = selectedProgramFilter === 'all'
-        ? programs.filter(p => p.isEnrolled !== false && p.status !== 'completed')
-        : programs.filter(p => p.id === selectedProgramFilter);
+        ? normalizedPrograms.filter(p => p.isEnrolled !== false && p.status !== 'completed')
+        : normalizedPrograms.filter(p => p.id === selectedProgramFilter);
 
-    const overall = calculateOverallGPA(modules, programs, selectedProgramFilter);
+    const currentProg = selectedProgramFilter !== 'all' ? normalizedPrograms.find(p => p.id === selectedProgramFilter) : null;
+    const evalType = currentProg?.evaluationType || (currentProg?.category === 'nhanh_b' ? 'modules' : currentProg?.category === 'nhanh_c' ? 'hours' : 'credits');
+
+    const programOptions = [
+        { label: '🌟 Tất cả chương trình học', value: 'all' },
+        ...normalizedPrograms.map(p => ({
+            label: `${p.name} (${p.evaluationType === 'modules' ? 'Hệ Chuyên đề' : p.evaluationType === 'hours' ? 'Hệ Tiết học' : 'Hệ Tín chỉ'})`,
+            value: p.id
+        }))
+    ];
+
+    const overall = calculateOverallGPA(modules, normalizedPrograms, selectedProgramFilter);
     const upcomingEvents = [...events].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
 
-    return (
-        <div className="max-w-5xl mx-auto space-y-10">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-brand-cerulean/30">
-                <div>
-                    <h2 className="text-5xl font-serif-title text-brand-cerulean mb-2">Tổng quan học tập.</h2>
-                    <p className="text-xl text-gray-600 font-body">Hệ thống quản lý tiến độ & kết quả cá nhân.</p>
-                </div>
-                <div className="flex gap-4 items-center flex-wrap">
-                    <div className="bg-brand-cerulean text-white p-4 text-center border-editorial shadow-editorial min-w-[110px]">
-                        <span className="text-xs uppercase tracking-widest block opacity-80">GPA (Hệ 4)</span>
-                        <span className="text-3xl font-serif-title font-bold">{overall.gpa4}</span>
-                    </div>
-                    <div className="bg-brand-jasper text-white p-4 text-center border-editorial shadow-editorial min-w-[110px]">
-                        <span className="text-xs uppercase tracking-widest block opacity-80">Xếp loại</span>
-                        <span className="text-xl font-serif-title font-bold">{overall.rank}</span>
-                    </div>
-                </div>
-            </header>
-
-            {/* Quick Metrics Grid */}
+    // Compute dynamic metric cards based on selectedProgramFilter and evalType
+    let metricCards = null;
+    if (selectedProgramFilter === 'all' || evalType === 'credits') {
+        metricCards = (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white border-editorial p-6 shadow-editorial flex items-center gap-4">
                     <div className="p-3 bg-brand-cerulean/10 text-brand-cerulean">
@@ -984,12 +1177,146 @@ const DashboardView = ({ programs, modules, events, studyLogs, navigate, onOpenC
                         <BookOpen size={28} />
                     </div>
                     <div>
-                        <span className="text-xs uppercase text-gray-400 font-bold tracking-wider block">Học phần đang xem</span>
+                        <span className="text-xs uppercase text-gray-400 font-bold tracking-wider block">Số môn đang xem</span>
                         <h4 className="text-3xl font-serif-title text-brand-cerulean font-bold">{overall.activeModulesCount} Môn</h4>
                         <span className="text-xs text-gray-500 font-sans">Bắt buộc, thực hành & tự chọn</span>
                     </div>
                 </div>
             </div>
+        );
+    } else if (evalType === 'modules') {
+        const progModules = modules.filter(m => isModuleInProgram(m, currentProg.id));
+        const passedMods = progModules.filter(m => {
+            const final = calculateModuleFinal(m.grades, m.syllabus?.weights);
+            return (final.score10 && final.score10 >= 5.0) || m.status === 'completed';
+        });
+        const isEligible = passedMods.length >= progModules.length && progModules.length > 0;
+
+        metricCards = (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white border-editorial p-6 shadow-editorial flex items-center gap-4">
+                    <div className="p-3 bg-brand-cerulean/10 text-brand-cerulean">
+                        <CheckCircle2 size={28} />
+                    </div>
+                    <div>
+                        <span className="text-xs uppercase text-gray-400 font-bold tracking-wider block">Chuyên đề đã Đạt</span>
+                        <h4 className="text-3xl font-serif-title text-brand-cerulean font-bold">
+                            {passedMods.length} <span className="text-lg text-gray-500 font-normal">/ {progModules.length} chuyên đề</span>
+                        </h4>
+                        <span className="text-xs text-gray-500 font-sans">Đánh giá theo môn & bài thu hoạch</span>
+                    </div>
+                </div>
+                <div className="bg-white border-editorial p-6 shadow-editorial flex items-center gap-4">
+                    <div className="p-3 bg-emerald-100 text-emerald-800">
+                        <Award size={28} />
+                    </div>
+                    <div>
+                        <span className="text-xs uppercase text-gray-400 font-bold tracking-wider block">Cấp chứng chỉ</span>
+                        <h4 className="text-xl font-serif-title text-emerald-800 font-bold">
+                            {isEligible ? '✓ Đủ điều kiện' : 'Chưa đủ điều kiện'}
+                        </h4>
+                        <span className="text-xs text-gray-500 font-sans">{isEligible ? 'Đã hoàn thành toàn bộ chuyên đề' : `Cần đạt thêm ${progModules.length - passedMods.length} chuyên đề`}</span>
+                    </div>
+                </div>
+                <div className="bg-white border-editorial p-6 shadow-editorial flex items-center gap-4">
+                    <div className="p-3 bg-brand-jasper/10 text-brand-jasper">
+                        <FileCheck size={28} />
+                    </div>
+                    <div>
+                        <span className="text-xs uppercase text-gray-400 font-bold tracking-wider block">Bài thu hoạch / Đồ án</span>
+                        <h4 className="text-3xl font-serif-title text-brand-jasper font-bold">
+                            {passedMods.length} / {progModules.length}
+                        </h4>
+                        <span className="text-xs text-gray-500 font-sans">Trạng thái hoàn thành chuyên đề</span>
+                    </div>
+                </div>
+            </div>
+        );
+    } else if (evalType === 'hours') {
+        const progModules = modules.filter(m => isModuleInProgram(m, currentProg.id));
+        const totalHours = progModules.reduce((s, m) => s + (Number(m.credits || 3) * 15), 0);
+        const completedHours = progModules.filter(m => {
+            const final = calculateModuleFinal(m.grades, m.syllabus?.weights);
+            return (final.score10 && final.score10 >= 5.0) || m.status === 'completed';
+        }).reduce((s, m) => s + (Number(m.credits || 3) * 15), 0);
+
+        metricCards = (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white border-editorial p-6 shadow-editorial flex items-center gap-4">
+                    <div className="p-3 bg-brand-cerulean/10 text-brand-cerulean">
+                        <Clock size={28} />
+                    </div>
+                    <div>
+                        <span className="text-xs uppercase text-gray-400 font-bold tracking-wider block">Thời lượng tích lũy</span>
+                        <h4 className="text-3xl font-serif-title text-brand-cerulean font-bold">
+                            {completedHours} <span className="text-lg text-gray-500 font-normal">/ {totalHours} tiết</span>
+                        </h4>
+                        <span className="text-xs text-gray-500 font-sans">Thời lượng tham gia học tập</span>
+                    </div>
+                </div>
+                <div className="bg-white border-editorial p-6 shadow-editorial flex items-center gap-4">
+                    <div className="p-3 bg-blue-100 text-blue-800">
+                        <UserCheck size={28} />
+                    </div>
+                    <div>
+                        <span className="text-xs uppercase text-gray-400 font-bold tracking-wider block">Chuyên cần & Tham gia</span>
+                        <h4 className="text-3xl font-serif-title text-blue-900 font-bold">
+                            {totalHours > 0 ? Math.round((completedHours / totalHours) * 100) : 0}%
+                        </h4>
+                        <span className="text-xs text-gray-500 font-sans">Tỷ lệ tích lũy giờ học</span>
+                    </div>
+                </div>
+                <div className="bg-white border-editorial p-6 shadow-editorial flex items-center gap-4">
+                    <div className="p-3 bg-brand-jasper/10 text-brand-jasper">
+                        <BookOpen size={28} />
+                    </div>
+                    <div>
+                        <span className="text-xs uppercase text-gray-400 font-bold tracking-wider block">Mô-đun hoàn thành</span>
+                        <h4 className="text-3xl font-serif-title text-brand-jasper font-bold">
+                            {progModules.filter(m => m.status === 'completed').length} / {progModules.length} Mô-đun
+                        </h4>
+                        <span className="text-xs text-gray-500 font-sans">Số bài học / kỹ năng đã hoàn thành</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="max-w-5xl mx-auto space-y-10">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-brand-cerulean/30">
+                <div>
+                    <h2 className="text-5xl font-serif-title text-brand-cerulean mb-2">Tổng quan học tập.</h2>
+                    <p className="text-xl text-gray-600 font-body">Hệ thống quản lý tiến độ & kết quả cá nhân đa mô hình.</p>
+                </div>
+                <div className="flex gap-4 items-center flex-wrap w-full md:w-auto">
+                    {setSelectedProgramFilter && (
+                        <div className="w-full md:w-72">
+                            <EditorialSelect
+                                label="Đang xem chương trình"
+                                value={selectedProgramFilter}
+                                onChange={val => setSelectedProgramFilter(val)}
+                                options={programOptions}
+                            />
+                        </div>
+                    )}
+                    {(selectedProgramFilter === 'all' || evalType === 'credits') && (
+                        <>
+                            <div className="bg-brand-cerulean text-white p-3.5 text-center border-editorial shadow-editorial min-w-[100px]">
+                                <span className="text-[10px] uppercase tracking-widest block opacity-80">GPA (Hệ 4)</span>
+                                <span className="text-2xl font-serif-title font-bold">{overall.gpa4}</span>
+                            </div>
+                            <div className="bg-brand-jasper text-white p-3.5 text-center border-editorial shadow-editorial min-w-[100px]">
+                                <span className="text-[10px] uppercase tracking-widest block opacity-80">Xếp loại</span>
+                                <span className="text-lg font-serif-title font-bold">{overall.rank}</span>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </header>
+
+            {/* Quick Metrics Grid */}
+            {metricCards}
 
             {/* Certificate Quick Banner */}
             <section className="bg-gradient-to-r from-blue-50/80 via-blue-50/50 to-blue-100/40 border-2 border-brand-cerulean/60 p-6 shadow-editorial flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -1025,23 +1352,61 @@ const DashboardView = ({ programs, modules, events, studyLogs, navigate, onOpenC
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {activePrograms.map(prog => {
+                            const pEval = prog.evaluationType || (prog.category === 'nhanh_b' ? 'modules' : prog.category === 'nhanh_c' ? 'hours' : 'credits');
                             const progModules = modules.filter(m => isModuleInProgram(m, prog.id));
-                            const activeProgMods = progModules.filter(m => m.type !== 'elective' || m.isSelected);
-                            const progActiveCredits = activeProgMods.reduce((s, m) => s + Number(m.credits || 0), 0);
-                            const progEarnedCredits = activeProgMods.reduce((s, m) => {
-                                if (m.grades) {
-                                    const { score10 } = calculateModuleFinal(m.grades, m.syllabus?.weights);
-                                    if (score10 >= 4.0) return s + Number(m.credits || 0);
-                                }
-                                return s;
-                            }, 0);
-                            const targetCredits = progActiveCredits || 1;
 
+                            if (pEval === 'credits') {
+                                const activeProgMods = progModules.filter(m => m.type !== 'elective' || m.isSelected);
+                                const progActiveCredits = activeProgMods.reduce((s, m) => s + Number(m.credits || 0), 0);
+                                const progEarnedCredits = activeProgMods.reduce((s, m) => {
+                                    if (m.grades) {
+                                        const { score10 } = calculateModuleFinal(m.grades, m.syllabus?.weights);
+                                        if (score10 >= 4.0) return s + Number(m.credits || 0);
+                                    }
+                                    return s;
+                                }, 0);
+                                const targetCredits = progActiveCredits || 1;
+
+                                return (
+                                    <div key={prog.id} onClick={() => navigate('program_detail', { programId: prog.id })} className="border border-brand-cerulean/30 p-6 bg-brand-cream cursor-pointer hover:border-brand-jasper transition-all">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <h4 className="text-2xl font-serif-title text-brand-cerulean font-bold">{prog.name}</h4>
+                                            <span className="px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/20 shrink-0">Hệ Tín chỉ</span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 my-2 line-clamp-3">{prog.description}</p>
+                                        <ProgressBar current={progEarnedCredits} total={targetCredits} label="Tiến độ tích lũy tín chỉ" />
+                                    </div>
+                                );
+                            }
+
+                            if (pEval === 'modules') {
+                                const passedMods = progModules.filter(m => {
+                                    const final = calculateModuleFinal(m.grades, m.syllabus?.weights);
+                                    return (final.score10 && final.score10 >= 5.0) || m.status === 'completed';
+                                });
+                                return (
+                                    <div key={prog.id} onClick={() => navigate('program_detail', { programId: prog.id })} className="border border-brand-cerulean/30 p-6 bg-brand-cream cursor-pointer hover:border-brand-jasper transition-all">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <h4 className="text-2xl font-serif-title text-brand-cerulean font-bold">{prog.name}</h4>
+                                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold font-serif-title rounded border border-emerald-300 shrink-0">Hệ Chuyên đề</span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 my-2 line-clamp-3">{prog.description}</p>
+                                        <ProgressBar current={passedMods.length} total={progModules.length || 1} label={`Chuyên đề đã Đạt: ${passedMods.length}/${progModules.length}`} />
+                                    </div>
+                                );
+                            }
+
+                            // Hours
+                            const totalH = progModules.reduce((s, m) => s + (Number(m.credits || 3) * 15), 0);
+                            const doneH = progModules.filter(m => m.status === 'completed' || calculateModuleFinal(m.grades, m.syllabus?.weights).score10 >= 5.0).reduce((s, m) => s + (Number(m.credits || 3) * 15), 0);
                             return (
                                 <div key={prog.id} onClick={() => navigate('program_detail', { programId: prog.id })} className="border border-brand-cerulean/30 p-6 bg-brand-cream cursor-pointer hover:border-brand-jasper transition-all">
-                                    <h4 className="text-2xl font-serif-title text-brand-cerulean font-bold">{prog.name}</h4>
+                                    <div className="flex justify-between items-start gap-2">
+                                        <h4 className="text-2xl font-serif-title text-brand-cerulean font-bold">{prog.name}</h4>
+                                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-bold font-serif-title rounded border border-blue-300 shrink-0">Hệ Tiết học</span>
+                                    </div>
                                     <p className="text-sm text-gray-600 my-2 line-clamp-3">{prog.description}</p>
-                                    <ProgressBar current={progEarnedCredits} total={targetCredits} label="Tiến độ tích lũy tín chỉ (Bắt buộc + Thực hành + Tự chọn)" />
+                                    <ProgressBar current={doneH} total={totalH || 1} label={`Thời lượng đã học: ${doneH}/${totalH} tiết`} />
                                 </div>
                             );
                         })}
@@ -1175,16 +1540,32 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
                                 </div>
                                 <p className="text-gray-600 text-sm line-clamp-2">{prog.description}</p>
                                 
-                                {/* Rules breakdown display */}
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-serif bg-brand-cream p-3 border border-brand-cerulean/20">
-                                    <div><strong className="text-brand-cerulean">Khối A Bắt buộc:</strong> {prog.rules?.mandatoryA || 15} TC</div>
-                                    <div><strong className="text-brand-cerulean">Khối A Tự chọn:</strong> {prog.rules?.electiveA || 2} TC</div>
-                                    <div><strong className="text-brand-cerulean">Khối B Bắt buộc:</strong> {prog.rules?.mandatoryB || 9} TC</div>
-                                    <div><strong className="text-brand-cerulean">Khối B Thực hành:</strong> {prog.rules?.practiceB || 6} TC</div>
-                                </div>
+                                {/* Dynamic Rules breakdown display according to evaluationType */}
+                                {prog.evaluationType === 'modules' ? (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-serif bg-emerald-50/60 p-3 border border-emerald-200">
+                                        <div><strong className="text-emerald-900">Chuyên đề Bắt buộc:</strong> {prog.rules?.mandatoryA || 4} chuyên đề</div>
+                                        <div><strong className="text-emerald-900">Chuyên đề Tự chọn:</strong> {prog.rules?.electiveA || 2} chuyên đề</div>
+                                        <div><strong className="text-emerald-900">Tổng yêu cầu:</strong> {prog.totalCreditsRequired || 6} chuyên đề</div>
+                                    </div>
+                                ) : prog.evaluationType === 'hours' ? (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-serif bg-blue-50/60 p-3 border border-blue-200">
+                                        <div><strong className="text-blue-900">Lý thuyết / Bài học:</strong> {prog.rules?.mandatoryA || 80} tiết</div>
+                                        <div><strong className="text-blue-900">Thực hành / Bài tập:</strong> {prog.rules?.electiveA || 40} tiết</div>
+                                        <div><strong className="text-blue-900">Tổng thời lượng:</strong> {prog.totalCreditsRequired || 120} tiết</div>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-serif bg-brand-cream p-3 border border-brand-cerulean/20">
+                                        <div><strong className="text-brand-cerulean">Khối A Bắt buộc:</strong> {prog.rules?.mandatoryA || 15} TC</div>
+                                        <div><strong className="text-brand-cerulean">Khối A Tự chọn:</strong> {prog.rules?.electiveA || 2} TC</div>
+                                        <div><strong className="text-brand-cerulean">Khối B Bắt buộc:</strong> {prog.rules?.mandatoryB || 9} TC</div>
+                                        <div><strong className="text-brand-cerulean">Khối B Thực hành:</strong> {prog.rules?.practiceB || 6} TC</div>
+                                    </div>
+                                )}
 
                                 <div className="flex gap-4 text-sm font-sans text-gray-500">
-                                    <span className="flex items-center gap-1"><Target size={14} /> Tổng yêu cầu: {prog.totalCreditsRequired} Tín chỉ</span>
+                                    <span className="flex items-center gap-1">
+                                        <Target size={14} /> Tổng yêu cầu: {prog.totalCreditsRequired} {prog.evaluationType === 'modules' ? 'Chuyên đề' : prog.evaluationType === 'hours' ? 'Tiết học' : 'Tín chỉ'}
+                                    </span>
                                     <span className="flex items-center gap-1"><Activity size={14} /> Trạng thái: {prog.status}</span>
                                 </div>
                             </div>
@@ -1221,35 +1602,110 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
                         <textarea className="input-editorial w-full resize-none" rows="2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Chứng chỉ nghiệp vụ sư phạm cấp trung học cơ sở..."></textarea>
                     </div>
 
-                    {/* Credit Rules Config */}
-                    <div className="border p-4 bg-brand-cream border-brand-cerulean/20 space-y-4">
-                        <h4 className="font-serif-title text-brand-cerulean text-lg border-b border-brand-cerulean/20 pb-1">Quy tắc phân bổ Tín chỉ</h4>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Bắt buộc (TC)</label>
-                                <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, mandatoryA: Number(e.target.value) } })} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Tự chọn (TC)</label>
-                                <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, electiveA: Number(e.target.value) } })} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Bắt buộc (TC)</label>
-                                <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryB} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, mandatoryB: Number(e.target.value) } })} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Thực hành (TC)</label>
-                                <input type="number" min="0" className="input-editorial w-full" value={formData.rules.practiceB} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, practiceB: Number(e.target.value) } })} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Tự chọn (TC)</label>
-                                <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveB} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, electiveB: Number(e.target.value) } })} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-brand-cerulean mb-1">Tổng tín chỉ yêu cầu</label>
-                                <input type="number" min="1" className="input-editorial w-full font-bold" value={formData.totalCreditsRequired} onChange={e => setFormData({ ...formData, totalCreditsRequired: Number(e.target.value) })} />
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <EditorialSelect
+                                label="Phân loại Nhánh đào tạo"
+                                value={formData.category || 'nhanh_a'}
+                                onChange={val => {
+                                    const presets = getCategoryPresets(val);
+                                    setFormData({
+                                        ...formData,
+                                        category: val,
+                                        evaluationType: presets.evaluationType,
+                                        totalCreditsRequired: presets.totalCreditsRequired,
+                                        rules: presets.rules
+                                    });
+                                }}
+                                options={[
+                                    { label: 'Nhánh A: Nghiệp vụ sư phạm (NVSP)', value: 'nhanh_a' },
+                                    { label: 'Nhánh B: Bồi dưỡng CDNN Giáo viên', value: 'nhanh_b' },
+                                    { label: 'Nhánh C: Chứng chỉ Kỹ năng / Ngắn hạn', value: 'nhanh_c' }
+                                ]}
+                            />
                         </div>
+                        <div>
+                            <EditorialSelect
+                                label="Hệ thống Đánh giá & Tiến độ"
+                                value={formData.evaluationType || 'credits'}
+                                onChange={val => setFormData({ ...formData, evaluationType: val })}
+                                options={[
+                                    { label: 'Hệ Tín chỉ & GPA (NVSP, Đại học)', value: 'credits' },
+                                    { label: 'Hệ Học phần & Chuyên đề (Bồi dưỡng CDNN)', value: 'modules' },
+                                    { label: 'Hệ Thời lượng Tiết/Giờ học (BDTX, Kỹ năng)', value: 'hours' }
+                                ]}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Dynamic Rule Config according to evaluationType */}
+                    <div className="border p-4 bg-brand-cream border-brand-cerulean/20 space-y-4">
+                        <h4 className="font-serif-title text-brand-cerulean text-lg border-b border-brand-cerulean/20 pb-1">
+                            {formData.evaluationType === 'modules'
+                                ? 'Quy tắc phân bổ Chuyên đề (Số môn)'
+                                : formData.evaluationType === 'hours'
+                                    ? 'Quy tắc phân bổ Thời lượng (Tiết học)'
+                                    : 'Quy tắc phân bổ Tín chỉ (TC)'}
+                        </h4>
+
+                        {formData.evaluationType === 'modules' ? (
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Chuyên đề Bắt buộc (Số môn)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, mandatoryA: Number(e.target.value) } })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Chuyên đề Tự chọn (Số môn)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, electiveA: Number(e.target.value) } })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-brand-cerulean mb-1">Tổng chuyên đề yêu cầu</label>
+                                    <input type="number" min="1" className="input-editorial w-full font-bold" value={formData.totalCreditsRequired} onChange={e => setFormData({ ...formData, totalCreditsRequired: Number(e.target.value) })} />
+                                </div>
+                            </div>
+                        ) : formData.evaluationType === 'hours' ? (
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Lý thuyết / Bài học (Tiết)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, mandatoryA: Number(e.target.value) } })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Thực hành / Bài tập (Tiết)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, electiveA: Number(e.target.value) } })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-brand-cerulean mb-1">Tổng số tiết yêu cầu</label>
+                                    <input type="number" min="1" className="input-editorial w-full font-bold" value={formData.totalCreditsRequired} onChange={e => setFormData({ ...formData, totalCreditsRequired: Number(e.target.value) })} />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Bắt buộc (TC)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, mandatoryA: Number(e.target.value) } })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Tự chọn (TC)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, electiveA: Number(e.target.value) } })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Bắt buộc (TC)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryB} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, mandatoryB: Number(e.target.value) } })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Thực hành (TC)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.practiceB} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, practiceB: Number(e.target.value) } })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Tự chọn (TC)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveB} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, electiveB: Number(e.target.value) } })} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-brand-cerulean mb-1">Tổng tín chỉ yêu cầu</label>
+                                    <input type="number" min="1" className="input-editorial w-full font-bold" value={formData.totalCreditsRequired} onChange={e => setFormData({ ...formData, totalCreditsRequired: Number(e.target.value) })} />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="pt-4 flex justify-end gap-4">
@@ -1476,11 +1932,28 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                         <p className="text-xl text-gray-600 font-body">{program.description}</p>
                     </div>
                     <div className="text-right min-w-[200px]">
-                        <div className="text-4xl font-serif-title text-brand-jasper">{totalProgramCredits} <span className="text-lg text-gray-500">/ {program.totalCreditsRequired}</span></div>
-                        <div className="text-sm uppercase tracking-wider text-brand-cerulean font-bold mt-1">Tín chỉ hiện có trong CTĐT</div>
+                        {program.evaluationType === 'modules' ? (
+                            <>
+                                <div className="text-4xl font-serif-title text-brand-jasper">{programModules.length} <span className="text-lg text-gray-500">/ {program.totalCreditsRequired || 6}</span></div>
+                                <div className="text-sm uppercase tracking-wider text-brand-cerulean font-bold mt-1">Chuyên đề trong CTĐT</div>
+                            </>
+                        ) : program.evaluationType === 'hours' ? (
+                            <>
+                                <div className="text-4xl font-serif-title text-brand-jasper">{programModules.reduce((s, m) => s + (Number(m.credits || 3) * 15), 0)} <span className="text-lg text-gray-500">/ {program.totalCreditsRequired || 120}</span></div>
+                                <div className="text-sm uppercase tracking-wider text-brand-cerulean font-bold mt-1">Tiết học trong CTĐT</div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="text-4xl font-serif-title text-brand-jasper">{totalProgramCredits} <span className="text-lg text-gray-500">/ {program.totalCreditsRequired || 34}</span></div>
+                                <div className="text-sm uppercase tracking-wider text-brand-cerulean font-bold mt-1">Tín chỉ hiện có trong CTĐT</div>
+                            </>
+                        )}
                     </div>
                 </div>
             </header>
+
+            {/* Live Rule Validation Breakdown Panel */}
+            <RuleValidationPanel program={program} modules={modules} />
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h2 className="text-3xl font-serif-title text-brand-cerulean">Danh sách Học phần theo Đề cương</h2>
@@ -3190,10 +3663,23 @@ const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEvent, on
 };
 
 // 5. GRADEBOOK & GPA CALCULATOR VIEW
-const GradebookView = ({ modules, onUpdateModule }) => {
-    // Only display active modules: Mandatory, Practice, OR Elective modules that have been explicitly selected!
-    const activeModules = modules.filter(m => m.type !== 'elective' || m.isSelected);
-    const overall = calculateOverallGPA(activeModules);
+const GradebookView = ({ modules, programs = [], onUpdateModule }) => {
+    const [selectedProgramFilter, setSelectedProgramFilter] = useState('all');
+    const normalizedPrograms = programs.map(normalizeProgram);
+    const activeModules = getFilteredModules(modules, normalizedPrograms, selectedProgramFilter);
+
+    const currentProg = selectedProgramFilter !== 'all' ? normalizedPrograms.find(p => p.id === selectedProgramFilter) : null;
+    const evalType = currentProg?.evaluationType || 'credits';
+
+    const programOptions = [
+        { label: '🌟 Tất cả chương trình học', value: 'all' },
+        ...normalizedPrograms.map(p => ({
+            label: `${p.name} (${p.evaluationType === 'modules' ? 'Hệ Chuyên đề' : p.evaluationType === 'hours' ? 'Hệ Tiết học' : 'Hệ Tín chỉ'})`,
+            value: p.id
+        }))
+    ];
+
+    const overall = calculateOverallGPA(activeModules, normalizedPrograms, selectedProgramFilter);
 
     const handleGradeChange = (mod, field, val) => {
         const numVal = Math.min(10, Math.max(0, Number(val)));
@@ -3208,18 +3694,37 @@ const GradebookView = ({ modules, onUpdateModule }) => {
         <div className="max-w-6xl mx-auto space-y-8">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-brand-cerulean">
                 <div>
-                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Sổ điểm & Tự động tính toán GPA</h2>
-                    <p className="text-lg text-gray-600 mt-1">Cập nhật điểm thành phần và theo dõi GPA hệ 4 & hệ 10.</p>
+                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Sổ điểm & Đánh giá kết quả</h2>
+                    <p className="text-lg text-gray-600 mt-1">Cập nhật điểm thành phần và theo dõi tiến độ tích lũy theo từng chương trình.</p>
                 </div>
-                <div className="flex gap-4">
-                    <div className="bg-white border-editorial p-4 text-center shadow-editorial">
-                        <span className="text-xs uppercase text-gray-400 font-bold block">GPA Hệ 10</span>
-                        <span className="text-3xl font-serif-title text-brand-cerulean font-bold">{overall.gpa10}</span>
+                <div className="flex gap-4 items-center flex-wrap w-full md:w-auto">
+                    <div className="w-full md:w-72">
+                        <EditorialSelect
+                            label="Đang xem chương trình"
+                            value={selectedProgramFilter}
+                            onChange={val => setSelectedProgramFilter(val)}
+                            options={programOptions}
+                        />
                     </div>
-                    <div className="bg-brand-cerulean text-white border-editorial p-4 text-center shadow-editorial">
-                        <span className="text-xs uppercase text-white/80 font-bold block">GPA Hệ 4.0</span>
-                        <span className="text-3xl font-serif-title font-bold">{overall.gpa4}</span>
-                    </div>
+                    {evalType === 'credits' ? (
+                        <>
+                            <div className="bg-white border-editorial p-3.5 text-center shadow-editorial min-w-[90px]">
+                                <span className="text-[10px] uppercase text-gray-400 font-bold block">GPA Hệ 10</span>
+                                <span className="text-2xl font-serif-title text-brand-cerulean font-bold">{overall.gpa10}</span>
+                            </div>
+                            <div className="bg-brand-cerulean text-white border-editorial p-3.5 text-center shadow-editorial min-w-[90px]">
+                                <span className="text-[10px] uppercase text-white/80 font-bold block">GPA Hệ 4.0</span>
+                                <span className="text-2xl font-serif-title font-bold">{overall.gpa4}</span>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="bg-emerald-800 text-white border-editorial p-3.5 text-center shadow-editorial min-w-[120px]">
+                            <span className="text-[10px] uppercase text-white/80 font-bold block">Đạt Chuyên đề</span>
+                            <span className="text-xl font-serif-title font-bold">
+                                {activeModules.filter(m => calculateModuleFinal(m.grades, m.syllabus?.weights).score10 >= 5.0 || m.status === 'completed').length} / {activeModules.length}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </header>
 
@@ -3228,18 +3733,19 @@ const GradebookView = ({ modules, onUpdateModule }) => {
                     <thead className="bg-brand-cream border-b border-brand-cerulean text-brand-cerulean font-serif-title sticky top-0 z-10 shadow-sm">
                         <tr>
                             <th className="p-4">Mã môn</th>
-                            <th className="p-4">Tên học phần</th>
-                            <th className="p-4 text-center">Số TC</th>
-                            <th className="p-4 text-center">Chuyên cần (10%)</th>
-                            <th className="p-4 text-center">Giữa kỳ (30%)</th>
-                            <th className="p-4 text-center">Cuối kỳ (60%)</th>
+                            <th className="p-4">Tên học phần / Chuyên đề</th>
+                            <th className="p-4 text-center">{evalType === 'hours' ? 'Thời lượng' : 'Số TC'}</th>
+                            <th className="p-4 text-center">Chuyên cần</th>
+                            <th className="p-4 text-center">{evalType === 'credits' ? 'Giữa kỳ' : 'Bài tập / Thảo luận'}</th>
+                            <th className="p-4 text-center">{evalType === 'credits' ? 'Cuối kỳ' : 'Bài thu hoạch / Đồ án'}</th>
                             <th className="p-4 text-center">Tổng kết (Hệ 10)</th>
-                            <th className="p-4 text-center">Điểm Chữ / Hệ 4</th>
+                            <th className="p-4 text-center">Kết quả Đánh giá</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {activeModules.map(mod => {
                             const { score10, letter, gpa4 } = calculateModuleFinal(mod.grades, mod.syllabus?.weights);
+                            const isPassed = score10 >= 5.0 || mod.status === 'completed';
                             return (
                                 <tr key={mod.id} className="hover:bg-brand-cream/50">
                                     <td className="p-4 font-sans font-bold text-gray-500">{(mod.code || '').toUpperCase()}</td>
@@ -3255,7 +3761,7 @@ const GradebookView = ({ modules, onUpdateModule }) => {
                                             </span>
                                         ) : null}
                                     </td>
-                                    <td className="p-4 text-center font-bold">{mod.credits}</td>
+                                    <td className="p-4 text-center font-bold">{evalType === 'hours' ? `${Number(mod.credits || 3) * 15} tiết` : `${mod.credits} TC`}</td>
                                     <td className="p-4 text-center">
                                         <input
                                             type="number"
@@ -3293,21 +3799,19 @@ const GradebookView = ({ modules, onUpdateModule }) => {
                                         {score10}
                                     </td>
                                     <td className="p-4 text-center font-bold">
-                                        <span className="px-2 py-1 bg-brand-cerulean/10 text-brand-cerulean">
-                                            {letter} ({gpa4})
-                                        </span>
+                                        {evalType === 'credits' ? (
+                                            <span className="px-2 py-1 bg-brand-cerulean/10 text-brand-cerulean">
+                                                {letter} ({gpa4})
+                                            </span>
+                                        ) : (
+                                            <span className={`px-2.5 py-1 text-xs rounded font-bold ${isPassed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                {isPassed ? '✓ ĐẠT' : 'CHƯA ĐẠT'}
+                                            </span>
+                                        )}
                                     </td>
                                 </tr>
                             );
                         })}
-
-                        {activeModules.length === 0 && (
-                            <tr>
-                                <td colSpan="8" className="p-12 text-center text-gray-500 font-serif-title">
-                                    Chưa có học phần nào được chọn trong sổ điểm. Hãy chọn môn tự chọn trong trang 'Chương trình học'.
-                                </td>
-                            </tr>
-                        )}
                     </tbody>
                 </table>
             </div>
