@@ -3931,7 +3931,7 @@ export default function App() {
     useEffect(() => { localStorage.setItem(STORAGE_KEYS.STUDY_LOGS, JSON.stringify(studyLogs)); }, [studyLogs]);
     useEffect(() => { localStorage.setItem(STORAGE_KEYS.RESOURCES, JSON.stringify(resources)); }, [resources]);
 
-    // Firestore Realtime Sync Logic (reflects pure real data)
+    // Firestore Realtime Sync Logic (reflects pure real data + auto-migrates local data to Cloud)
     const syncFirestoreData = async (userId) => {
         try {
             const profileRef = getDocRef(userId, 'profile', 'main');
@@ -3939,24 +3939,73 @@ export default function App() {
             if (snap.exists()) setProfile(snap.data());
             else await setDoc(profileRef, profile);
 
-            onSnapshot(getCollectionRef(userId, 'programs'), (snapshot) => {
-                setPrograms(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+            onSnapshot(getCollectionRef(userId, 'programs'), async (snapshot) => {
+                if (snapshot.docs.length > 0) {
+                    setPrograms(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                } else {
+                    // Tự động đẩy data từ LocalStorage lên Cloud nếu Cloud đang trống
+                    const saved = localStorage.getItem(STORAGE_KEYS.PROGRAMS);
+                    const localItems = (saved && JSON.parse(saved).length > 0) ? JSON.parse(saved) : DEFAULT_PROGRAMS;
+                    const batch = writeBatch(db);
+                    localItems.forEach(p => batch.set(getDocRef(userId, 'programs', p.id), p));
+                    await batch.commit();
+                }
             });
 
-            onSnapshot(getCollectionRef(userId, 'modules'), (snapshot) => {
-                setModules(snapshot.docs.map(d => normalizeModuleProgramIds({ id: d.id, ...d.data() })));
+            onSnapshot(getCollectionRef(userId, 'modules'), async (snapshot) => {
+                if (snapshot.docs.length > 0) {
+                    setModules(snapshot.docs.map(d => normalizeModuleProgramIds({ id: d.id, ...d.data() })));
+                } else {
+                    const saved = localStorage.getItem(STORAGE_KEYS.MODULES);
+                    const localItems = saved ? JSON.parse(saved) : [];
+                    if (localItems.length > 0) {
+                        const batch = writeBatch(db);
+                        localItems.forEach(m => batch.set(getDocRef(userId, 'modules', m.id), m));
+                        await batch.commit();
+                    }
+                }
             });
 
-            onSnapshot(getCollectionRef(userId, 'events'), (snapshot) => {
-                setEvents(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+            onSnapshot(getCollectionRef(userId, 'events'), async (snapshot) => {
+                if (snapshot.docs.length > 0) {
+                    setEvents(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                } else {
+                    const saved = localStorage.getItem(STORAGE_KEYS.EVENTS);
+                    const localItems = saved ? JSON.parse(saved) : [];
+                    if (localItems.length > 0) {
+                        const batch = writeBatch(db);
+                        localItems.forEach(e => batch.set(getDocRef(userId, 'events', e.id), e));
+                        await batch.commit();
+                    }
+                }
             });
 
-            onSnapshot(getCollectionRef(userId, 'studyLogs'), (snapshot) => {
-                setStudyLogs(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+            onSnapshot(getCollectionRef(userId, 'studyLogs'), async (snapshot) => {
+                if (snapshot.docs.length > 0) {
+                    setStudyLogs(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                } else {
+                    const saved = localStorage.getItem(STORAGE_KEYS.STUDY_LOGS);
+                    const localItems = saved ? JSON.parse(saved) : [];
+                    if (localItems.length > 0) {
+                        const batch = writeBatch(db);
+                        localItems.forEach(l => batch.set(getDocRef(userId, 'studyLogs', l.id), l));
+                        await batch.commit();
+                    }
+                }
             });
 
-            onSnapshot(getCollectionRef(userId, 'resources'), (snapshot) => {
-                setResources(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+            onSnapshot(getCollectionRef(userId, 'resources'), async (snapshot) => {
+                if (snapshot.docs.length > 0) {
+                    setResources(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                } else {
+                    const saved = localStorage.getItem(STORAGE_KEYS.RESOURCES);
+                    const localItems = saved ? JSON.parse(saved) : [];
+                    if (localItems.length > 0) {
+                        const batch = writeBatch(db);
+                        localItems.forEach(r => batch.set(getDocRef(userId, 'resources', r.id), r));
+                        await batch.commit();
+                    }
+                }
             });
         } catch (err) {
             console.warn("Firestore sync setup error:", err);
