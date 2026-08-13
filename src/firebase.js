@@ -4,7 +4,9 @@ import {
     GoogleAuthProvider, 
     signInWithPopup, 
     onAuthStateChanged,
-    signOut 
+    signOut,
+    setPersistence,
+    browserSessionPersistence
 } from 'firebase/auth';
 import {
     getFirestore,
@@ -37,7 +39,7 @@ export const auth = getAuth(app);
 const appId = 'pedagogy-app-v1';
 export const getCollectionRef = (userId, colName) => collection(db, 'artifacts', appId, 'users', userId, colName);
 export const getDocRef = (userId, colName, docId) => doc(db, 'artifacts', appId, 'users', userId, colName, docId);
-export { onAuthStateChanged, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, collection, doc, signInWithPopup, signOut };
+export { onAuthStateChanged, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, collection, doc, signInWithPopup, signOut, setPersistence, browserSessionPersistence };
 
 // ─── Collection names ───────────────────────────────────────────────────────
 export const COLLECTIONS = {

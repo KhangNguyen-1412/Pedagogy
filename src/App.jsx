@@ -45,7 +45,9 @@ import {
     deleteDoc,
     onSnapshot,
     getCollectionRef,
-    getDocRef
+    getDocRef,
+    setPersistence,
+    browserSessionPersistence
 } from './firebase';
 import { signOut } from 'firebase/auth';
 import { writeBatch } from 'firebase/firestore';
@@ -77,33 +79,27 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_PROFILE = {
-    // Group 1: Thông tin Định danh & Cá nhân
-    avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
-    fullName: "Nguyễn Huỳnh Phúc Khang",
-    studentId: "NVSP-2026-001",
-    dob: "2000-01-01",
-    gender: "Nam",
-    idCard: "079200012345",
-
-    // Group 2: Thông tin Đào tạo & Khóa học
-    major: "Nghiệp vụ Sư phạm THCS",
-    faculty: "Sư phạm Kỹ thuật",
-    originalMajor: "Cử nhân Công nghệ Thông tin",
-    className: "K2026-NVSP",
-    trainingMode: "Bồi dưỡng nghiệp vụ",
-    status: "Đang học",
-
-    // Group 3: Thông tin Liên lạc & Khẩn cấp
-    email: "nhpk1412@gmail.com",
-    phone: "+84 703 506 140",
-    addressDetail: "351A Lạc Long Quân",
-    ward: "Phường Hòa Bình",
-    province: "Thành phố Hồ Chí Minh",
-    emergencyRelation: "Anh em",
-    emergencyName: "Nguyễn Huỳnh Phúc Hải",
-    emergencyPhone: "+84 789 515 248",
-    emergencyContact: "Anh em - Nguyễn Huỳnh Phúc Hải (+84 789 515 248)",
-
+    avatarUrl: "",
+    fullName: "",
+    studentId: "",
+    dob: "",
+    gender: "",
+    idCard: "",
+    major: "",
+    faculty: "",
+    originalMajor: "",
+    className: "",
+    trainingMode: "",
+    status: "",
+    email: "",
+    phone: "",
+    addressDetail: "",
+    ward: "",
+    province: "",
+    emergencyRelation: "",
+    emergencyName: "",
+    emergencyPhone: "",
+    emergencyContact: "",
     createdAt: new Date().toISOString()
 };
 
@@ -3775,6 +3771,7 @@ export default function App() {
 
     const handleGoogleLogin = async () => {
         try {
+            await setPersistence(auth, browserSessionPersistence);
             const result = await signInWithPopup(auth, googleProvider);
             const user = result.user;
             
@@ -3843,38 +3840,13 @@ export default function App() {
     const [isCertModalOpen, setIsCertModalOpen] = useState(false);
     const [selectedProgramFilter, setSelectedProgramFilter] = useState('all');
 
-    // Hybrid Local Storage Data initializers
-    // Initial Data loading with LocalStorage Sync (real user data only)
-    const [profile, setProfile] = useState(() => {
-        const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
-        return saved ? JSON.parse(saved) : DEFAULT_PROFILE;
-    });
-
-    const [programs, setPrograms] = useState(() => {
-        const saved = localStorage.getItem(STORAGE_KEYS.PROGRAMS);
-        return (saved && JSON.parse(saved).length > 0) ? JSON.parse(saved) : DEFAULT_PROGRAMS;
-    });
-
-    const [modules, setModules] = useState(() => {
-        const saved = localStorage.getItem(STORAGE_KEYS.MODULES);
-        const parsed = saved ? JSON.parse(saved) : [];
-        return parsed.map(normalizeModuleProgramIds);
-    });
-
-    const [events, setEvents] = useState(() => {
-        const saved = localStorage.getItem(STORAGE_KEYS.EVENTS);
-        return saved ? JSON.parse(saved) : [];
-    });
-
-    const [studyLogs, setStudyLogs] = useState(() => {
-        const saved = localStorage.getItem(STORAGE_KEYS.STUDY_LOGS);
-        return saved ? JSON.parse(saved) : [];
-    });
-
-    const [resources, setResources] = useState(() => {
-        const saved = localStorage.getItem(STORAGE_KEYS.RESOURCES);
-        return saved ? JSON.parse(saved) : [];
-    });
+    // Initial Data State (strictly driven by Firestore Realtime Sync)
+    const [profile, setProfile] = useState(() => DEFAULT_PROFILE);
+    const [programs, setPrograms] = useState(() => []);
+    const [modules, setModules] = useState(() => []);
+    const [events, setEvents] = useState(() => []);
+    const [studyLogs, setStudyLogs] = useState(() => []);
+    const [resources, setResources] = useState(() => []);
 
     const handleToggleEnrollProgram = async (programId) => {
         let updatedProgram = null;
@@ -3887,9 +3859,8 @@ export default function App() {
             return p;
         });
         
-        // Cập nhật Local State & LocalStorage
+        // Cập nhật Local State & Firebase
         setPrograms(updated);
-        localStorage.setItem(STORAGE_KEYS.PROGRAMS, JSON.stringify(updated));
 
         // Bổ sung đồng bộ lên Firebase
         if (updatedProgram) {
@@ -3906,109 +3877,116 @@ export default function App() {
 
     // Authenticate & Connect Firestore Realtime Sync
     useEffect(() => {
-        // Chỉnh setLoading(true) ở trạng thái ban đầu để tránh chớp màn hình
         setLoading(true); 
         
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
                 setUser(currentUser);
                 const userId = getUserId(currentUser);
-                syncFirestoreData(userId);
+                syncFirestoreData(userId, currentUser);
             } else {
-                // Người dùng chưa đăng nhập hoặc đã đăng xuất
-                setUser(null); 
+                setUser(null);
+                setProfile(DEFAULT_PROFILE);
+                setPrograms(DEFAULT_PROGRAMS);
+                setModules([]);
+                setEvents([]);
+                setStudyLogs([]);
+                setResources([]);
             }
             setLoading(false);
         });
         return () => unsubscribe();
     }, []);
 
-    // LocalStorage Auto-Sync
-    useEffect(() => { localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile)); }, [profile]);
-    useEffect(() => { localStorage.setItem(STORAGE_KEYS.PROGRAMS, JSON.stringify(programs)); }, [programs]);
-    useEffect(() => { localStorage.setItem(STORAGE_KEYS.MODULES, JSON.stringify(modules)); }, [modules]);
-    useEffect(() => { localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events)); }, [events]);
-    useEffect(() => { localStorage.setItem(STORAGE_KEYS.STUDY_LOGS, JSON.stringify(studyLogs)); }, [studyLogs]);
-    useEffect(() => { localStorage.setItem(STORAGE_KEYS.RESOURCES, JSON.stringify(resources)); }, [resources]);
+    // LocalStorage Auto-Sync (Scoped by logged-in user to prevent cross-account leakage)
+    useEffect(() => {
+        if (user?.uid) {
+            localStorage.setItem(`${STORAGE_KEYS.PROFILE}_${user.uid}`, JSON.stringify(profile));
+            localStorage.setItem(`${STORAGE_KEYS.PROGRAMS}_${user.uid}`, JSON.stringify(programs));
+            localStorage.setItem(`${STORAGE_KEYS.MODULES}_${user.uid}`, JSON.stringify(modules));
+            localStorage.setItem(`${STORAGE_KEYS.EVENTS}_${user.uid}`, JSON.stringify(events));
+            localStorage.setItem(`${STORAGE_KEYS.STUDY_LOGS}_${user.uid}`, JSON.stringify(studyLogs));
+            localStorage.setItem(`${STORAGE_KEYS.RESOURCES}_${user.uid}`, JSON.stringify(resources));
+        }
+    }, [user, profile, programs, modules, events, studyLogs, resources]);
 
-    // Firestore Realtime Sync Logic (reflects pure real data + auto-migrates local data to Cloud)
-    const syncFirestoreData = async (userId) => {
+    // Firestore Realtime Sync Logic (Strict per-account Cloud Sync)
+    const syncFirestoreData = async (userId, googleUser) => {
         try {
             const profileRef = getDocRef(userId, 'profile', 'main');
             const snap = await getDoc(profileRef);
-            if (snap.exists()) setProfile(snap.data());
-            else await setDoc(profileRef, profile);
+            if (snap.exists()) {
+                setProfile(snap.data());
+            } else {
+                const initProfile = {
+                    avatarUrl: googleUser?.photoURL || "",
+                    fullName: googleUser?.displayName || "",
+                    studentId: "",
+                    dob: "",
+                    gender: "",
+                    idCard: "",
+                    major: "",
+                    faculty: "",
+                    originalMajor: "",
+                    className: "",
+                    trainingMode: "",
+                    status: "",
+                    email: googleUser?.email || "",
+                    phone: "",
+                    addressDetail: "",
+                    ward: "",
+                    province: "",
+                    emergencyRelation: "",
+                    emergencyName: "",
+                    emergencyPhone: "",
+                    emergencyContact: "",
+                    createdAt: new Date().toISOString()
+                };
+                setProfile(initProfile);
+                await setDoc(profileRef, initProfile);
+            }
 
-            onSnapshot(getCollectionRef(userId, 'programs'), async (snapshot) => {
-                if (snapshot.docs.length > 0) {
-                    setPrograms(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-                } else {
-                    // Tự động đẩy data từ LocalStorage lên Cloud nếu Cloud đang trống
-                    const saved = localStorage.getItem(STORAGE_KEYS.PROGRAMS);
-                    const localItems = (saved && JSON.parse(saved).length > 0) ? JSON.parse(saved) : DEFAULT_PROGRAMS;
-                    const batch = writeBatch(db);
-                    localItems.forEach(p => batch.set(getDocRef(userId, 'programs', p.id), p));
-                    await batch.commit();
-                }
+            onSnapshot(getCollectionRef(userId, 'programs'), (snapshot) => {
+                setPrograms(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
             });
 
-            onSnapshot(getCollectionRef(userId, 'modules'), async (snapshot) => {
-                if (snapshot.docs.length > 0) {
-                    setModules(snapshot.docs.map(d => normalizeModuleProgramIds({ id: d.id, ...d.data() })));
-                } else {
-                    const saved = localStorage.getItem(STORAGE_KEYS.MODULES);
-                    const localItems = saved ? JSON.parse(saved) : [];
-                    if (localItems.length > 0) {
-                        const batch = writeBatch(db);
-                        localItems.forEach(m => batch.set(getDocRef(userId, 'modules', m.id), m));
-                        await batch.commit();
-                    }
-                }
+            onSnapshot(getCollectionRef(userId, 'modules'), (snapshot) => {
+                setModules(snapshot.docs.map(d => normalizeModuleProgramIds({ id: d.id, ...d.data() })));
             });
 
-            onSnapshot(getCollectionRef(userId, 'events'), async (snapshot) => {
-                if (snapshot.docs.length > 0) {
-                    setEvents(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-                } else {
-                    const saved = localStorage.getItem(STORAGE_KEYS.EVENTS);
-                    const localItems = saved ? JSON.parse(saved) : [];
-                    if (localItems.length > 0) {
-                        const batch = writeBatch(db);
-                        localItems.forEach(e => batch.set(getDocRef(userId, 'events', e.id), e));
-                        await batch.commit();
-                    }
-                }
+            onSnapshot(getCollectionRef(userId, 'events'), (snapshot) => {
+                setEvents(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
             });
 
-            onSnapshot(getCollectionRef(userId, 'studyLogs'), async (snapshot) => {
-                if (snapshot.docs.length > 0) {
-                    setStudyLogs(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-                } else {
-                    const saved = localStorage.getItem(STORAGE_KEYS.STUDY_LOGS);
-                    const localItems = saved ? JSON.parse(saved) : [];
-                    if (localItems.length > 0) {
-                        const batch = writeBatch(db);
-                        localItems.forEach(l => batch.set(getDocRef(userId, 'studyLogs', l.id), l));
-                        await batch.commit();
-                    }
-                }
+            onSnapshot(getCollectionRef(userId, 'studyLogs'), (snapshot) => {
+                setStudyLogs(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
             });
 
-            onSnapshot(getCollectionRef(userId, 'resources'), async (snapshot) => {
-                if (snapshot.docs.length > 0) {
-                    setResources(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-                } else {
-                    const saved = localStorage.getItem(STORAGE_KEYS.RESOURCES);
-                    const localItems = saved ? JSON.parse(saved) : [];
-                    if (localItems.length > 0) {
-                        const batch = writeBatch(db);
-                        localItems.forEach(r => batch.set(getDocRef(userId, 'resources', r.id), r));
-                        await batch.commit();
-                    }
-                }
+            onSnapshot(getCollectionRef(userId, 'resources'), (snapshot) => {
+                setResources(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
             });
         } catch (err) {
             console.warn("Firestore sync setup error:", err);
+        }
+    };
+
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth);
+            setUser(null);
+            setProfile(DEFAULT_PROFILE);
+            setPrograms(DEFAULT_PROGRAMS);
+            setModules([]);
+            setEvents([]);
+            setStudyLogs([]);
+            setResources([]);
+            Object.values(STORAGE_KEYS).forEach(key => {
+                localStorage.removeItem(key);
+                if (user?.uid) localStorage.removeItem(`${key}_${user.uid}`);
+            });
+            localStorage.removeItem('pedagogy_user_id');
+        } catch (err) {
+            console.error("Lỗi đăng xuất:", err);
         }
     };
 
@@ -4289,7 +4267,7 @@ if (!user) {
                         <p className="text-xs font-sans text-gray-500 truncate mb-3">{profile.email}</p>
                         
                         <button 
-                            onClick={() => signOut(auth)} 
+                            onClick={handleSignOut} 
                             className="text-xs font-bold text-brand-jasper hover:underline"
                         >
                             Đăng xuất
