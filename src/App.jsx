@@ -502,6 +502,45 @@ const Modal = ({ isOpen, onClose, title, children }) => {
     );
 };
 
+// --- EDITORIAL TOAST NOTIFICATION COMPONENT ---
+const ToastNotification = ({ toast, onClose }) => {
+    if (!toast) return null;
+    const isSuccess = toast.type === 'success';
+    const isError = toast.type === 'error';
+
+    return createPortal(
+        <div className="fixed top-6 right-6 z-[600] animate-fade-in-down max-w-md">
+            <div className={`flex items-center gap-3.5 px-5 py-3.5 shadow-2xl border ${
+                isSuccess 
+                    ? 'bg-brand-cerulean text-white border-brand-cerulean' 
+                    : isError 
+                        ? 'bg-brand-jasper text-white border-brand-jasper' 
+                        : 'bg-gray-900 text-white border-gray-800'
+            } rounded-sm min-w-[320px] font-sans relative overflow-hidden group`}>
+                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
+                    isSuccess ? 'bg-emerald-400' : isError ? 'bg-amber-400' : 'bg-blue-400'
+                }`}></div>
+                
+                <div className="p-1 rounded-full bg-white/20 shrink-0 ml-1">
+                    <CheckCircle2 size={18} />
+                </div>
+                
+                <div className="flex-1 text-sm font-serif-title font-bold leading-snug tracking-wide">
+                    {toast.message}
+                </div>
+                
+                <button
+                    onClick={onClose}
+                    className="p-1 hover:bg-white/20 rounded transition-colors shrink-0 ml-1 text-white/80 hover:text-white"
+                >
+                    <X size={16} />
+                </button>
+            </div>
+        </div>,
+        document.body
+    );
+};
+
 // --- CERTIFICATE MODAL COMPONENT ---
 const CertificateModal = ({ isOpen, onClose, profile, program, overall }) => {
     if (!isOpen) return null;
@@ -2391,7 +2430,7 @@ const ModuleDetailView = ({ moduleId, programId, programs, modules, profile, onU
 };
 
 // 3. SYLLABUS MANAGEMENT VIEW (DYNAMIC FORM)
-const SyllabusView = ({ modules, onUpdateModule }) => {
+const SyllabusView = ({ modules, onUpdateModule, showToast }) => {
     const [selectedModuleId, setSelectedModuleId] = useState(modules[0]?.id || '');
     const currentModule = modules.find(m => m.id === selectedModuleId) || modules[0];
 
@@ -2489,7 +2528,9 @@ const SyllabusView = ({ modules, onUpdateModule }) => {
             ...currentModule,
             syllabus: syllabusData
         });
-        alert(`Đã lưu thành công đề cương chi tiết môn ${currentModule.name}!`);
+        if (showToast) {
+            showToast(`Đã lưu thành công đề cương chi tiết môn ${currentModule.name}!`, 'success');
+        }
     };
 
     const att = Number(syllabusData.weights?.attendance || 0);
@@ -3951,7 +3992,15 @@ export default function App() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Initial Navigation State from URL
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'success', duration = 3500) => {
+        const id = Date.now();
+        setToast({ message, type, id });
+        setTimeout(() => {
+            setToast(prev => (prev?.id === id ? null : prev));
+        }, duration);
+    };
     const [currentView, setCurrentView] = useState(() => {
         if (typeof window === 'undefined') return 'dashboard';
         const path = window.location.pathname.toLowerCase();
@@ -4539,7 +4588,7 @@ if (!user) {
                         navigate={navigate}
                     />
                 )}
-                {currentView === 'syllabus' && <SyllabusView modules={filteredModules} onUpdateModule={handleUpdateModule} />}
+                {currentView === 'syllabus' && <SyllabusView modules={filteredModules} onUpdateModule={handleUpdateModule} showToast={showToast} />}
                 {currentView === 'calendar' && <CalendarAttendanceView modules={filteredModules} events={events} onAddEvent={handleAddEvent} onUpdateEvent={handleUpdateEvent} onDeleteEvent={handleDeleteEvent} />}
                 {currentView === 'gradebook' && <GradebookView modules={filteredModules} onUpdateModule={handleUpdateModule} />}
                 {currentView === 'resources' && (
@@ -4582,6 +4631,9 @@ if (!user) {
                 program={programs.find(p => p.id === activeProgramId) || programs[0]}
                 overall={calculateOverallGPA(modules)}
             />
+
+            {/* Custom Toast Notification Component */}
+            <ToastNotification toast={toast} onClose={() => setToast(null)} />
         </div>
     );
 }
