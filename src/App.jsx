@@ -127,7 +127,7 @@ if (typeof window !== 'undefined' && localStorage.getItem('pedagogy_real_data_on
 // --- CUSTOM EDITORIAL DROPDOWN / SELECT COMPONENT ---
 const EditorialSelect = ({ label, value, onChange, options, className = "", placeholder, direction = "auto", isMulti = false }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [openUpward, setOpenUpward] = useState(false);
+    const [coords, setCoords] = useState({ top: 0, bottom: 0, left: 0, width: 0, openUpward: false });
     const dropdownRef = useRef(null);
 
     // Normalize value array when isMulti is active
@@ -153,9 +153,28 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
         displayLabel = selectedOption?.label || selectedOption?.value || value || (placeholder || 'Chọn...');
     }
 
+    const updateCoords = () => {
+        if (dropdownRef.current) {
+            const rect = dropdownRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const openUp = direction === "up" || (direction === "auto" && spaceBelow < 220 && rect.top > 220);
+            setCoords({
+                top: rect.bottom + 4,
+                bottom: window.innerHeight - rect.top + 4,
+                left: rect.left,
+                width: rect.width,
+                openUpward: openUp
+            });
+        }
+    };
+
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (
+                dropdownRef.current && 
+                !dropdownRef.current.contains(event.target) &&
+                !event.target.closest('.editorial-portal-select')
+            ) {
                 setIsOpen(false);
             }
         };
@@ -164,28 +183,8 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
     }, []);
 
     const handleToggle = () => {
-        if (!isOpen && dropdownRef.current) {
-            const rect = dropdownRef.current.getBoundingClientRect();
-            
-            // Smart Container Boundary Detection: find closest scroll container (e.g. Modal)
-            let containerBottom = window.innerHeight;
-            let parent = dropdownRef.current.parentElement;
-            while (parent && parent !== document.body) {
-                const style = window.getComputedStyle(parent);
-                if (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflow === 'auto' || style.overflow === 'scroll') {
-                    const parentRect = parent.getBoundingClientRect();
-                    containerBottom = Math.min(containerBottom, parentRect.bottom);
-                    break;
-                }
-                parent = parent.parentElement;
-            }
-
-            const spaceBelow = containerBottom - rect.bottom;
-            if (direction === "up" || (direction === "auto" && spaceBelow < 190)) {
-                setOpenUpward(true);
-            } else {
-                setOpenUpward(false);
-            }
+        if (!isOpen) {
+            updateCoords();
         }
         setIsOpen(!isOpen);
     };
@@ -221,8 +220,18 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
                 <ChevronDown size={16} className={`text-brand-cerulean group-hover:text-brand-jasper transition-transform duration-200 shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {isOpen && (
-                <div className={`absolute z-[100] left-0 right-0 ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'} bg-brand-cream border-editorial shadow-editorial max-h-56 overflow-y-auto animate-fade-in-down`}>
+            {isOpen && createPortal(
+                <div
+                    style={{
+                        position: 'fixed',
+                        left: `${coords.left}px`,
+                        width: `${coords.width}px`,
+                        top: coords.openUpward ? 'auto' : `${coords.top}px`,
+                        bottom: coords.openUpward ? `${coords.bottom}px` : 'auto',
+                        zIndex: 550
+                    }}
+                    className="editorial-portal-select bg-brand-cream border-editorial shadow-2xl max-h-56 overflow-y-auto animate-fade-in-down"
+                >
                     {options.map((opt) => {
                         const isSelected = isMulti ? selectedValues.includes(opt.value) : value === opt.value;
                         return (
@@ -250,7 +259,8 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
                             </div>
                         );
                     })}
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
@@ -259,7 +269,7 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
 // --- CUSTOM EDITORIAL DATE PICKER COMPONENT ---
 const EditorialDatePicker = ({ label, value, onChange, className = "" }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [openUpward, setOpenUpward] = useState(false);
+    const [coords, setCoords] = useState({ top: 0, bottom: 0, left: 0, openUpward: false });
     const dateObj = value ? new Date(value) : new Date();
     const [viewDate, setViewDate] = useState(dateObj);
     const dropdownRef = useRef(null);
@@ -271,9 +281,28 @@ const EditorialDatePicker = ({ label, value, onChange, className = "" }) => {
         }
     }, [value]);
 
+    const updateCoords = () => {
+        if (dropdownRef.current) {
+            const rect = dropdownRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const openUp = spaceBelow < 310 && rect.top > 310;
+            const left = Math.min(rect.left, window.innerWidth - 296);
+            setCoords({
+                top: rect.bottom + 4,
+                bottom: window.innerHeight - rect.top + 4,
+                left: Math.max(10, left),
+                openUpward: openUp
+            });
+        }
+    };
+
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (
+                dropdownRef.current && 
+                !dropdownRef.current.contains(event.target) &&
+                !event.target.closest('.editorial-portal-datepicker')
+            ) {
                 setIsOpen(false);
             }
         };
@@ -282,27 +311,8 @@ const EditorialDatePicker = ({ label, value, onChange, className = "" }) => {
     }, []);
 
     const handleToggle = () => {
-        if (!isOpen && dropdownRef.current) {
-            const rect = dropdownRef.current.getBoundingClientRect();
-            
-            let containerBottom = window.innerHeight;
-            let parent = dropdownRef.current.parentElement;
-            while (parent && parent !== document.body) {
-                const style = window.getComputedStyle(parent);
-                if (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflow === 'auto' || style.overflow === 'scroll') {
-                    const parentRect = parent.getBoundingClientRect();
-                    containerBottom = Math.min(containerBottom, parentRect.bottom);
-                    break;
-                }
-                parent = parent.parentElement;
-            }
-
-            const spaceBelow = containerBottom - rect.bottom;
-            if (spaceBelow < 280) {
-                setOpenUpward(true);
-            } else {
-                setOpenUpward(false);
-            }
+        if (!isOpen) {
+            updateCoords();
         }
         setIsOpen(!isOpen);
     };
@@ -358,8 +368,18 @@ const EditorialDatePicker = ({ label, value, onChange, className = "" }) => {
                 <Calendar size={18} className="text-brand-cerulean group-hover:text-brand-jasper transition-colors" />
             </button>
 
-            {isOpen && (
-                <div className={`absolute z-[130] left-0 ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'} w-72 bg-brand-cream border-editorial shadow-editorial p-4 space-y-3 animate-fade-in-down`}>
+            {isOpen && createPortal(
+                <div
+                    style={{
+                        position: 'fixed',
+                        left: `${coords.left}px`,
+                        width: '288px',
+                        top: coords.openUpward ? 'auto' : `${coords.top}px`,
+                        bottom: coords.openUpward ? `${coords.bottom}px` : 'auto',
+                        zIndex: 550
+                    }}
+                    className="editorial-portal-datepicker bg-brand-cream border-editorial shadow-2xl p-4 space-y-3 animate-fade-in-down"
+                >
                     <div className="flex justify-between items-center pb-2 border-b border-brand-cerulean/20 font-serif-title">
                         <button type="button" onClick={prevMonth} className="p-1 text-brand-cerulean hover:text-brand-jasper">
                             <ChevronLeft size={18} />
@@ -408,7 +428,8 @@ const EditorialDatePicker = ({ label, value, onChange, className = "" }) => {
                             Hôm nay
                         </button>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
@@ -417,12 +438,31 @@ const EditorialDatePicker = ({ label, value, onChange, className = "" }) => {
 // --- CUSTOM EDITORIAL TIME PICKER COMPONENT ---
 const EditorialTimePicker = ({ label, value, onChange, className = "" }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [openUpward, setOpenUpward] = useState(false);
+    const [coords, setCoords] = useState({ top: 0, bottom: 0, left: 0, openUpward: false });
     const dropdownRef = useRef(null);
+
+    const updateCoords = () => {
+        if (dropdownRef.current) {
+            const rect = dropdownRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const openUp = spaceBelow < 280 && rect.top > 280;
+            const left = Math.min(rect.left, window.innerWidth - 264);
+            setCoords({
+                top: rect.bottom + 4,
+                bottom: window.innerHeight - rect.top + 4,
+                left: Math.max(10, left),
+                openUpward: openUp
+            });
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (
+                dropdownRef.current && 
+                !dropdownRef.current.contains(event.target) &&
+                !event.target.closest('.editorial-portal-timepicker')
+            ) {
                 setIsOpen(false);
             }
         };
@@ -431,27 +471,8 @@ const EditorialTimePicker = ({ label, value, onChange, className = "" }) => {
     }, []);
 
     const handleToggle = () => {
-        if (!isOpen && dropdownRef.current) {
-            const rect = dropdownRef.current.getBoundingClientRect();
-            
-            let containerBottom = window.innerHeight;
-            let parent = dropdownRef.current.parentElement;
-            while (parent && parent !== document.body) {
-                const style = window.getComputedStyle(parent);
-                if (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflow === 'auto' || style.overflow === 'scroll') {
-                    const parentRect = parent.getBoundingClientRect();
-                    containerBottom = Math.min(containerBottom, parentRect.bottom);
-                    break;
-                }
-                parent = parent.parentElement;
-            }
-
-            const spaceBelow = containerBottom - rect.bottom;
-            if (spaceBelow < 280) {
-                setOpenUpward(true);
-            } else {
-                setOpenUpward(false);
-            }
+        if (!isOpen) {
+            updateCoords();
         }
         setIsOpen(!isOpen);
     };
@@ -493,8 +514,18 @@ const EditorialTimePicker = ({ label, value, onChange, className = "" }) => {
                 <Clock size={18} className="text-brand-cerulean group-hover:text-brand-jasper transition-colors" />
             </button>
 
-            {isOpen && (
-                <div className={`absolute z-[130] ${openUpward ? 'bottom-full mb-1 right-0 sm:left-0' : 'top-full mt-1 right-0 sm:left-0'} w-64 bg-brand-cream border-editorial shadow-editorial p-4 space-y-3 animate-fade-in-down`}>
+            {isOpen && createPortal(
+                <div
+                    style={{
+                        position: 'fixed',
+                        left: `${coords.left}px`,
+                        width: '256px',
+                        top: coords.openUpward ? 'auto' : `${coords.top}px`,
+                        bottom: coords.openUpward ? `${coords.bottom}px` : 'auto',
+                        zIndex: 550
+                    }}
+                    className="editorial-portal-timepicker bg-brand-cream border-editorial shadow-2xl p-4 space-y-3 animate-fade-in-down"
+                >
                     <div className="text-xs font-serif-title text-brand-cerulean font-bold border-b border-brand-cerulean/20 pb-1">
                         Chọn khung giờ phổ biến
                     </div>
@@ -533,7 +564,8 @@ const EditorialTimePicker = ({ label, value, onChange, className = "" }) => {
                             </select>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
