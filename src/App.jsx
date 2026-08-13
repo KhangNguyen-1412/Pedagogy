@@ -2601,7 +2601,7 @@ const SyllabusView = ({ modules, onUpdateModule }) => {
                         </button>
                     </div>
 
-                    <div className="space-y-3 max-h-[480px] overflow-y-auto pr-2 border border-brand-cerulean/15 p-2.5 bg-brand-cream/20 rounded-sm">
+                    <div className="space-y-3 max-h-[360px] overflow-y-auto pr-2 border border-brand-cerulean/15 p-2.5 bg-brand-cream/20 rounded-sm">
                         {(syllabusData.schedule || []).map((item, idx) => (
                             <div key={idx} className="p-4 border border-brand-cerulean/20 bg-white space-y-3 relative group shadow-xs">
                                 <div className="flex justify-between items-center gap-4">
