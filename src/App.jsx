@@ -54,9 +54,13 @@ import {db} from './firebase';
 
 // Helper for persistent User ID across page reloads
 const getUserId = (currentUser) => {
+    if (currentUser?.uid) {
+        localStorage.setItem('pedagogy_user_id', currentUser.uid);
+        return currentUser.uid;
+    }
     let storedId = localStorage.getItem('pedagogy_user_id');
     if (!storedId) {
-        storedId = currentUser?.uid || ('user_' + Math.random().toString(36).substring(2, 9));
+        storedId = 'user_' + Math.random().toString(36).substring(2, 9);
         localStorage.setItem('pedagogy_user_id', storedId);
     }
     return storedId;
