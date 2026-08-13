@@ -37,7 +37,8 @@ import {
 } from 'lucide-react';
 import {
     auth,
-    signInAnonymously,
+    googleProvider,
+    signInWithPopup,
     onAuthStateChanged,
     getDoc,
     setDoc,
@@ -46,6 +47,9 @@ import {
     getCollectionRef,
     getDocRef
 } from './firebase';
+import { signOut } from 'firebase/auth';
+import logoImg from './assets/logo.png';
+import {db} from './firebase';
 
 // Helper for persistent User ID across page reloads
 const getUserId = (currentUser) => {
@@ -751,15 +755,6 @@ const DashboardView = ({ programs, modules, events, studyLogs, navigate, onOpenC
                         <span className="text-xs uppercase tracking-widest block opacity-80">Xếp loại</span>
                         <span className="text-xl font-serif-title font-bold">{overall.rank}</span>
                     </div>
-                    <button
-                        type="button"
-                        onClick={onOpenCertificate}
-                        className="px-4 py-3 bg-[#D4AF37] hover:bg-[#b8952b] text-white font-serif-title shadow-editorial transition-all flex flex-col items-center justify-center gap-1 min-w-[110px] text-center"
-                        title="Xem mẫu Chứng chỉ Nghiệp vụ Sư phạm chính thức"
-                    >
-                        <Award size={20} />
-                        <span className="text-xs uppercase tracking-wider font-bold">Chứng chỉ</span>
-                    </button>
                 </div>
             </header>
 
@@ -800,23 +795,23 @@ const DashboardView = ({ programs, modules, events, studyLogs, navigate, onOpenC
             </div>
 
             {/* Certificate Quick Banner */}
-            <section className="bg-gradient-to-r from-amber-50/80 via-orange-50/50 to-amber-100/40 border-2 border-[#D4AF37]/60 p-6 shadow-editorial flex flex-col sm:flex-row items-center justify-between gap-4">
+            <section className="bg-gradient-to-r from-blue-50/80 via-blue-50/50 to-blue-100/40 border-2 border-brand-cerulean/60 p-6 shadow-editorial flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <div className="p-3.5 bg-[#D4AF37] text-white rounded-full shadow-md shrink-0">
+                    <div className="p-3.5 bg-brand-cerulean text-white rounded-full shadow-md shrink-0">
                         <Award size={32} />
                     </div>
                     <div>
                         <span className="px-2.5 py-0.5 bg-red-100 text-red-800 text-xs font-bold font-serif-title uppercase tracking-wider rounded border border-red-200">
                             Bản Mẫu Chuẩn Bộ Giáo Dục & Đào Tạo
                         </span>
-                        <h4 className="text-xl font-serif-title text-amber-950 font-bold mt-1">Chứng chỉ Nghiệp vụ Sư phạm Chính thức</h4>
-                        <p className="text-sm text-amber-800 font-body">Xem bản chứng nhận hoàn thành khóa học nghiệp vụ sư phạm cá nhân hóa với dấu đỏ & chữ ký.</p>
+                        <h4 className="text-xl font-serif-title text-brand-cerulean font-bold mt-1">Chứng chỉ Nghiệp vụ Sư phạm Chính thức</h4>
+                        <p className="text-sm text-brand-cerulean/80 font-body">Xem bản chứng nhận hoàn thành khóa học nghiệp vụ sư phạm cá nhân hóa với dấu đỏ & chữ ký.</p>
                     </div>
                 </div>
                 <button
                     type="button"
                     onClick={onOpenCertificate}
-                    className="px-6 py-3 bg-[#D4AF37] text-white font-serif-title font-bold text-sm shadow-editorial hover:bg-[#b8952b] transition-all shrink-0 flex items-center gap-2"
+                    className="px-6 py-3 bg-brand-cerulean text-white font-serif-title font-bold text-sm shadow-editorial hover:bg-brand-cerulean/80 transition-all shrink-0 flex items-center gap-2"
                 >
                     <Award size={18} /> Xem & In Chứng chỉ
                 </button>
@@ -2358,7 +2353,7 @@ const SyllabusView = ({ modules, onUpdateModule }) => {
         <div className="max-w-5xl mx-auto space-y-8">
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-brand-cerulean">
                 <div>
-                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Quản lý Đề cương chi tiết (Syllabus)</h2>
+                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Quản lý Đề cương chi tiết</h2>
                     <p className="text-lg text-gray-600 mt-1">Cấu hình Chuẩn đầu ra (CLOs), Khung bài học & Trọng số đánh giá.</p>
                 </div>
                 <div className="w-72">
@@ -3317,7 +3312,7 @@ const ProfileView = ({ profile, onUpdateProfile, onOpenCertificate }) => {
                     <button
                         type="button"
                         onClick={onOpenCertificate}
-                        className="px-4 py-2 bg-[#D4AF37] hover:bg-[#b8952b] text-white font-serif-title shadow-editorial transition-colors flex items-center gap-2"
+                        className="px-4 py-2 bg-brand-jasper hover:bg-brand-cerulean text-white font-serif-title shadow-editorial transition-colors flex items-center gap-2"
                     >
                         <Award size={16} /> Xem Chứng chỉ mẫu
                     </button>
@@ -3491,18 +3486,18 @@ const ProfileView = ({ profile, onUpdateProfile, onOpenCertificate }) => {
                                 <span className="text-xs uppercase font-bold text-gray-400 block">Lớp & Trạng thái</span>
                                 <span className="text-base font-body">{profile.className || 'Chưa xếp lớp'} &bull; <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-bold rounded">{profile.status || 'Đang học'}</span></span>
                             </div>
-                            <div className="md:col-span-2 p-4 bg-amber-50/60 border border-[#D4AF37]/50 rounded flex justify-between items-center flex-wrap gap-3 mt-2">
+                            <div className="md:col-span-2 p-4 bg-blue-50/60 border border-brand-cerulean/50 rounded flex justify-between items-center flex-wrap gap-3 mt-2">
                                 <div className="flex items-center gap-3">
-                                    <Award className="text-[#D4AF37]" size={24} />
+                                    <Award className="text-brand-cerulean" size={24} />
                                     <div>
-                                        <span className="text-xs uppercase font-bold text-amber-900 block">Chứng chỉ nghiệp vụ dự kiến</span>
+                                        <span className="text-xs uppercase font-bold text-brand-cerulean block">Chứng chỉ nghiệp vụ dự kiến</span>
                                         <span className="text-sm font-serif-title font-bold text-gray-800">Chứng chỉ Nghiệp vụ Sư phạm THCS / THPT chuẩn Bộ GD&ĐT</span>
                                     </div>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={onOpenCertificate}
-                                    className="px-3.5 py-1.5 bg-[#D4AF37] hover:bg-[#b8952b] text-white text-xs font-serif-title font-bold rounded shadow-sm transition-colors flex items-center gap-1.5"
+                                    className="px-3.5 py-1.5 bg-brand-cerulean hover:bg-brand-jasper text-white text-xs font-serif-title font-bold rounded shadow-sm transition-colors flex items-center gap-1.5"
                                 >
                                     <Award size={14} /> Mở bản xem trước
                                 </button>
@@ -3773,6 +3768,30 @@ export default function App() {
         return 'dashboard';
     });
 
+    const handleGoogleLogin = async () => {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+            
+            // Bạn có thể tự động lấy tên và avatar từ Google để đắp vào Profile mặc định
+            const googleProfile = {
+                ...DEFAULT_PROFILE,
+                fullName: user.displayName || DEFAULT_PROFILE.fullName,
+                email: user.email || DEFAULT_PROFILE.email,
+                avatarUrl: user.photoURL || DEFAULT_PROFILE.avatarUrl,
+            };
+            
+            // Lưu tạm vào localStorage để syncFirestoreData xử lý ở bước sau
+            if (!localStorage.getItem(STORAGE_KEYS.PROFILE)) {
+                localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(googleProfile));
+                setProfile(googleProfile);
+            }
+        } catch (error) {
+            console.error("Lỗi đăng nhập Google:", error);
+            setError("Không thể đăng nhập bằng Google. Vui lòng thử lại.");
+        }
+    };
+
     const [activeProgramId, setActiveProgramId] = useState(null);
     const [activeModuleId, setActiveModuleId] = useState(null);
     const [isCertModalOpen, setIsCertModalOpen] = useState(false);
@@ -3811,33 +3830,49 @@ export default function App() {
         return saved ? JSON.parse(saved) : [];
     });
 
-    const handleToggleEnrollProgram = (programId) => {
+    const handleToggleEnrollProgram = async (programId) => {
+        let updatedProgram = null;
+        
         const updated = programs.map(p => {
             if (p.id === programId) {
-                return { ...p, isEnrolled: p.isEnrolled === false ? true : false };
+                updatedProgram = { ...p, isEnrolled: p.isEnrolled === false ? true : false };
+                return updatedProgram;
             }
             return p;
         });
+        
+        // Cập nhật Local State & LocalStorage
         setPrograms(updated);
         localStorage.setItem(STORAGE_KEYS.PROGRAMS, JSON.stringify(updated));
+
+        // Bổ sung đồng bộ lên Firebase
+        if (updatedProgram) {
+            const userId = getUserId(user);
+            try { 
+                await setDoc(getDocRef(userId, 'programs', programId), updatedProgram); 
+            } catch (err) {
+                console.error("Lỗi cập nhật trạng thái chương trình:", err);
+            }
+        }
     };
 
     const filteredModules = getFilteredModules(modules, programs, selectedProgramFilter);
 
     // Authenticate & Connect Firestore Realtime Sync
     useEffect(() => {
+        // Chỉnh setLoading(true) ở trạng thái ban đầu để tránh chớp màn hình
+        setLoading(true); 
+        
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
                 setUser(currentUser);
                 const userId = getUserId(currentUser);
                 syncFirestoreData(userId);
             } else {
-                try {
-                    await signInAnonymously(auth);
-                } catch (err) {
-                    console.warn("Anonymous auth warning:", err);
-                }
+                // Người dùng chưa đăng nhập hoặc đã đăng xuất
+                setUser(null); 
             }
+            setLoading(false);
         });
         return () => unsubscribe();
     }, []);
@@ -4037,13 +4072,96 @@ export default function App() {
         );
     }
 
+if (!user) {
+        return (
+            <div className="min-h-screen flex flex-col lg:flex-row bg-brand-cream">
+                {/* CỘT TRÁI: HÌNH ẢNH & TRÍCH DẪN (Ẩn trên điện thoại) */}
+                <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-center items-center p-12 overflow-hidden shadow-2xl z-10">
+                    {/* Hình ảnh nền (Bạn có thể đổi URL ảnh khác nếu muốn) */}
+                    <div 
+                        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=2073&auto=format&fit=crop')" }}
+                    ></div>
+                    
+                    {/* Lớp phủ màu Xanh Cerulean giúp chữ dễ đọc và giữ tone màu thương hiệu */}
+                    <div className="absolute inset-0 bg-brand-cerulean/85 mix-blend-multiply"></div>
+                    
+                    {/* Nội dung câu trích dẫn */}
+                    <div className="relative z-10 text-white max-w-lg text-center px-4">
+                        <p className="text-4xl font-serif-title leading-tight mb-8">
+                            "Giáo dục không phải là việc đổ đầy một cái bình, mà là thắp sáng một ngọn lửa."
+                        </p>
+                        <div className="w-16 h-1.5 bg-brand-jasper mx-auto mb-6 rounded-full"></div>
+                        <p className="text-lg font-sans font-bold tracking-[0.2em] uppercase opacity-90 text-brand-cream">
+                            William Butler Yeats
+                        </p>
+                    </div>
+                </div>
+
+                {/* CỘT PHẢI: LOGO & FORM ĐĂNG NHẬP */}
+                <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12">
+                    <div className="w-full max-w-md">
+                        {/* Logo & Tiêu đề nằm trên form đăng nhập */}
+                        <div className="text-center mb-10 flex flex-col items-center">
+                            <img 
+                                src={logoImg} 
+                                alt="Pedagogy Logo" 
+                                className="w-36 h-36 rounded-full shadow-lg border-4 border-brand-cerulean/10 mb-5" 
+                            />
+                            <h1 className="font-serif-title text-5xl text-brand-cerulean tracking-tight mb-2">Pedagogy.</h1>
+                            <p className="text-base italic text-gray-600 font-body">Personal Learning Management</p>
+                        </div>
+
+                        {/* Box Đăng nhập */}
+                        <div className="bg-white p-10 border-editorial shadow-editorial w-full relative">
+                            {/* Accent line màu Đỏ Jasper */}
+                            <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-jasper"></div>
+
+                            <div className="mb-8 text-center">
+                                <h2 className="text-2xl font-serif-title text-brand-cerulean mb-2">Chào mừng trở lại</h2>
+                                <p className="text-gray-500 font-body text-sm">Vui lòng đăng nhập để truy cập vào hệ thống.</p>
+                            </div>
+
+                            <button 
+                                onClick={handleGoogleLogin} 
+                                className="w-full flex items-center justify-center gap-3 px-6 py-3.5 border border-gray-300 shadow-sm hover:shadow-editorial-hover hover:border-brand-cerulean transition-all bg-white group"
+                            >
+                                <img 
+                                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                                    alt="Google Logo" 
+                                    className="w-6 h-6 group-hover:scale-110 transition-transform" 
+                                />
+                                <span className="font-sans font-bold text-gray-700 group-hover:text-brand-cerulean transition-colors">
+                                    Tiếp tục với Google
+                                </span>
+                            </button>
+                            
+                            {error && (
+                                <div className="mt-5 p-3 bg-red-50 border-l-4 border-brand-jasper text-brand-jasper text-sm font-bold flex items-center gap-2">
+                                    <span>⚠️</span> {error}
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="mt-8 text-center text-xs text-gray-400 font-body">
+                            &copy; {new Date().getFullYear()} Pedagogy. Khóa luận Tốt nghiệp 2026.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex h-screen overflow-hidden bg-brand-cream">
             {/* Sidebar (Stationary / Fixed) */}
             <aside className="w-64 h-full border-r border-brand-cerulean/20 flex flex-col p-6 shrink-0 hidden md:flex">
-                <div className="mb-8">
-                    <h1 className="font-serif-title text-4xl text-brand-cerulean tracking-tight">Pedagogy.</h1>
-                    <p className="text-sm italic text-gray-500 mt-1 font-body">Personal Learning Management</p>
+                <div className="mb-8 flex items-center gap-3">
+                    <img src={logoImg} alt="Pedagogy Logo" className="w-12 h-12 rounded-full shadow-sm" />
+                    <div>
+                        <h1 className="font-serif-title text-4xl text-brand-cerulean tracking-tight">Pedagogy.</h1>
+                        <p className="text-sm italic text-gray-500 mt-1 font-body">Personal Learning Management</p>
+                    </div>
                 </div>
 
                 <nav className="flex-1 space-y-2 overflow-y-auto pr-1">
@@ -4073,14 +4191,24 @@ export default function App() {
                 {profile && (
                     <div className="mt-auto pt-4 border-t border-brand-cerulean/20">
                         <p className="font-serif-title text-brand-cerulean truncate font-bold">{profile.fullName}</p>
-                        <p className="text-xs font-sans text-gray-500 truncate">{profile.email}</p>
+                        <p className="text-xs font-sans text-gray-500 truncate mb-3">{profile.email}</p>
+                        
+                        <button 
+                            onClick={() => signOut(auth)} 
+                            className="text-xs font-bold text-brand-jasper hover:underline"
+                        >
+                            Đăng xuất
+                        </button>
                     </div>
                 )}
             </aside>
 
             {/* Mobile Header */}
             <div className="md:hidden fixed top-0 w-full bg-brand-cream border-b border-brand-cerulean p-4 flex justify-between items-center z-40">
-                <h1 className="font-serif-title text-2xl text-brand-cerulean">Pedagogy</h1>
+                <div className="flex items-center gap-2">
+                    <img src={logoImg} alt="Logo" className="w-8 h-8 rounded-full" />
+                    <h1 className="font-serif-title text-2xl text-brand-cerulean">Pedagogy</h1>
+                </div>
                 <button onClick={() => alert('Mobile menu - hãy sử dụng trên máy tính để có trải nghiệm đầy đủ nhất')}><Menu /></button>
             </div>
 

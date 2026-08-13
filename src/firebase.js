@@ -1,5 +1,11 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import { 
+    getAuth, 
+    GoogleAuthProvider, 
+    signInWithPopup, 
+    onAuthStateChanged,
+    signOut 
+} from 'firebase/auth';
 import {
     getFirestore,
     collection,
@@ -31,7 +37,7 @@ export const auth = getAuth(app);
 const appId = 'pedagogy-app-v1';
 export const getCollectionRef = (userId, colName) => collection(db, 'artifacts', appId, 'users', userId, colName);
 export const getDocRef = (userId, colName, docId) => doc(db, 'artifacts', appId, 'users', userId, colName, docId);
-export { signInAnonymously, onAuthStateChanged, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, collection, doc };
+export { onAuthStateChanged, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, collection, doc, signInWithPopup, signOut };
 
 // ─── Collection names ───────────────────────────────────────────────────────
 export const COLLECTIONS = {
@@ -41,6 +47,8 @@ export const COLLECTIONS = {
     SYLLABI: "syllabi",
     LEARNER_PROGRESS: "learnerProgress",
 };
+
+export const googleProvider = new GoogleAuthProvider();
 
 function handleFirestoreError(context, err) {
     if (err?.code === 'permission-denied') {
