@@ -259,6 +259,7 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
 // --- CUSTOM EDITORIAL DATE PICKER COMPONENT ---
 const EditorialDatePicker = ({ label, value, onChange, className = "" }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [openUpward, setOpenUpward] = useState(false);
     const dateObj = value ? new Date(value) : new Date();
     const [viewDate, setViewDate] = useState(dateObj);
     const dropdownRef = useRef(null);
@@ -279,6 +280,32 @@ const EditorialDatePicker = ({ label, value, onChange, className = "" }) => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    const handleToggle = () => {
+        if (!isOpen && dropdownRef.current) {
+            const rect = dropdownRef.current.getBoundingClientRect();
+            
+            let containerBottom = window.innerHeight;
+            let parent = dropdownRef.current.parentElement;
+            while (parent && parent !== document.body) {
+                const style = window.getComputedStyle(parent);
+                if (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflow === 'auto' || style.overflow === 'scroll') {
+                    const parentRect = parent.getBoundingClientRect();
+                    containerBottom = Math.min(containerBottom, parentRect.bottom);
+                    break;
+                }
+                parent = parent.parentElement;
+            }
+
+            const spaceBelow = containerBottom - rect.bottom;
+            if (spaceBelow < 280) {
+                setOpenUpward(true);
+            } else {
+                setOpenUpward(false);
+            }
+        }
+        setIsOpen(!isOpen);
+    };
 
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -324,7 +351,7 @@ const EditorialDatePicker = ({ label, value, onChange, className = "" }) => {
             )}
             <button
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={handleToggle}
                 className="w-full flex items-center justify-between py-2 border-b border-brand-cerulean font-body text-brand-ink text-left hover:border-brand-jasper focus:outline-none transition-colors bg-transparent group"
             >
                 <span className="truncate text-lg">{formatDisplay(value)}</span>
@@ -332,7 +359,7 @@ const EditorialDatePicker = ({ label, value, onChange, className = "" }) => {
             </button>
 
             {isOpen && (
-                <div className="absolute z-[130] left-0 top-full mt-1 w-72 bg-brand-cream border-editorial shadow-editorial p-4 space-y-3">
+                <div className={`absolute z-[130] left-0 ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'} w-72 bg-brand-cream border-editorial shadow-editorial p-4 space-y-3 animate-fade-in-down`}>
                     <div className="flex justify-between items-center pb-2 border-b border-brand-cerulean/20 font-serif-title">
                         <button type="button" onClick={prevMonth} className="p-1 text-brand-cerulean hover:text-brand-jasper">
                             <ChevronLeft size={18} />
@@ -390,6 +417,7 @@ const EditorialDatePicker = ({ label, value, onChange, className = "" }) => {
 // --- CUSTOM EDITORIAL TIME PICKER COMPONENT ---
 const EditorialTimePicker = ({ label, value, onChange, className = "" }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [openUpward, setOpenUpward] = useState(false);
     const dropdownRef = useRef(null);
 
     useEffect(() => {
@@ -401,6 +429,32 @@ const EditorialTimePicker = ({ label, value, onChange, className = "" }) => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    const handleToggle = () => {
+        if (!isOpen && dropdownRef.current) {
+            const rect = dropdownRef.current.getBoundingClientRect();
+            
+            let containerBottom = window.innerHeight;
+            let parent = dropdownRef.current.parentElement;
+            while (parent && parent !== document.body) {
+                const style = window.getComputedStyle(parent);
+                if (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflow === 'auto' || style.overflow === 'scroll') {
+                    const parentRect = parent.getBoundingClientRect();
+                    containerBottom = Math.min(containerBottom, parentRect.bottom);
+                    break;
+                }
+                parent = parent.parentElement;
+            }
+
+            const spaceBelow = containerBottom - rect.bottom;
+            if (spaceBelow < 280) {
+                setOpenUpward(true);
+            } else {
+                setOpenUpward(false);
+            }
+        }
+        setIsOpen(!isOpen);
+    };
 
     const timePresets = [
         { label: '07:30 (Sáng)', value: '07:30' },
@@ -432,7 +486,7 @@ const EditorialTimePicker = ({ label, value, onChange, className = "" }) => {
             )}
             <button
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={handleToggle}
                 className="w-full flex items-center justify-between py-2 border-b border-brand-cerulean font-body text-brand-ink text-left hover:border-brand-jasper focus:outline-none transition-colors bg-transparent group"
             >
                 <span className="truncate text-lg">{value || '08:00'}</span>
@@ -440,7 +494,7 @@ const EditorialTimePicker = ({ label, value, onChange, className = "" }) => {
             </button>
 
             {isOpen && (
-                <div className="absolute z-[130] left-0 top-full mt-1 w-64 bg-brand-cream border-editorial shadow-editorial p-4 space-y-3">
+                <div className={`absolute z-[130] ${openUpward ? 'bottom-full mb-1 right-0 sm:left-0' : 'top-full mt-1 right-0 sm:left-0'} w-64 bg-brand-cream border-editorial shadow-editorial p-4 space-y-3 animate-fade-in-down`}>
                     <div className="text-xs font-serif-title text-brand-cerulean font-bold border-b border-brand-cerulean/20 pb-1">
                         Chọn khung giờ phổ biến
                     </div>
