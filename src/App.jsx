@@ -3245,7 +3245,7 @@ const ResourcesStudyLogView = ({ modules, studyLogs, resources, onAddStudyLog, o
 };
 
 // 7. PROFILE VIEW
-const ProfileView = ({ profile, onUpdateProfile, onOpenCertificate }) => {
+const ProfileView = ({ profile, programs, onUpdateProfile, onOpenCertificate }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState(profile || {});
 
@@ -3265,6 +3265,13 @@ const ProfileView = ({ profile, onUpdateProfile, onOpenCertificate }) => {
     };
 
     if (!profile) return null;
+
+    const programOptions = (programs && programs.length > 0)
+        ? programs.map(p => ({ label: p.name, value: p.name }))
+        : [
+            { label: "Nghiệp vụ sư phạm THCS 2026", value: "Nghiệp vụ sư phạm THCS 2026" },
+            { label: "Nghiệp vụ sư phạm THPT 2026", value: "Nghiệp vụ sư phạm THPT 2026" }
+        ];
 
     const genderOptions = [
         { label: 'Nam', value: 'Nam' },
@@ -3485,8 +3492,13 @@ const ProfileView = ({ profile, onUpdateProfile, onOpenCertificate }) => {
                     {isEditing ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-xs font-serif-title text-brand-cerulean mb-1">Chương trình bồi dưỡng</label>
-                                <input type="text" className="input-editorial w-full font-bold" value={formData.major || ''} onChange={e => setFormData({ ...formData, major: e.target.value })} />
+                                <EditorialSelect
+                                    label="Chương trình bồi dưỡng"
+                                    value={formData.major || (programOptions[0]?.value || '')}
+                                    onChange={val => setFormData({ ...formData, major: val })}
+                                    options={programOptions}
+                                    placeholder="Chọn chương trình bồi dưỡng..."
+                                />
                             </div>
                             <div>
                                 <EditorialSelect
@@ -4424,6 +4436,7 @@ if (!user) {
                 {currentView === 'profile' && (
                     <ProfileView
                         profile={profile}
+                        programs={programs}
                         onUpdateProfile={handleUpdateProfile}
                         onOpenCertificate={() => setIsCertModalOpen(true)}
                     />
