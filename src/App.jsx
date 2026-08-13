@@ -88,6 +88,7 @@ const DEFAULT_PROFILE = {
     major: "",
     faculty: "",
     originalMajor: "",
+    teachingSubject: "",
     className: "",
     trainingMode: "",
     status: "",
@@ -102,6 +103,17 @@ const DEFAULT_PROFILE = {
     emergencyContact: "",
     createdAt: new Date().toISOString()
 };
+
+// Helper to dynamically format module names containing bracketed placeholders with user's selected teaching subject
+export const formatModuleName = (name, subject) => {
+    if (!name) return '';
+    if (!subject) return name;
+    return name
+        .replace(/\[.*?(?:môn|Toán|Tin|Ngữ văn|Tiếng|Giáo dục|KHTN|Lịch sử|Địa|Công nghệ).*?\]/gi, subject)
+        .replace(/\[Môn học\]/gi, subject)
+        .replace(/\[Môn đăng ký\]/gi, subject);
+};
+
 
 // Automatic cleanup of initial demo mock data from LocalStorage
 if (typeof window !== 'undefined' && localStorage.getItem('pedagogy_real_data_only') !== 'v1') {
@@ -1067,7 +1079,7 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
 };
 
 // PROGRAM DETAIL VIEW
-const ProgramDetailView = ({ programId, programs, modules, onAddModule, onUpdateModule, onDeleteModule, onUpdateProgram, navigate }) => {
+const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule, onUpdateModule, onDeleteModule, onUpdateProgram, navigate }) => {
     const program = programs.find(p => p.id === programId) || (programs && programs.length > 0 ? programs[0] : null);
     const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
     const [editingModule, setEditingModule] = useState(null);
@@ -1359,7 +1371,7 @@ const ProgramDetailView = ({ programId, programs, modules, onAddModule, onUpdate
                                                             onClick={() => navigate('module_detail', { moduleId: mod.id, programId: program.id })}
                                                             className="text-xl font-serif-title text-brand-cerulean leading-tight mt-1 mb-2 group-hover:text-brand-jasper transition-colors cursor-pointer"
                                                         >
-                                                            {mod.name}
+                                                            {formatModuleName(mod.name, profile?.teachingSubject || profile?.major)}
                                                         </h4>
                                                         <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
                                                             <span className="text-xs italic text-gray-500">
@@ -1463,7 +1475,7 @@ const ProgramDetailView = ({ programId, programs, modules, onAddModule, onUpdate
                                                                     isSelected ? 'text-brand-jasper font-bold' : 'text-brand-cerulean hover:text-brand-jasper'
                                                                 }`}
                                                             >
-                                                                {mod.name}
+                                                                {formatModuleName(mod.name, profile?.teachingSubject || profile?.major)}
                                                             </h4>
 
                                                             <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
@@ -1548,6 +1560,44 @@ const ProgramDetailView = ({ programId, programs, modules, onAddModule, onUpdate
                                 <input required type="text" className="input-editorial w-full" value={modForm.name} onChange={e => setModForm({ ...modForm, name: e.target.value })} placeholder="Tâm lý học giáo dục..." />
                             </div>
                         </div>
+
+                        {modForm.category === 'B' && (
+                            <div className="p-3 bg-blue-50/80 border border-brand-cerulean/30 rounded space-y-2">
+                                <label className="block text-xs font-serif-title font-bold text-brand-cerulean">
+                                    Mẫu học phần chuẩn Nhánh B {profile?.teachingSubject ? `(Áp dụng môn: ${profile.teachingSubject})` : ''}:
+                                </label>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {[
+                                        { code: 'B01', name: `Phương pháp dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THCS`, credits: 2, type: 'mandatory' },
+                                        { code: 'B02', name: `Xây dựng kế hoạch dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THCS`, credits: 2, type: 'mandatory' },
+                                        { code: 'B03', name: `Tổ chức dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THCS`, credits: 2, type: 'mandatory' },
+                                        { code: 'B04', name: `Thực hành dạy học [${profile?.teachingSubject || 'Môn học'}] cấp THCS ở trường sư phạm`, credits: 3, type: 'mandatory' },
+                                        { code: 'B05', name: 'Thực hành kỹ năng giáo dục ở trường THCS', credits: 2, type: 'practice' },
+                                        { code: 'B06', name: 'Thực tập sư phạm 1 ở trường THCS', credits: 2, type: 'practice' },
+                                        { code: 'B07', name: 'Thực tập sư phạm 2 ở trường THCS', credits: 2, type: 'practice' },
+                                    ].map(tpl => (
+                                        <button
+                                            key={tpl.code}
+                                            type="button"
+                                            onClick={() => {
+                                                const formattedName = formatModuleName(tpl.name, profile?.teachingSubject || profile?.major);
+                                                setModForm({
+                                                    ...modForm,
+                                                    code: tpl.code,
+                                                    name: formattedName,
+                                                    credits: tpl.credits,
+                                                    type: tpl.type,
+                                                    category: 'B'
+                                                });
+                                            }}
+                                            className="px-2.5 py-1 text-xs bg-white border border-brand-cerulean/40 hover:border-brand-cerulean hover:bg-blue-100/80 text-brand-cerulean font-bold transition-all rounded shadow-xs"
+                                        >
+                                            + Mẫu {tpl.code} ({tpl.credits} TC)
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-3 gap-4">
                             <div>
@@ -1839,7 +1889,7 @@ const ProgramDetailView = ({ programId, programs, modules, onAddModule, onUpdate
 };
 
 // MODULE DETAIL VIEW
-const ModuleDetailView = ({ moduleId, programId, programs, modules, onUpdateModule, onDeleteModule, navigate }) => {
+const ModuleDetailView = ({ moduleId, programId, programs, modules, profile, onUpdateModule, onDeleteModule, navigate }) => {
     const moduleItem = modules.find(m => m.id === moduleId);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingModule, setEditingModule] = useState(null);
@@ -1961,7 +2011,7 @@ const ModuleDetailView = ({ moduleId, programId, programs, modules, onUpdateModu
                             </span>
                         )}
                     </div>
-                    <h1 className="text-4xl font-serif-title text-brand-cerulean">{moduleItem.name}</h1>
+                    <h1 className="text-4xl font-serif-title text-brand-cerulean">{formatModuleName(moduleItem.name, profile?.teachingSubject || profile?.major)}</h1>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -3445,6 +3495,28 @@ const ProfileView = ({ profile, onUpdateProfile, onOpenCertificate }) => {
                                 <input type="text" className="input-editorial w-full font-bold" value={formData.major || ''} onChange={e => setFormData({ ...formData, major: e.target.value })} />
                             </div>
                             <div>
+                                <EditorialSelect
+                                    label="Môn đăng ký giảng dạy (Nhánh B)"
+                                    value={formData.teachingSubject || ''}
+                                    onChange={val => setFormData({ ...formData, teachingSubject: val })}
+                                    options={[
+                                        { label: 'Toán', value: 'Toán' },
+                                        { label: 'Tin học', value: 'Tin học' },
+                                        { label: 'Tiếng Anh', value: 'Tiếng Anh' },
+                                        { label: 'Ngữ văn', value: 'Ngữ văn' },
+                                        { label: 'Giáo dục kinh tế và pháp luật', value: 'Giáo dục kinh tế và pháp luật' },
+                                        { label: 'Khoa học tự nhiên (KHTN)', value: 'Khoa học tự nhiên' },
+                                        { label: 'Lịch sử và Địa lý', value: 'Lịch sử và Địa lý' },
+                                        { label: 'Tiếng Trung', value: 'Tiếng Trung' },
+                                        { label: 'Tiếng Nga', value: 'Tiếng Nga' },
+                                        { label: 'Tiếng Pháp', value: 'Tiếng Pháp' },
+                                        { label: 'Công nghệ', value: 'Công nghệ' },
+                                        { label: 'Giáo dục thể chất', value: 'Giáo dục thể chất' },
+                                    ]}
+                                    placeholder="Chọn môn giảng dạy..."
+                                />
+                            </div>
+                            <div>
                                 <label className="block text-xs font-serif-title text-brand-cerulean mb-1">Khoa / Viện quản lý</label>
                                 <input type="text" className="input-editorial w-full" value={formData.faculty || ''} onChange={e => setFormData({ ...formData, faculty: e.target.value })} />
                             </div>
@@ -3474,6 +3546,12 @@ const ProfileView = ({ profile, onUpdateProfile, onOpenCertificate }) => {
                             <div>
                                 <span className="text-xs uppercase font-bold text-gray-400 block">Chương trình học</span>
                                 <span className="text-lg font-serif-title text-brand-cerulean font-bold">{profile.major}</span>
+                            </div>
+                            <div>
+                                <span className="text-xs uppercase font-bold text-gray-400 block">Môn đăng ký giảng dạy (Nhánh B)</span>
+                                <span className="text-base font-serif-title font-bold text-brand-jasper">
+                                    {profile.teachingSubject ? `Môn ${profile.teachingSubject}` : 'Chưa chọn môn dạy (Nhấp Chỉnh sửa để chọn)'}
+                                </span>
                             </div>
                             <div>
                                 <span className="text-xs uppercase font-bold text-gray-400 block">Khoa / Đơn vị</span>
