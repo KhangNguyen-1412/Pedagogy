@@ -3792,6 +3792,49 @@ export default function App() {
         }
     };
 
+    import { writeBatch } from 'firebase/firestore';
+    // Đảm bảo bạn đã có sẵn import db từ file firebase
+
+    const handleMigrateRealData = async () => {
+        if (!user) {
+            alert("Vui lòng đăng nhập bằng Google trên máy local này trước!");
+            return;
+        }
+
+        const confirm = window.confirm("Hệ thống sẽ lấy dữ liệu THẬT đang có trên máy tính này (Local) để đẩy lên Cloud cho tài khoản Google của bạn. Tiếp tục?");
+        if (!confirm) return;
+
+        try {
+            const batch = writeBatch(db);
+            const userId = getUserId(user);
+
+            // 1. Rút dữ liệu thật từ LocalStorage (nơi nó đang bị kẹt)
+            const localProfile = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROFILE));
+            const localPrograms = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROGRAMS) || '[]');
+            const localModules = JSON.parse(localStorage.getItem(STORAGE_KEYS.MODULES) || '[]');
+            const localEvents = JSON.parse(localStorage.getItem(STORAGE_KEYS.EVENTS) || '[]');
+            const localStudyLogs = JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDY_LOGS) || '[]');
+            const localResources = JSON.parse(localStorage.getItem(STORAGE_KEYS.RESOURCES) || '[]');
+
+            // 2. Gom toàn bộ lệnh ghi đè lên Firebase
+            if (localProfile) batch.set(getDocRef(userId, 'profile', 'main'), localProfile);
+            
+            localPrograms.forEach(p => batch.set(getDocRef(userId, 'programs', p.id), p));
+            localModules.forEach(m => batch.set(getDocRef(userId, 'modules', m.id), m));
+            localEvents.forEach(e => batch.set(getDocRef(userId, 'events', e.id), e));
+            localStudyLogs.forEach(l => batch.set(getDocRef(userId, 'studyLogs', l.id), l));
+            localResources.forEach(r => batch.set(getDocRef(userId, 'resources', r.id), r));
+
+            // 3. Thực thi bắn dữ liệu lên mây
+            await batch.commit();
+            alert("🎉 Đã đẩy toàn bộ dữ liệu thật lên Cloud thành công! Bây giờ bạn có thể lên web thật để kiểm tra.");
+            
+        } catch (error) {
+            console.error("Lỗi đồng bộ dữ liệu thật:", error);
+            alert("Có lỗi xảy ra: " + error.message);
+        }
+    };
+
     const [activeProgramId, setActiveProgramId] = useState(null);
     const [activeModuleId, setActiveModuleId] = useState(null);
     const [isCertModalOpen, setIsCertModalOpen] = useState(false);
@@ -4198,6 +4241,12 @@ if (!user) {
                             className="text-xs font-bold text-brand-jasper hover:underline"
                         >
                             Đăng xuất
+                        </button>
+                        <button 
+                            onClick={handleMigrateRealData} 
+                            className="w-full bg-brand-jasper text-white text-xs py-2 font-bold shadow-md hover:bg-red-800 transition-colors"
+                        >
+                            Đẩy Data Local Lên Cloud
                         </button>
                     </div>
                 )}
