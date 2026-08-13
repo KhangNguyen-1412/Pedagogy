@@ -428,9 +428,9 @@ const EditorialTimePicker = ({ label, value, onChange, className = "" }) => {
 const Modal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-ink/50 backdrop-blur-sm">
-            <div className="bg-brand-cream border-editorial p-6 w-full max-w-2xl max-h-[90vh] overflow-visible shadow-editorial relative">
-                <button onClick={onClose} className="absolute top-4 right-4 text-brand-cerulean hover:text-brand-jasper">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-ink/50 backdrop-blur-sm animate-backdrop-in">
+            <div className="bg-brand-cream border-editorial p-6 w-full max-w-2xl max-h-[90vh] overflow-visible shadow-editorial relative animate-modal-pop-in">
+                <button onClick={onClose} className="absolute top-4 right-4 text-brand-cerulean hover:text-brand-jasper transition-colors p-1">
                     <X size={20} />
                 </button>
                 <h2 className="text-3xl font-serif-title text-brand-cerulean mb-6 pb-2 border-b border-brand-cerulean/30">{title}</h2>
@@ -452,7 +452,7 @@ const CertificateModal = ({ isOpen, onClose, profile, program, overall }) => {
     return (
         <div
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-            className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-3 md:p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
+            className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-3 md:p-6 bg-black/80 backdrop-blur-md overflow-y-auto animate-backdrop-in"
         >
             {/* Inject Landscape Print Rule */}
             <style>{`
@@ -489,7 +489,7 @@ const CertificateModal = ({ isOpen, onClose, profile, program, overall }) => {
             </div>
 
             {/* Certificate Paper Container with max-h and scroll fallback */}
-            <div className="bg-[#FFFDF5] border-[8px] md:border-[12px] border-[#D4AF37] p-5 md:p-8 w-full max-w-5xl shadow-2xl relative rounded-sm mt-14 mb-4 max-h-[85vh] overflow-y-auto font-serif">
+            <div className="bg-[#FFFDF5] border-[8px] md:border-[12px] border-[#D4AF37] p-5 md:p-8 w-full max-w-5xl shadow-2xl relative rounded-sm mt-14 mb-4 max-h-[85vh] overflow-y-auto font-serif animate-modal-pop-in">
                 {/* Inner Ornamental Certificate Border */}
                 <div className="border-2 md:border-4 border-[#D4AF37] p-4 md:p-8 relative bg-amber-50/20 shadow-inner min-h-[440px] flex flex-col justify-between">
                     {/* Corner Flourishes */}
@@ -2630,7 +2630,7 @@ const SyllabusView = ({ modules, onUpdateModule }) => {
 
 // 4. CALENDAR & ATTENDANCE TRACKING VIEW
 const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEvent, onDeleteEvent }) => {
-    const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+    const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [eventForm, setEventForm] = useState({
@@ -2709,20 +2709,18 @@ const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEvent, on
                     <p className="text-lg text-gray-600 mt-1">Quản lý thời gian, link học trực tuyến & ghi chú chuyên cần.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="flex bg-white p-1 border border-brand-cerulean">
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className={`px-3 py-1.5 font-serif-title flex items-center gap-1 text-sm ${viewMode === 'grid' ? 'bg-brand-cerulean text-white' : 'text-brand-cerulean'}`}
-                        >
-                            <Grid size={15} /> Dạng Lịch
-                        </button>
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`px-3 py-1.5 font-serif-title flex items-center gap-1 text-sm ${viewMode === 'list' ? 'bg-brand-cerulean text-white' : 'text-brand-cerulean'}`}
-                        >
-                            <List size={15} /> Dạng Danh sách
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setViewMode(prev => prev === 'list' ? 'grid' : 'list')}
+                        title={viewMode === 'list' ? 'Chuyển sang dạng Lịch theo tháng' : 'Chuyển sang dạng Danh sách'}
+                        className="p-2.5 bg-white border border-brand-cerulean text-brand-cerulean hover:bg-brand-cerulean hover:text-white transition-all shadow-sm flex items-center justify-center group"
+                    >
+                        {viewMode === 'list' ? (
+                            <Calendar size={18} className="group-hover:scale-110 transition-transform" />
+                        ) : (
+                            <List size={18} className="group-hover:scale-110 transition-transform" />
+                        )}
+                    </button>
                     <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-brand-jasper text-white font-serif-title shadow-editorial whitespace-nowrap">
                         <Plus size={18} /> Thêm Buổi học / Thi
                     </button>
@@ -3853,13 +3851,15 @@ export default function App() {
         return 'dashboard';
     });
 
+    const [authLoadingState, setAuthLoadingState] = useState(null); // 'logging_in' | 'logging_out' | null
+
     const handleGoogleLogin = async () => {
+        setAuthLoadingState('logging_in');
         try {
             await setPersistence(auth, browserSessionPersistence);
             const result = await signInWithPopup(auth, googleProvider);
             const user = result.user;
             
-            // Bạn có thể tự động lấy tên và avatar từ Google để đắp vào Profile mặc định
             const googleProfile = {
                 ...DEFAULT_PROFILE,
                 fullName: user.displayName || DEFAULT_PROFILE.fullName,
@@ -3867,7 +3867,6 @@ export default function App() {
                 avatarUrl: user.photoURL || DEFAULT_PROFILE.avatarUrl,
             };
             
-            // Lưu tạm vào localStorage để syncFirestoreData xử lý ở bước sau
             if (!localStorage.getItem(STORAGE_KEYS.PROFILE)) {
                 localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(googleProfile));
                 setProfile(googleProfile);
@@ -3875,6 +3874,8 @@ export default function App() {
         } catch (error) {
             console.error("Lỗi đăng nhập Google:", error);
             setError("Không thể đăng nhập bằng Google. Vui lòng thử lại.");
+        } finally {
+            setTimeout(() => setAuthLoadingState(null), 400);
         }
     };
     // Đảm bảo bạn đã có sẵn import db từ file firebase
@@ -4056,6 +4057,8 @@ export default function App() {
 
     const handleSignOut = async () => {
         try {
+            setAuthLoadingState('logging_out');
+            await new Promise(resolve => setTimeout(resolve, 500)); // Smooth exit delay
             await signOut(auth);
             setUser(null);
             setProfile(DEFAULT_PROFILE);
@@ -4071,6 +4074,8 @@ export default function App() {
             localStorage.removeItem('pedagogy_user_id');
         } catch (err) {
             console.error("Lỗi đăng xuất:", err);
+        } finally {
+            setAuthLoadingState(null);
         }
     };
 
@@ -4257,7 +4262,7 @@ if (!user) {
 
                 {/* CỘT PHẢI: LOGO & FORM ĐĂNG NHẬP */}
                 <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12">
-                    <div className="w-full max-w-md">
+                    <div className="w-full max-w-md animate-auth-in">
                         {/* Logo & Tiêu đề nằm trên form đăng nhập */}
                         <div className="text-center mb-10 flex flex-col items-center">
                             <img 
@@ -4369,8 +4374,8 @@ if (!user) {
                 <button onClick={() => alert('Mobile menu - hãy sử dụng trên máy tính để có trải nghiệm đầy đủ nhất')}><Menu /></button>
             </div>
 
-            {/* Main Content Area (Independent Vertical Scroll) */}
-            <main className="flex-1 h-full overflow-y-auto p-6 md:p-12 mt-14 md:mt-0">
+            {/* Main Content Area (Independent Vertical Scroll with Fade Up Animation) */}
+            <main key={currentView} className="flex-1 h-full overflow-y-auto p-6 md:p-12 mt-14 md:mt-0 animate-fade-in-up">
                 {error && <AlertBox type="error" message={error} onClose={() => setError(null)} />}
 
 
@@ -4442,6 +4447,16 @@ if (!user) {
                     />
                 )}
             </main>
+
+            {/* Auth Login / Logout Transition Overlay */}
+            {authLoadingState && (
+                <div className="fixed inset-0 z-[300] bg-brand-cream/90 backdrop-blur-md flex flex-col items-center justify-center space-y-4 animate-backdrop-in">
+                    <div className="w-14 h-14 border-4 border-brand-cerulean/30 border-t-brand-cerulean rounded-full animate-spin"></div>
+                    <p className="text-xl font-serif-title font-bold text-brand-cerulean animate-pulse">
+                        {authLoadingState === 'logging_in' ? 'Đang kết nối tài khoản Google...' : 'Đang đăng xuất an toàn...'}
+                    </p>
+                </div>
+            )}
 
             {/* Certificate Modal */}
             <CertificateModal
