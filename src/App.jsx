@@ -108,10 +108,7 @@ const DEFAULT_PROFILE = {
 export const formatModuleName = (name, subject) => {
     if (!name) return '';
     if (!subject) return name;
-    return name
-        .replace(/\[.*?(?:môn|Toán|Tin|Ngữ văn|Tiếng|Giáo dục|KHTN|Lịch sử|Địa|Công nghệ).*?\]/gi, subject)
-        .replace(/\[Môn học\]/gi, subject)
-        .replace(/\[Môn đăng ký\]/gi, subject);
+    return name.replace(/\[[^\]]+\]/gi, subject);
 };
 
 
@@ -1572,9 +1569,6 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                         { code: 'B02', name: `Xây dựng kế hoạch dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THCS`, credits: 2, type: 'mandatory' },
                                         { code: 'B03', name: `Tổ chức dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THCS`, credits: 2, type: 'mandatory' },
                                         { code: 'B04', name: `Thực hành dạy học [${profile?.teachingSubject || 'Môn học'}] cấp THCS ở trường sư phạm`, credits: 3, type: 'mandatory' },
-                                        { code: 'B05', name: 'Thực hành kỹ năng giáo dục ở trường THCS', credits: 2, type: 'practice' },
-                                        { code: 'B06', name: 'Thực tập sư phạm 1 ở trường THCS', credits: 2, type: 'practice' },
-                                        { code: 'B07', name: 'Thực tập sư phạm 2 ở trường THCS', credits: 2, type: 'practice' },
                                     ].map(tpl => (
                                         <button
                                             key={tpl.code}
@@ -4393,6 +4387,7 @@ if (!user) {
                         programId={activeProgramId || (programs[0] && programs[0].id)}
                         programs={programs}
                         modules={modules}
+                        profile={profile}
                         onAddModule={handleAddModule}
                         onUpdateModule={handleUpdateModule}
                         onDeleteModule={handleDeleteModule}
@@ -4406,6 +4401,7 @@ if (!user) {
                         programId={activeProgramId || (programs[0] && programs[0].id)}
                         programs={programs}
                         modules={modules}
+                        profile={profile}
                         onUpdateModule={handleUpdateModule}
                         onDeleteModule={handleDeleteModule}
                         navigate={navigate}
