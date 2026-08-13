@@ -145,8 +145,22 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
     const handleToggle = () => {
         if (!isOpen && dropdownRef.current) {
             const rect = dropdownRef.current.getBoundingClientRect();
-            const spaceBelow = window.innerHeight - rect.bottom;
-            if (direction === "up" || (direction === "auto" && spaceBelow < 220)) {
+            
+            // Smart Container Boundary Detection: find closest scroll container (e.g. Modal)
+            let containerBottom = window.innerHeight;
+            let parent = dropdownRef.current.parentElement;
+            while (parent && parent !== document.body) {
+                const style = window.getComputedStyle(parent);
+                if (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflow === 'auto' || style.overflow === 'scroll') {
+                    const parentRect = parent.getBoundingClientRect();
+                    containerBottom = Math.min(containerBottom, parentRect.bottom);
+                    break;
+                }
+                parent = parent.parentElement;
+            }
+
+            const spaceBelow = containerBottom - rect.bottom;
+            if (direction === "up" || (direction === "auto" && spaceBelow < 190)) {
                 setOpenUpward(true);
             } else {
                 setOpenUpward(false);
@@ -172,7 +186,7 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
             </button>
 
             {isOpen && (
-                <div className={`absolute z-[100] left-0 right-0 ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'} bg-brand-cream border-editorial shadow-editorial max-h-60 overflow-y-auto`}>
+                <div className={`absolute z-[100] left-0 right-0 ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'} bg-brand-cream border-editorial shadow-editorial max-h-56 overflow-y-auto animate-fade-in-down`}>
                     {options.map((opt) => (
                         <div
                             key={opt.value}
