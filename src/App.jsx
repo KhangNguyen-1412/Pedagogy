@@ -48,6 +48,7 @@ import {
     getDocRef
 } from './firebase';
 import { signOut } from 'firebase/auth';
+import { writeBatch } from 'firebase/firestore';
 import logoImg from './assets/logo.png';
 import {db} from './firebase';
 
@@ -3791,8 +3792,6 @@ export default function App() {
             setError("Không thể đăng nhập bằng Google. Vui lòng thử lại.");
         }
     };
-
-    import { writeBatch } from 'firebase/firestore';
     // Đảm bảo bạn đã có sẵn import db từ file firebase
 
     const handleMigrateRealData = async () => {
