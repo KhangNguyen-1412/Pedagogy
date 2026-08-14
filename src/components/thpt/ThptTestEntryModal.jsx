@@ -5,6 +5,7 @@ import {
     CheckCircle2, AlertCircle, Sparkles, CheckSquare, RefreshCw
 } from 'lucide-react';
 import { EditorialSelect } from './EditorialSelect';
+import { EditorialDatePicker } from './EditorialDatePicker';
 
 export const ThptTestEntryModal = ({
     isOpen,
@@ -181,15 +182,12 @@ export const ThptTestEntryModal = ({
                         </div>
 
                         <div>
-                            <label className="block text-xs font-serif-title font-bold text-brand-cerulean mb-1 flex items-center gap-1.5">
-                                <Calendar size={14} /> Ngày kiểm tra
-                            </label>
-                            <input
-                                type="date"
+                            <EditorialDatePicker
+                                label="Ngày kiểm tra"
                                 value={testDate}
-                                onChange={e => setTestDate(e.target.value)}
-                                className="w-full input-editorial text-sm font-body px-2 py-1.5"
-                                required
+                                onChange={setTestDate}
+                                isRange={false}
+                                placeholder="Chọn ngày kiểm tra..."
                             />
                         </div>
 
@@ -304,7 +302,7 @@ export const ThptTestEntryModal = ({
                                                             Câu {idx + 1}:
                                                         </span>
                                                         <span className="text-[10px] text-gray-400 font-mono">
-                                                            (ĐA: {q.correctAnswer})
+                                                            (ĐA: {typeof q.correctAnswer === 'string' ? q.correctAnswer : 'Đ/S'})
                                                         </span>
                                                     </div>
 

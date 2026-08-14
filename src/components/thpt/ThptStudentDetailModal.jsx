@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
     X, User, Phone, Mail, GraduationCap, Target, Award,
-    Plus, Trash2, Check, Calendar, AlertCircle, FileText, CheckCircle2, TrendingUp, Sparkles, BookOpen
+    Plus, Trash2, Check, Calendar, AlertCircle, FileText, CheckCircle2, TrendingUp, Sparkles, BookOpen, AlertTriangle
 } from 'lucide-react';
 import { EditorialSelect } from './EditorialSelect';
 
@@ -447,9 +447,9 @@ export const ThptStudentDetailModal = ({
                                             value={noteForm.type}
                                             onChange={val => setNoteForm({ ...noteForm, type: val })}
                                             options={[
-                                                { value: 'weakness', label: '⚠️ Điểm yếu / Hay sai' },
-                                                { value: 'strength', label: '🌟 Điểm mạnh / Thế mạnh' },
-                                                { value: 'general', label: '📝 Ghi chú chung' }
+                                                { value: 'weakness', label: 'Điểm yếu / Hay sai', icon: AlertTriangle, iconClassName: 'text-amber-500' },
+                                                { value: 'strength', label: 'Điểm mạnh / Thế mạnh', icon: Sparkles, iconClassName: 'text-brand-jasper' },
+                                                { value: 'general', label: 'Ghi chú chung', icon: FileText, iconClassName: 'text-brand-cerulean' }
                                             ]}
                                             size="sm"
                                         />

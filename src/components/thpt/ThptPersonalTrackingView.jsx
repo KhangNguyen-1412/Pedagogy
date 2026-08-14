@@ -114,37 +114,30 @@ export const ThptPersonalTrackingView = ({
     }, [chartPoints, linePathD, innerHeight]);
 
     return (
-        <div className="space-y-8 animate-fade-in-up">
-            {/* Header Banner */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-brand-cerulean/20 pb-6">
+        <div className="max-w-5xl mx-auto space-y-6 animate-fade-in-up">
+            {/* Header Banner - Identical layout to ProgramsView (Sticky Header) */}
+            <div className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
-                    <div className="flex items-center gap-2 text-xs font-sans uppercase tracking-widest text-brand-jasper font-bold mb-1">
-                        <TrendingUp size={14} /> Nhật ký Giải đề & Phân tích Điểm số
-                    </div>
-                    <h1 className="text-3xl sm:text-4xl font-serif-title text-brand-cerulean tracking-tight">
-                        Tiến độ & Kết quả Luyện đề của Tôi
-                    </h1>
-                    <p className="text-sm italic text-gray-600 font-body mt-1">
-                        Theo dõi biểu đồ tăng trưởng điểm số, nhật ký rút kinh nghiệm và khoảng cách tới mục tiêu Đại học
-                    </p>
+                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Nhật ký & Tiến độ Ôn thi</h2>
+                    <p className="text-lg text-gray-600 mt-2">Theo dõi biểu đồ điểm số, nhật ký rút kinh nghiệm và khoảng cách tới mục tiêu.</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 shrink-0">
                     <button
                         type="button"
                         onClick={() => setIsEntryModalOpen(true)}
-                        className="px-5 py-2.5 bg-brand-cerulean hover:bg-brand-jasper text-white font-sans text-xs font-bold shadow-editorial transition-all flex items-center gap-2"
+                        className="flex items-center gap-2 px-4 py-2 bg-brand-jasper text-brand-cream font-serif-title hover:bg-red-800 transition-colors shadow-editorial whitespace-nowrap"
                     >
-                        <Plus size={16} /> Ghi nhận Kết quả Làm Đề
+                        <Plus size={18} /> Ghi nhận Kết quả Làm Đề
                     </button>
                 </div>
             </div>
 
-            {/* Filter Bar */}
-            <div className="bg-white p-4 border border-brand-cerulean/20 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex items-center gap-3 w-full sm:w-80">
-                    <label className="text-xs font-serif-title text-brand-cerulean shrink-0 font-bold flex items-center gap-1.5">
-                        <BookOpen size={14} /> Lọc môn học:
+            {/* Filter Bar - Editorial Card Style */}
+            <div className="bg-white p-6 border-editorial shadow-editorial flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-3 w-full sm:w-96">
+                    <label className="text-xs font-serif-title text-brand-cerulean shrink-0 font-bold flex items-center gap-1.5 uppercase tracking-wider">
+                        <BookOpen size={14} className="text-brand-jasper" /> Lọc môn học:
                     </label>
                     <EditorialSelect
                         value={selectedSubjectFilter}
@@ -161,55 +154,55 @@ export const ThptPersonalTrackingView = ({
                     />
                 </div>
 
-                <div className="text-xs text-gray-500 font-serif">
-                    Mục tiêu: <strong className="text-brand-cerulean">{profile?.targetUniversity || 'Đại học Mục tiêu'}</strong> ({profile?.targetTotalScore || 27.5} đ)
+                <div className="text-xs text-gray-600 font-serif">
+                    Mục tiêu: <strong className="text-brand-cerulean font-bold">{profile?.targetUniversity || 'Đại học Mục tiêu'}</strong> ({profile?.targetTotalScore || 27.5} đ)
                 </div>
             </div>
 
-            {/* KPIs Strip */}
+            {/* KPIs Strip - Matching Editorial Panels */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-white p-4 border border-brand-cerulean/20 shadow-sm">
-                    <span className="text-xs font-serif-title text-gray-500 uppercase">Điểm trung bình của tôi</span>
-                    <p className="text-2xl font-serif-title font-bold text-brand-cerulean mt-1">
+                <div className="bg-white p-5 border-editorial shadow-editorial">
+                    <span className="text-xs font-serif-title text-gray-500 uppercase tracking-wider block">Điểm trung bình</span>
+                    <p className="text-3xl font-serif-title font-bold text-brand-cerulean mt-1">
                         {totalTests > 0 ? `${avgScore} đ` : '---'}
                     </p>
-                    <span className="text-[11px] text-gray-400 font-body">Qua {totalTests} lần làm đề</span>
+                    <span className="text-xs text-gray-400 font-body">Qua {totalTests} lần làm đề</span>
                 </div>
 
-                <div className="bg-white p-4 border border-brand-cerulean/20 shadow-sm">
-                    <span className="text-xs font-serif-title text-gray-500 uppercase">Kỷ lục điểm cao nhất</span>
-                    <p className="text-2xl font-serif-title font-bold text-emerald-700 mt-1">
+                <div className="bg-white p-5 border-editorial shadow-editorial">
+                    <span className="text-xs font-serif-title text-gray-500 uppercase tracking-wider block">Kỷ lục điểm cao nhất</span>
+                    <p className="text-3xl font-serif-title font-bold text-emerald-700 mt-1">
                         {totalTests > 0 ? `${highestScore} đ` : '---'}
                     </p>
-                    <span className="text-[11px] text-emerald-600 font-body font-bold">Thành tích cao nhất</span>
+                    <span className="text-xs text-emerald-600 font-body font-bold">Thành tích cao nhất</span>
                 </div>
 
-                <div className="bg-white p-4 border border-brand-cerulean/20 shadow-sm">
-                    <span className="text-xs font-serif-title text-gray-500 uppercase">Điểm đề gần nhất</span>
-                    <p className="text-2xl font-serif-title font-bold text-brand-jasper mt-1">
+                <div className="bg-white p-5 border-editorial shadow-editorial">
+                    <span className="text-xs font-serif-title text-gray-500 uppercase tracking-wider block">Điểm đề gần nhất</span>
+                    <p className="text-3xl font-serif-title font-bold text-brand-jasper mt-1">
                         {totalTests > 0 ? `${latestScore} đ` : '---'}
                     </p>
-                    <span className="text-[11px] text-gray-400 font-body">
+                    <span className="text-xs text-gray-400 font-body">
                         {totalTests > 0 ? filteredResults[filteredResults.length - 1].testDate : 'Chưa có'}
                     </span>
                 </div>
 
-                <div className="bg-white p-4 border border-brand-cerulean/20 shadow-sm">
-                    <span className="text-xs font-serif-title text-gray-500 uppercase">Xu hướng tiến bộ</span>
-                    <p className="text-2xl font-serif-title font-bold text-indigo-700 mt-1 flex items-center gap-1">
+                <div className="bg-white p-5 border-editorial shadow-editorial">
+                    <span className="text-xs font-serif-title text-gray-500 uppercase tracking-wider block">Xu hướng tiến bộ</span>
+                    <p className="text-3xl font-serif-title font-bold text-indigo-700 mt-1 flex items-center gap-1">
                         {totalTests > 1 ? (
                             <>
                                 {Number(progressDiff) >= 0 ? `+${progressDiff}` : progressDiff} đ
-                                <ArrowUpRight size={18} className={Number(progressDiff) >= 0 ? 'text-emerald-600' : 'text-red-500'} />
+                                <ArrowUpRight size={20} className={Number(progressDiff) >= 0 ? 'text-emerald-600' : 'text-red-500'} />
                             </>
                         ) : 'Ổn định'}
                     </p>
-                    <span className="text-[11px] text-gray-400 font-body">So với đề đầu tiên</span>
+                    <span className="text-xs text-gray-400 font-body">So với đề đầu tiên</span>
                 </div>
             </div>
 
             {/* Performance Progress Chart Box */}
-            <div className="bg-white p-6 border border-brand-cerulean/20 shadow-editorial space-y-4">
+            <div className="bg-white p-6 border-editorial shadow-editorial space-y-4">
                 <div className="flex flex-wrap justify-between items-center pb-3 border-b border-brand-cerulean/15 gap-2">
                     <div>
                         <h3 className="font-serif-title font-bold text-lg text-brand-cerulean flex items-center gap-2">

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
     Users, Plus, Search, Filter, Phone, Mail, GraduationCap,
-    Target, Award, TrendingUp, FileText, Trash2, Edit2, ChevronRight, Sparkles, Check
+    Target, Award, TrendingUp, FileText, Trash2, Edit2, ChevronRight, Sparkles, Check, AlertTriangle
 } from 'lucide-react';
 import { ThptStudentDetailModal } from './ThptStudentDetailModal';
 import { EditorialSelect } from './EditorialSelect';
@@ -260,8 +260,13 @@ export const ThptStudentsView = ({
                                                 ? 'bg-red-50/70 border-red-200 text-red-900'
                                                 : 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
                                         }`}>
-                                            <div className="flex items-center gap-1 font-bold text-[11px] mb-0.5">
-                                                <span>{latestNote.type === 'weakness' ? '⚠️ Cần cải thiện:' : '🌟 Điểm mạnh:'}</span>
+                                            <div className="flex items-center gap-1.5 font-bold text-[11px] mb-0.5">
+                                                {latestNote.type === 'weakness' ? (
+                                                    <AlertTriangle size={13} className="text-amber-600 shrink-0" />
+                                                ) : (
+                                                    <Sparkles size={13} className="text-emerald-700 shrink-0" />
+                                                )}
+                                                <span>{latestNote.type === 'weakness' ? 'Cần cải thiện:' : 'Điểm mạnh:'}</span>
                                                 <span className="truncate">{latestNote.title}</span>
                                             </div>
                                             <p className="line-clamp-1 text-[11px] opacity-90">{latestNote.content}</p>

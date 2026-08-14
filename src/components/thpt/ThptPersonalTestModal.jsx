@@ -5,6 +5,8 @@ import {
     CheckCircle2, AlertCircle, Sparkles, CheckSquare, RefreshCw
 } from 'lucide-react';
 import { EditorialSelect } from './EditorialSelect';
+import { EditorialDatePicker } from './EditorialDatePicker';
+import { MathText } from './MathText';
 
 export const ThptPersonalTestModal = ({
     isOpen,
@@ -52,24 +54,58 @@ export const ThptPersonalTestModal = ({
 
     if (!isOpen) return null;
 
-    // Calculate auto grade results
+    // Calculate auto grade results with THPT BGD Standards
     const totalQuestions = activeExam?.questions?.length || 0;
     let autoCorrectCount = 0;
-    let autoWrongCount = 0;
+    let earnedPoints = 0;
+    let maxPossiblePoints = 0;
 
     if (activeExam?.questions) {
         activeExam.questions.forEach(q => {
-            if (studentAnswers[q.id] && studentAnswers[q.id] === q.correctAnswer) {
-                autoCorrectCount++;
-            } else if (studentAnswers[q.id]) {
-                autoWrongCount++;
+            const studentAns = studentAnswers[q.id];
+            if (q.type === 'true_false') {
+                maxPossiblePoints += 1.0;
+                const correctObj = typeof q.correctAnswer === 'object' && q.correctAnswer !== null ? q.correctAnswer : {};
+                const studentObj = typeof studentAns === 'object' && studentAns !== null ? studentAns : {};
+                
+                let correctStatements = 0;
+                let answeredAny = false;
+                ['a', 'b', 'c', 'd'].forEach(k => {
+                    if (studentObj[k] !== undefined) answeredAny = true;
+                    if (studentObj[k] !== undefined && studentObj[k] === correctObj[k]) {
+                        correctStatements++;
+                    }
+                });
+
+                if (correctStatements === 1) earnedPoints += 0.1;
+                else if (correctStatements === 2) earnedPoints += 0.25;
+                else if (correctStatements === 3) earnedPoints += 0.5;
+                else if (correctStatements === 4) {
+                    earnedPoints += 1.0;
+                    autoCorrectCount++;
+                }
+            } else if (q.type === 'short_answer' || q.type === 'essay') {
+                maxPossiblePoints += 0.5;
+                const isCorrect = studentAns && String(studentAns).trim().toLowerCase() === String(q.correctAnswer).trim().toLowerCase();
+                if (isCorrect) {
+                    earnedPoints += 0.5;
+                    autoCorrectCount++;
+                }
+            } else {
+                maxPossiblePoints += 0.25;
+                if (studentAns && studentAns === q.correctAnswer) {
+                    earnedPoints += 0.25;
+                    autoCorrectCount++;
+                }
             }
         });
     }
 
-    const calculatedScore = totalQuestions > 0
-        ? Number(((autoCorrectCount / totalQuestions) * 10).toFixed(2))
-        : 0;
+    const calculatedScore = maxPossiblePoints > 0
+        ? Number(((earnedPoints / maxPossiblePoints) * 10).toFixed(2))
+        : totalQuestions > 0 ? Number(((autoCorrectCount / totalQuestions) * 10).toFixed(2)) : 0;
+
+    const autoWrongCount = Math.max(0, totalQuestions - autoCorrectCount);
 
     const handleSelectOption = (questionId, optionId) => {
         setStudentAnswers(prev => ({
@@ -78,11 +114,24 @@ export const ThptPersonalTestModal = ({
         }));
     };
 
+    const handleSelectTrueFalse = (questionId, itemKey, isTrue) => {
+        setStudentAnswers(prev => {
+            const currentObj = typeof prev[questionId] === 'object' && prev[questionId] !== null ? prev[questionId] : {};
+            return {
+                ...prev,
+                [questionId]: {
+                    ...currentObj,
+                    [itemKey]: isTrue
+                }
+            };
+        });
+    };
+
     const handleQuickFillAllCorrect = () => {
         if (!activeExam?.questions) return;
         const allCorrect = {};
         activeExam.questions.forEach(q => {
-            allCorrect[q.id] = q.correctAnswer || 'A';
+            allCorrect[q.id] = q.correctAnswer;
         });
         setStudentAnswers(allCorrect);
         showToast?.('Đã điền toàn bộ đáp án chuẩn của đề');
@@ -161,15 +210,12 @@ export const ThptPersonalTestModal = ({
                         </div>
 
                         <div>
-                            <label className="block text-xs font-serif-title font-bold text-brand-cerulean mb-1 flex items-center gap-1.5">
-                                <Calendar size={14} /> Ngày tôi làm bài
-                            </label>
-                            <input
-                                type="date"
+                            <EditorialDatePicker
+                                label="Ngày tôi làm bài"
                                 value={testDate}
-                                onChange={e => setTestDate(e.target.value)}
-                                className="w-full input-editorial text-sm font-body px-2 py-1.5"
-                                required
+                                onChange={setTestDate}
+                                isRange={false}
+                                placeholder="Chọn ngày làm bài..."
                             />
                         </div>
                     </div>
@@ -250,6 +296,123 @@ export const ThptPersonalTestModal = ({
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto p-1">
                                     {activeExam.questions.map((q, idx) => {
                                         const myAns = studentAnswers[q.id];
+
+                                        if (q.type === 'true_false') {
+                                            const ansObj = typeof myAns === 'object' && myAns !== null ? myAns : {};
+                                            const correctObj = typeof q.correctAnswer === 'object' && q.correctAnswer !== null ? q.correctAnswer : {};
+
+                                            return (
+                                                <div key={q.id} className="p-3 border border-brand-cerulean/20 rounded bg-white space-y-2 col-span-1 sm:col-span-2 lg:col-span-3">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="font-serif-title font-bold text-xs text-brand-cerulean">
+                                                            Câu {idx + 1} (Trắc nghiệm Đúng/Sai 4 ý):
+                                                        </span>
+                                                        <span className="text-[10px] text-gray-400 font-sans">
+                                                            Tích chọn Đúng/Sai cho từng ý:
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                        {['a', 'b', 'c', 'd'].map(itemKey => {
+                                                            const isChosenTrue = ansObj[itemKey] === true;
+                                                            const isChosenFalse = ansObj[itemKey] === false;
+                                                            const correctVal = correctObj[itemKey];
+
+                                                            return (
+                                                                <div key={itemKey} className="p-1.5 bg-brand-cream/30 border border-brand-cerulean/15 rounded flex items-center justify-between gap-1 text-xs">
+                                                                    <strong className="font-serif-title text-brand-cerulean uppercase">{itemKey})</strong>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleSelectTrueFalse(q.id, itemKey, true)}
+                                                                            className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                                                                                isChosenTrue
+                                                                                    ? correctVal === true
+                                                                                        ? 'bg-emerald-600 text-white shadow-sm'
+                                                                                        : 'bg-brand-jasper text-white shadow-sm'
+                                                                                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+                                                                            }`}
+                                                                        >
+                                                                            Đúng
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleSelectTrueFalse(q.id, itemKey, false)}
+                                                                            className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                                                                                isChosenFalse
+                                                                                    ? correctVal === false
+                                                                                        ? 'bg-emerald-600 text-white shadow-sm'
+                                                                                        : 'bg-brand-jasper text-white shadow-sm'
+                                                                                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+                                                                            }`}
+                                                                        >
+                                                                            Sai
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        if (q.type === 'essay') {
+                                            const isFilled = typeof myAns === 'string' && myAns.trim().length > 0;
+
+                                            return (
+                                                <div key={q.id} className="p-3.5 border border-brand-cerulean/20 rounded bg-white space-y-2 col-span-1 sm:col-span-2 lg:col-span-3">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="font-serif-title font-bold text-xs text-brand-cerulean flex items-center gap-1">
+                                                            Câu {idx + 1} (Bài làm Tự luận):
+                                                        </span>
+                                                        <span className="text-[10px] text-gray-500 font-sans">
+                                                            Nhập lời giải / các bước tính toán của bạn
+                                                        </span>
+                                                    </div>
+                                                    <textarea
+                                                        rows={4}
+                                                        value={typeof myAns === 'string' ? myAns : ''}
+                                                        onChange={e => handleSelectOption(q.id, e.target.value)}
+                                                        placeholder="Nhập chi tiết lời giải, biến đổi toán học hoặc kết quả bài làm..."
+                                                        className="w-full p-2.5 bg-brand-cream/30 border border-brand-cerulean/30 rounded font-body text-xs text-brand-ink focus:outline-none focus:border-brand-jasper focus:bg-white leading-relaxed"
+                                                    />
+                                                    {isFilled && (
+                                                        <div className="p-2 bg-emerald-50/50 border border-emerald-200 rounded text-xs space-y-0.5">
+                                                            <span className="text-[10px] font-bold text-emerald-800 uppercase block">Xem trước bài làm:</span>
+                                                            <div className="text-emerald-950 font-serif"><MathText text={myAns} /></div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        }
+
+                                        if (q.type === 'short_answer') {
+                                            const isFilled = typeof myAns === 'string' && myAns.trim().length > 0;
+                                            const isMatch = isFilled && String(myAns).trim().toLowerCase() === String(q.correctAnswer).trim().toLowerCase();
+
+                                            return (
+                                                <div key={q.id} className="p-2.5 border border-brand-cerulean/20 rounded bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                                    <span className="font-serif-title font-bold text-xs text-brand-cerulean shrink-0">
+                                                        Câu {idx + 1} (Điền đáp số):
+                                                    </span>
+                                                    <input
+                                                        type="text"
+                                                        value={typeof myAns === 'string' ? myAns : ''}
+                                                        onChange={e => handleSelectOption(q.id, e.target.value)}
+                                                        placeholder="Nhập kết quả (vd: 2.5)..."
+                                                        className={`w-full sm:w-36 input-editorial text-xs font-mono px-2 py-1 ${
+                                                            isFilled
+                                                                ? isMatch
+                                                                    ? 'bg-emerald-50 border-emerald-400 font-bold text-emerald-800'
+                                                                    : 'bg-amber-50 border-amber-300 text-amber-900'
+                                                                : 'bg-white'
+                                                        }`}
+                                                    />
+                                                </div>
+                                            );
+                                        }
+
+                                        // Default: Multiple Choice 4 Options (A, B, C, D)
                                         const isCorrect = myAns && myAns === q.correctAnswer;
                                         const isWrong = myAns && myAns !== q.correctAnswer;
 
@@ -272,7 +435,7 @@ export const ThptPersonalTestModal = ({
                                                         <span className="text-[10px] text-emerald-700 font-bold">✓ Đúng</span>
                                                     )}
                                                     {isWrong && (
-                                                        <span className="text-[10px] text-red-600 font-bold">✗ Sai (Đ.A: {q.correctAnswer})</span>
+                                                        <span className="text-[10px] text-red-600 font-bold">✗ Sai (Đ.A: {typeof q.correctAnswer === 'string' ? q.correctAnswer : 'Đ/S'})</span>
                                                     )}
                                                 </div>
 

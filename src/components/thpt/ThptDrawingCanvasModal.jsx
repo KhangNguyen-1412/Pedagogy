@@ -903,83 +903,119 @@ export const ThptDrawingCanvasModal = ({
                         <button
                             type="button"
                             onClick={() => setIs3DMenuOpen(!is3DMenuOpen)}
-                            className="px-3 py-1.5 bg-brand-jasper text-white hover:bg-brand-cerulean rounded font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                            className="px-3 py-1.5 bg-brand-jasper text-white hover:bg-brand-cerulean rounded font-bold flex items-center gap-1.5 shadow-sm transition-all text-xs"
                             title="Chèn mẫu hình học không gian 3D chuẩn"
                         >
                             <Box size={14} /> Mẫu Hình Không Gian 3D <ChevronDown size={13} />
                         </button>
 
                         {is3DMenuOpen && (
-                            <div className="absolute left-0 top-full mt-1 w-64 bg-white border-2 border-brand-cerulean shadow-xl rounded z-30 py-1 divide-y divide-gray-100 animate-fade-in-down text-left">
-                                <div className="px-3 py-1 bg-brand-cream text-[11px] font-bold font-serif-title text-brand-cerulean uppercase">
+                            <div className="absolute right-0 top-full mt-1.5 w-80 sm:w-96 max-h-[390px] overflow-y-auto bg-white border-2 border-brand-cerulean shadow-2xl rounded-lg z-50 py-1 divide-y divide-gray-100 animate-fade-in-down text-left">
+                                <div className="px-3.5 py-1.5 bg-brand-cream/90 text-[11px] font-bold font-serif-title text-brand-cerulean uppercase sticky top-0 z-10 border-b border-brand-cerulean/10">
                                     📐 Khối Đa Diện & Chóp
                                 </div>
                                 <button
                                     type="button"
                                     onClick={drawPyramidTriangular}
-                                    className="w-full px-3 py-2 text-left hover:bg-brand-cream text-xs text-gray-800 font-serif flex items-center gap-2"
+                                    className="w-full px-3.5 py-2.5 text-left hover:bg-brand-cream/60 transition-colors flex items-start gap-2.5"
                                 >
-                                    🔺 <strong>Hình chóp tam giác S.ABC</strong> (Cao SH)
+                                    <span className="text-base shrink-0 mt-0.5">🔺</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-serif-title font-bold text-brand-cerulean text-xs">Hình chóp tam giác S.ABC</div>
+                                        <div className="text-[11px] text-gray-500 font-sans mt-0.5">Chiều cao SH ⟂ đáy, cạnh khuất nét đứt</div>
+                                    </div>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={drawPyramidQuadrilateral}
-                                    className="w-full px-3 py-2 text-left hover:bg-brand-cream text-xs text-gray-800 font-serif flex items-center gap-2"
+                                    className="w-full px-3.5 py-2.5 text-left hover:bg-brand-cream/60 transition-colors flex items-start gap-2.5"
                                 >
-                                    🔲 <strong>Hình chóp tứ giác S.ABCD</strong> (Đáy HBH)
+                                    <span className="text-base shrink-0 mt-0.5">🔲</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-serif-title font-bold text-brand-cerulean text-xs">Hình chóp tứ giác S.ABCD</div>
+                                        <div className="text-[11px] text-gray-500 font-sans mt-0.5">Đáy hình bình hành, tâm O, chiều cao SO</div>
+                                    </div>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={drawCubeBox}
-                                    className="w-full px-3 py-2 text-left hover:bg-brand-cream text-xs text-gray-800 font-serif flex items-center gap-2"
+                                    className="w-full px-3.5 py-2.5 text-left hover:bg-brand-cream/60 transition-colors flex items-start gap-2.5"
                                 >
-                                    🧊 <strong>Hình lập phương / Khối hộp chữ nhật</strong>
+                                    <span className="text-base shrink-0 mt-0.5">🧊</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-serif-title font-bold text-brand-cerulean text-xs">Hình lập phương / Khối hộp chữ nhật</div>
+                                        <div className="text-[11px] text-gray-500 font-sans mt-0.5">8 đỉnh ABCD.A'B'C'D' với 3 cạnh khuất</div>
+                                    </div>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={drawTriangularPrism}
-                                    className="w-full px-3 py-2 text-left hover:bg-brand-cream text-xs text-gray-800 font-serif flex items-center gap-2"
+                                    className="w-full px-3.5 py-2.5 text-left hover:bg-brand-cream/60 transition-colors flex items-start gap-2.5"
                                 >
-                                    🏛️ <strong>Lăng trụ tam giác ABC.A'B'C'</strong>
+                                    <span className="text-base shrink-0 mt-0.5">🏛️</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-serif-title font-bold text-brand-cerulean text-xs">Lăng trụ tam giác ABC.A'B'C'</div>
+                                        <div className="text-[11px] text-gray-500 font-sans mt-0.5">Lăng trụ đứng 6 đỉnh, đáy tam giác</div>
+                                    </div>
                                 </button>
 
-                                <div className="px-3 py-1 bg-brand-cream text-[11px] font-bold font-serif-title text-brand-cerulean uppercase">
+                                <div className="px-3.5 py-1.5 bg-brand-cream/90 text-[11px] font-bold font-serif-title text-brand-cerulean uppercase sticky top-0 z-10 border-b border-brand-cerulean/10">
                                     🌀 Khối Tròn Xoay & Tọa Độ
                                 </div>
                                 <button
                                     type="button"
                                     onClick={drawCone}
-                                    className="w-full px-3 py-2 text-left hover:bg-brand-cream text-xs text-gray-800 font-serif flex items-center gap-2"
+                                    className="w-full px-3.5 py-2.5 text-left hover:bg-brand-cream/60 transition-colors flex items-start gap-2.5"
                                 >
-                                    🍦 <strong>Hình nón</strong> (Đỉnh S, Đáy Elip, Trục SO)
+                                    <span className="text-base shrink-0 mt-0.5">🍦</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-serif-title font-bold text-brand-cerulean text-xs">Hình nón tròn xoay</div>
+                                        <div className="text-[11px] text-gray-500 font-sans mt-0.5">Đỉnh S, Đáy Elip bán phần, Trục SO, Bán kính R</div>
+                                    </div>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={drawCylinder}
-                                    className="w-full px-3 py-2 text-left hover:bg-brand-cream text-xs text-gray-800 font-serif flex items-center gap-2"
+                                    className="w-full px-3.5 py-2.5 text-left hover:bg-brand-cream/60 transition-colors flex items-start gap-2.5"
                                 >
-                                    🛢️ <strong>Hình trụ tròn xoay</strong> (Trục O'O)
+                                    <span className="text-base shrink-0 mt-0.5">🛢️</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-serif-title font-bold text-brand-cerulean text-xs">Hình trụ tròn xoay</div>
+                                        <div className="text-[11px] text-gray-500 font-sans mt-0.5">2 đáy elip, hai đường sinh, trục O'O</div>
+                                    </div>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={drawSphere}
-                                    className="w-full px-3 py-2 text-left hover:bg-brand-cream text-xs text-gray-800 font-serif flex items-center gap-2"
+                                    className="w-full px-3.5 py-2.5 text-left hover:bg-brand-cream/60 transition-colors flex items-start gap-2.5"
                                 >
-                                    🌐 <strong>Khối cầu / Mặt cầu</strong> (Tâm O, Bán kính R)
+                                    <span className="text-base shrink-0 mt-0.5">🌐</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-serif-title font-bold text-brand-cerulean text-xs">Khối cầu / Mặt cầu</div>
+                                        <div className="text-[11px] text-gray-500 font-sans mt-0.5">Tâm O, Bán kính R, vĩ tuyến xích đạo</div>
+                                    </div>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={drawOxyzPreset}
-                                    className="w-full px-3 py-2 text-left hover:bg-brand-cream text-xs text-gray-800 font-serif flex items-center gap-2"
+                                    className="w-full px-3.5 py-2.5 text-left hover:bg-brand-cream/60 transition-colors flex items-start gap-2.5"
                                 >
-                                    🧭 <strong>Hệ trục tọa độ không gian Oxyz</strong>
+                                    <span className="text-base shrink-0 mt-0.5">🧭</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-serif-title font-bold text-brand-cerulean text-xs">Hệ trục tọa độ không gian Oxyz</div>
+                                        <div className="text-[11px] text-gray-500 font-sans mt-0.5">3 trục Ox, Oy, Oz và các tia đối nét đứt</div>
+                                    </div>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={drawOxyPreset}
-                                    className="w-full px-3 py-2 text-left hover:bg-brand-cream text-xs text-gray-800 font-serif flex items-center gap-2"
+                                    className="w-full px-3.5 py-2.5 text-left hover:bg-brand-cream/60 transition-colors flex items-start gap-2.5"
                                 >
-                                    📊 <strong>Hệ trục tọa độ Oxy (2D)</strong>
+                                    <span className="text-base shrink-0 mt-0.5">📊</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-serif-title font-bold text-brand-cerulean text-xs">Hệ trục tọa độ Oxy (2D)</div>
+                                        <div className="text-[11px] text-gray-500 font-sans mt-0.5">Hệ trục tọa độ mặt phẳng chuẩn</div>
+                                    </div>
                                 </button>
                             </div>
                         )}

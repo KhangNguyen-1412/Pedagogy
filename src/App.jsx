@@ -1049,14 +1049,17 @@ const getModuleProgramNames = (mod, programs) => {
     return ids.map(id => programs.find(p => p.id === id)?.name || id).filter(Boolean);
 };
 
-const getFilteredModules = (modules, programs, selectedProgramFilter = 'all') => {
-    let activePrograms = programs.filter(p => p.isEnrolled !== false);
+const getFilteredModules = (modules = [], programs = [], selectedProgramFilter = 'all') => {
+    let activePrograms = (programs || []).filter(p => p.isEnrolled !== false);
     if (selectedProgramFilter !== 'all') {
-        activePrograms = programs.filter(p => p.id === selectedProgramFilter);
+        activePrograms = (programs || []).filter(p => p.id === selectedProgramFilter);
     }
     const activeIds = activePrograms.map(p => p.id);
-    if (activeIds.length === 0) return [];
-    return modules.filter(m => activeIds.some(pId => isModuleInProgram(m, pId)));
+    if (activeIds.length === 0) {
+        if (selectedProgramFilter === 'all') return modules || [];
+        return [];
+    }
+    return (modules || []).filter(m => activeIds.some(pId => isModuleInProgram(m, pId)));
 };
 
 // ─── GPA HELPER FUNCTIONS ──────────────────────────────────────────────────
@@ -1335,7 +1338,7 @@ const DashboardView = ({
 
     return (
         <div className="max-w-5xl mx-auto space-y-10">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-brand-cerulean/30">
+            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-5xl font-serif-title text-brand-cerulean mb-2">Tổng quan học tập.</h2>
                     <p className="text-xl text-gray-600 font-body">Hệ thống quản lý tiến độ & kết quả cá nhân đa mô hình.</p>
@@ -1637,7 +1640,7 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
 
     return (
         <div className="max-w-5xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 border-b-2 border-brand-cerulean pb-4 gap-4">
+            <div className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
                     <h2 className="text-4xl font-serif-title text-brand-cerulean">Quản lý Chương trình đào tạo</h2>
                     <p className="text-lg text-gray-600 mt-2">Cấu trúc quy tắc tín chỉ các khối kiến thức & khóa đào tạo.</p>
@@ -2057,15 +2060,14 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
 
     return (
         <div className="max-w-6xl mx-auto space-y-8">
-            <button onClick={() => navigate('programs')} className="flex items-center gap-2 text-brand-cerulean hover:text-brand-jasper font-serif-title transition-colors">
-                <ArrowLeft size={16} /> Quay lại danh sách chương trình
-            </button>
-
-            <header className="pb-6 border-b-4 border-brand-cerulean">
-                <div className="flex justify-between items-start gap-6">
+            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean space-y-3">
+                <button onClick={() => navigate('programs')} className="flex items-center gap-2 text-brand-cerulean hover:text-brand-jasper font-serif-title text-sm font-bold transition-colors">
+                    <ArrowLeft size={16} /> Quay lại danh sách chương trình
+                </button>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
                     <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-3 flex-wrap">
-                            <h1 className="text-5xl font-serif-title text-brand-cerulean">{program.name}</h1>
+                            <h1 className="text-4xl sm:text-5xl font-serif-title text-brand-cerulean">{program.name}</h1>
                             <button
                                 onClick={handleOpenProgramEditModal}
                                 className="p-2 text-brand-cerulean hover:text-brand-jasper hover:bg-brand-cerulean/10 border border-brand-cerulean/30 rounded transition-all shadow-sm"
@@ -2074,7 +2076,7 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                 <Pencil size={18} />
                             </button>
                         </div>
-                        <p className="text-xl text-gray-600 font-body">{program.description}</p>
+                        <p className="text-lg text-gray-600 font-body">{program.description}</p>
                     </div>
                     <div className="text-right min-w-[200px]">
                         {program.evaluationType === 'modules' ? (
@@ -2822,15 +2824,16 @@ const ModuleDetailView = ({ moduleId, programId, programs, modules, profile, onU
 
     return (
         <div className="max-w-5xl mx-auto space-y-8">
-            <button
-                onClick={() => navigate('program_detail', { programId: programId || (moduleItem.programIds && moduleItem.programIds[0]) })}
-                className="flex items-center gap-2 text-brand-cerulean hover:text-brand-jasper font-serif-title transition-colors"
-            >
-                <ArrowLeft size={16} /> Quay lại danh sách học phần
-            </button>
+            {/* Sticky Header Container */}
+            <div className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean space-y-3">
+                <button
+                    onClick={() => navigate('program_detail', { programId: programId || (moduleItem.programIds && moduleItem.programIds[0]) })}
+                    className="flex items-center gap-2 text-brand-cerulean hover:text-brand-jasper font-serif-title text-sm font-bold transition-colors"
+                >
+                    <ArrowLeft size={16} /> Quay lại danh sách học phần
+                </button>
 
-            {/* Header Card */}
-            <header className="bg-white border-editorial p-6 shadow-editorial flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <header className="bg-white border-editorial p-6 shadow-editorial flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-3 flex-wrap">
                         <span className="px-2.5 py-1 bg-brand-cerulean text-white font-sans font-bold text-xs rounded">
@@ -2873,6 +2876,7 @@ const ModuleDetailView = ({ moduleId, programId, programs, modules, profile, onU
                     </button>
                 </div>
             </header>
+            </div>
 
             {/* Main Content Breakdown */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -3244,7 +3248,7 @@ const SyllabusView = ({ modules, onUpdateModule, showToast }) => {
 
     return (
         <div className="max-w-5xl mx-auto space-y-8">
-            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-brand-cerulean">
+            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-4xl font-serif-title text-brand-cerulean">Quản lý Đề cương chi tiết</h2>
                     <p className="text-lg text-gray-600 mt-1">Cấu hình Chuẩn đầu ra (CLOs), Khung bài học & Trọng số đánh giá.</p>
@@ -3551,7 +3555,7 @@ const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEvent, on
 
     return (
         <div className="max-w-5xl mx-auto space-y-8">
-            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end pb-6 border-b border-brand-cerulean gap-4">
+            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
                     <h2 className="text-4xl font-serif-title text-brand-cerulean">Lịch biểu & Điểm danh</h2>
                     <p className="text-lg text-gray-600 mt-1">Quản lý thời gian, link học trực tuyến & ghi chú chuyên cần.</p>
@@ -3837,7 +3841,7 @@ const GradebookView = ({ modules, programs = [], onUpdateModule }) => {
 
     return (
         <div className="max-w-6xl mx-auto space-y-8">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-brand-cerulean">
+            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-4xl font-serif-title text-brand-cerulean">Sổ điểm & Đánh giá kết quả</h2>
                     <p className="text-lg text-gray-600 mt-1">Cập nhật điểm thành phần và theo dõi tiến độ tích lũy theo từng chương trình.</p>
@@ -3888,75 +3892,83 @@ const GradebookView = ({ modules, programs = [], onUpdateModule }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {activeModules.map(mod => {
-                            const { score10, letter, gpa4 } = calculateModuleFinal(mod.grades, mod.syllabus?.weights);
-                            const isPassed = score10 >= 5.0 || mod.status === 'completed';
-                            return (
-                                <tr key={mod.id} className="hover:bg-brand-cream/50">
-                                    <td className="p-4 font-sans font-bold text-gray-500">{(mod.code || '').toUpperCase()}</td>
-                                    <td className="p-4 font-serif-title text-lg text-brand-cerulean font-bold flex items-center gap-2">
-                                        <span>{mod.name}</span>
-                                        {mod.type === 'elective' ? (
-                                            <span className="px-2 py-0.5 text-xs font-serif bg-red-100 text-brand-jasper rounded font-bold">
-                                                Tự chọn
-                                            </span>
-                                        ) : mod.type === 'practice' ? (
-                                            <span className="px-2 py-0.5 text-xs font-serif bg-blue-100 text-blue-800 rounded font-normal">
-                                                Thực hành
-                                            </span>
-                                        ) : null}
-                                    </td>
-                                    <td className="p-4 text-center font-bold">{evalType === 'hours' ? `${Number(mod.credits || 3) * 15} tiết` : `${mod.credits} TC`}</td>
-                                    <td className="p-4 text-center">
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            min="0"
-                                            max="10"
-                                            className="input-editorial w-16 text-center"
-                                            value={mod.grades?.attendance || 0}
-                                            onChange={e => handleGradeChange(mod, 'attendance', e.target.value)}
-                                        />
-                                    </td>
-                                    <td className="p-4 text-center">
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            min="0"
-                                            max="10"
-                                            className="input-editorial w-16 text-center"
-                                            value={mod.grades?.midterm || 0}
-                                            onChange={e => handleGradeChange(mod, 'midterm', e.target.value)}
-                                        />
-                                    </td>
-                                    <td className="p-4 text-center">
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            min="0"
-                                            max="10"
-                                            className="input-editorial w-16 text-center"
-                                            value={mod.grades?.final || 0}
-                                            onChange={e => handleGradeChange(mod, 'final', e.target.value)}
-                                        />
-                                    </td>
-                                    <td className="p-4 text-center font-serif-title text-xl text-brand-jasper font-bold">
-                                        {score10}
-                                    </td>
-                                    <td className="p-4 text-center font-bold">
-                                        {evalType === 'credits' ? (
-                                            <span className="px-2 py-1 bg-brand-cerulean/10 text-brand-cerulean">
-                                                {letter} ({gpa4})
-                                            </span>
-                                        ) : (
-                                            <span className={`px-2.5 py-1 text-xs rounded font-bold ${isPassed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                {isPassed ? '✓ ĐẠT' : 'CHƯA ĐẠT'}
-                                            </span>
-                                        )}
-                                    </td>
-                                </tr>
-                            );
-                        })}
+                        {activeModules.length === 0 ? (
+                            <tr>
+                                <td colSpan={8} className="p-12 text-center text-gray-500 font-serif text-base bg-white/50">
+                                    Chưa có học phần nào trong chương trình đã chọn. Hãy vào mục <strong className="text-brand-cerulean">Chương trình học</strong> để đăng ký hoặc thêm học phần mới.
+                                </td>
+                            </tr>
+                        ) : (
+                            activeModules.map(mod => {
+                                const { score10, letter, gpa4 } = calculateModuleFinal(mod.grades, mod.syllabus?.weights);
+                                const isPassed = score10 >= 5.0 || mod.status === 'completed';
+                                return (
+                                    <tr key={mod.id} className="hover:bg-brand-cream/50">
+                                        <td className="p-4 font-sans font-bold text-gray-500">{(mod.code || '').toUpperCase()}</td>
+                                        <td className="p-4 font-serif-title text-lg text-brand-cerulean font-bold flex items-center gap-2">
+                                            <span>{mod.name}</span>
+                                            {mod.type === 'elective' ? (
+                                                <span className="px-2 py-0.5 text-xs font-serif bg-red-100 text-brand-jasper rounded font-bold">
+                                                    Tự chọn
+                                                </span>
+                                            ) : mod.type === 'practice' ? (
+                                                <span className="px-2 py-0.5 text-xs font-serif bg-blue-100 text-blue-800 rounded font-normal">
+                                                    Thực hành
+                                                </span>
+                                            ) : null}
+                                        </td>
+                                        <td className="p-4 text-center font-bold">{evalType === 'hours' ? `${Number(mod.credits || 3) * 15} tiết` : `${mod.credits} TC`}</td>
+                                        <td className="p-4 text-center">
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="10"
+                                                className="input-editorial w-16 text-center"
+                                                value={mod.grades?.attendance || 0}
+                                                onChange={e => handleGradeChange(mod, 'attendance', e.target.value)}
+                                            />
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="10"
+                                                className="input-editorial w-16 text-center"
+                                                value={mod.grades?.midterm || 0}
+                                                onChange={e => handleGradeChange(mod, 'midterm', e.target.value)}
+                                            />
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="10"
+                                                className="input-editorial w-16 text-center"
+                                                value={mod.grades?.final || 0}
+                                                onChange={e => handleGradeChange(mod, 'final', e.target.value)}
+                                            />
+                                        </td>
+                                        <td className="p-4 text-center font-serif-title text-xl text-brand-jasper font-bold">
+                                            {score10}
+                                        </td>
+                                        <td className="p-4 text-center font-bold">
+                                            {evalType === 'credits' ? (
+                                                <span className="px-2 py-1 bg-brand-cerulean/10 text-brand-cerulean">
+                                                    {letter} ({gpa4})
+                                                </span>
+                                            ) : (
+                                                <span className={`px-2.5 py-1 text-xs rounded font-bold ${isPassed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                    {isPassed ? '✓ ĐẠT' : 'CHƯA ĐẠT'}
+                                                </span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -3993,7 +4005,7 @@ const ResourcesStudyLogView = ({ modules, studyLogs, resources, onAddStudyLog, o
 
     return (
         <div className="max-w-5xl mx-auto space-y-8">
-            <header className="flex justify-between items-end pb-6 border-b border-brand-cerulean">
+            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
                     <h2 className="text-4xl font-serif-title text-brand-cerulean">Quản lý Học liệu & Nhật ký học tập</h2>
                     <p className="text-lg text-gray-600 mt-1">Lưu trữ tài liệu giảng dạy & ghi chép cá nhân sau từng buổi học.</p>
@@ -4232,7 +4244,7 @@ const ProfileView = ({ profile, programs, onUpdateProfile, onOpenCertificate }) 
 
     return (
         <div className="max-w-4xl mx-auto space-y-8">
-            <header className="pb-6 border-b border-brand-cerulean flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-4xl font-serif-title text-brand-cerulean">Hồ sơ Học viên</h2>
                     <p className="text-gray-500 font-body mt-1">Thông tin cá nhân, chương trình đào tạo & liên lạc cá nhân hóa.</p>
@@ -5593,12 +5605,32 @@ if (!user) {
                         navigate={navigate}
                     />
                 )}
-                {currentView === 'syllabus' && <SyllabusView modules={filteredModules} onUpdateModule={handleUpdateModule} showToast={showToast} />}
-                {currentView === 'calendar' && <CalendarAttendanceView modules={filteredModules} events={events} onAddEvent={handleAddEvent} onUpdateEvent={handleUpdateEvent} onDeleteEvent={handleDeleteEvent} />}
-                {currentView === 'gradebook' && <GradebookView modules={filteredModules} onUpdateModule={handleUpdateModule} />}
+                {currentView === 'syllabus' && (
+                    <SyllabusView
+                        modules={filteredModules.length > 0 ? filteredModules : modules}
+                        onUpdateModule={handleUpdateModule}
+                        showToast={showToast}
+                    />
+                )}
+                {currentView === 'calendar' && (
+                    <CalendarAttendanceView
+                        modules={filteredModules.length > 0 ? filteredModules : modules}
+                        events={events}
+                        onAddEvent={handleAddEvent}
+                        onUpdateEvent={handleUpdateEvent}
+                        onDeleteEvent={handleDeleteEvent}
+                    />
+                )}
+                {currentView === 'gradebook' && (
+                    <GradebookView
+                        modules={modules}
+                        programs={programs}
+                        onUpdateModule={handleUpdateModule}
+                    />
+                )}
                 {currentView === 'resources' && (
                     <ResourcesStudyLogView
-                        modules={filteredModules}
+                        modules={filteredModules.length > 0 ? filteredModules : modules}
                         studyLogs={studyLogs}
                         resources={resources}
                         onAddStudyLog={handleAddStudyLog}
@@ -5619,6 +5651,7 @@ if (!user) {
                         onUpdateSubjects={handleUpdateThptSubjects}
                         onUpdateYears={handleUpdateThptYears}
                         onUpdateExamTypes={handleUpdateThptExamTypes}
+                        onSaveResult={handleSaveThptResult}
                         showToast={showToast}
                     />
                 )}

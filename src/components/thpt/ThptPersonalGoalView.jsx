@@ -1,9 +1,32 @@
 import React, { useState, useMemo } from 'react';
 import {
     Target, Award, BookOpen, Sparkles, CheckCircle2, Circle, Clock,
-    Plus, Trash2, Edit2, AlertCircle, Save, Filter, Search, GraduationCap
+    Plus, Trash2, Edit2, AlertCircle, Save, Filter, Search, GraduationCap, Zap,
+    AlertTriangle, Calculator, Lightbulb
 } from 'lucide-react';
 import { EditorialSelect } from './EditorialSelect';
+import { EditorialDatePicker } from './EditorialDatePicker';
+
+export const THPT_COMBINATIONS = [
+    { value: '', label: '-- Chọn Khối thi xét tuyển --', subjects: [] },
+    { value: 'A00', label: 'Khối A00 (Toán, Vật lí, Hóa học)', subjects: ['math', 'physics', 'chemistry'] },
+    { value: 'A01', label: 'Khối A01 (Toán, Vật lí, Tiếng Anh)', subjects: ['math', 'physics', 'english'] },
+    { value: 'A02', label: 'Khối A02 (Toán, Vật lí, Sinh học)', subjects: ['math', 'physics', 'biology'] },
+    { value: 'B00', label: 'Khối B00 (Toán, Hóa học, Sinh học)', subjects: ['math', 'chemistry', 'biology'] },
+    { value: 'B08', label: 'Khối B08 (Toán, Sinh học, Tiếng Anh)', subjects: ['math', 'biology', 'english'] },
+    { value: 'C00', label: 'Khối C00 (Ngữ văn, Lịch sử, Địa lí)', subjects: ['literature', 'history', 'geography'] },
+    { value: 'C01', label: 'Khối C01 (Ngữ văn, Toán, Vật lí)', subjects: ['literature', 'math', 'physics'] },
+    { value: 'C02', label: 'Khối C02 (Ngữ văn, Toán, Hóa học)', subjects: ['literature', 'math', 'chemistry'] },
+    { value: 'C03', label: 'Khối C03 (Ngữ văn, Toán, Lịch sử)', subjects: ['literature', 'math', 'history'] },
+    { value: 'D01', label: 'Khối D01 (Toán, Ngữ văn, Tiếng Anh)', subjects: ['math', 'literature', 'english'] },
+    { value: 'D07', label: 'Khối D07 (Toán, Hóa học, Tiếng Anh)', subjects: ['math', 'chemistry', 'english'] },
+    { value: 'D08', label: 'Khối D08 (Toán, Sinh học, Tiếng Anh)', subjects: ['math', 'biology', 'english'] },
+    { value: 'D09', label: 'Khối D09 (Toán, Lịch sử, Tiếng Anh)', subjects: ['math', 'history', 'english'] },
+    { value: 'D10', label: 'Khối D10 (Toán, Địa lí, Tiếng Anh)', subjects: ['math', 'geography', 'english'] },
+    { value: 'D14', label: 'Khối D14 (Ngữ văn, Lịch sử, Tiếng Anh)', subjects: ['literature', 'history', 'english'] },
+    { value: 'D15', label: 'Khối D15 (Ngữ văn, Địa lí, Tiếng Anh)', subjects: ['literature', 'geography', 'english'] },
+    { value: 'custom', label: 'Khối tự chọn khác', subjects: [] }
+];
 
 export const ThptPersonalGoalView = ({
     profile,
@@ -40,6 +63,23 @@ export const ThptPersonalGoalView = ({
     const [newPhaseTitle, setNewPhaseTitle] = useState('');
     const [newPhaseTimeline, setNewPhaseTimeline] = useState('');
 
+    // Active subjects belonging to current chosen combination
+    const activeCombo = THPT_COMBINATIONS.find(c => c.value === targetForm.combination);
+    const activeComboSubjects = activeCombo?.subjects || [];
+
+    // Helper: calculate total score of the 3 subjects in the combination
+    const calculateComboTotal = (combinationCode, subjectTargetsList) => {
+        const combo = THPT_COMBINATIONS.find(c => c.value === combinationCode);
+        const comboSubjects = combo?.subjects || [];
+        if (comboSubjects.length > 0) {
+            return comboSubjects.reduce((sum, sId) => {
+                const st = subjectTargetsList.find(item => item.subjectId === sId);
+                return sum + (Number(st?.target) || 0);
+            }, 0);
+        }
+        return subjectTargetsList.reduce((sum, st) => sum + (Number(st.target) || 0), 0);
+    };
+
     // Keep form state in sync when profile changes
     React.useEffect(() => {
         if (profile) {
@@ -65,7 +105,17 @@ export const ThptPersonalGoalView = ({
         showToast?.('Đã cập nhật mục tiêu ôn thi thành công');
     };
 
-    // Handle Update Subject Target Score
+    // Handle Change Combination Dropdown
+    const handleCombinationChange = (newCombo) => {
+        const total = calculateComboTotal(newCombo, targetForm.subjectTargets);
+        setTargetForm(prev => ({
+            ...prev,
+            combination: newCombo,
+            targetTotalScore: total > 0 ? Number(total.toFixed(2)) : (prev.targetTotalScore || '')
+        }));
+    };
+
+    // Handle Update Subject Target Score & auto-recalculate combo total
     const handleUpdateSubjectTarget = (subjId, score) => {
         const numScore = score === '' ? '' : Number(score);
         const existing = targetForm.subjectTargets.find(st => st.subjectId === subjId);
@@ -81,7 +131,13 @@ export const ThptPersonalGoalView = ({
         } else {
             updatedList = targetForm.subjectTargets;
         }
-        setTargetForm({ ...targetForm, subjectTargets: updatedList });
+
+        const total = calculateComboTotal(targetForm.combination, updatedList);
+        setTargetForm(prev => ({
+            ...prev,
+            subjectTargets: updatedList,
+            targetTotalScore: total > 0 ? Number(total.toFixed(2)) : ''
+        }));
     };
 
     // Handle Toggle Phase Status
@@ -181,58 +237,51 @@ export const ThptPersonalGoalView = ({
     const hasTargets = profile?.targetUniversity || profile?.combination || (profile?.targetTotalScore > 0);
 
     return (
-        <div className="space-y-8 animate-fade-in-up">
-            {/* Header Banner */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-brand-cerulean/20 pb-6">
+        <div className="max-w-5xl mx-auto space-y-6 animate-fade-in-up">
+            {/* Header Banner - Identical layout to ProgramsView (Sticky Header) */}
+            <div className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-brand-jasper font-bold mb-1">
-                        <GraduationCap size={14} /> Cá nhân hóa Kế hoạch Ôn thi THPT
-                    </div>
-                    <h1 className="text-3xl sm:text-4xl font-serif-title text-brand-cerulean tracking-tight">
-                        Mục tiêu & Kế hoạch Ôn thi của Tôi
-                    </h1>
-                    <p className="text-sm italic text-gray-600 font-body mt-1">
-                        Thiết lập mục tiêu Đại học, lộ trình từng giai đoạn và sổ tay rút kinh nghiệm tránh bẫy đề thi
-                    </p>
+                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Mục tiêu & Kế hoạch Ôn thi</h2>
+                    <p className="text-lg text-gray-600 mt-2">Thiết lập mục tiêu Đại học, lộ trình từng giai đoạn và sổ tay rút kinh nghiệm.</p>
                 </div>
 
                 {/* Quick Switch Tab Pill */}
-                <div className="flex items-center bg-white border border-brand-cerulean/20 shadow-sm p-1 rounded">
+                <div className="flex items-center bg-white border border-brand-cerulean/30 shadow-sm p-1 shrink-0">
                     <button
                         type="button"
                         onClick={() => setActiveTab('targets')}
-                        className={`px-3 py-1.5 font-serif-title text-xs font-bold transition-all rounded ${
+                        className={`px-4 py-2 font-serif-title text-xs font-bold transition-all ${
                             activeTab === 'targets'
                                 ? 'bg-brand-cerulean text-white shadow-sm'
-                                : 'text-brand-cerulean/80 hover:text-brand-jasper'
+                                : 'text-brand-cerulean hover:text-brand-jasper'
                         }`}
                     >
                         Mục tiêu & Khối thi
                     </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('phases')}
-                        className={`px-3 py-1.5 font-serif-title text-xs font-bold transition-all rounded ${
-                            activeTab === 'phases'
-                                ? 'bg-brand-cerulean text-white shadow-sm'
-                                : 'text-brand-cerulean/80 hover:text-brand-jasper'
-                        }`}
-                    >
-                        Lộ trình Giai đoạn ({(profile?.studyPhases || []).length})
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('mistakes')}
-                        className={`px-3 py-1.5 font-serif-title text-xs font-bold transition-all rounded ${
-                            activeTab === 'mistakes'
-                                ? 'bg-brand-cerulean text-white shadow-sm'
-                                : 'text-brand-cerulean/80 hover:text-brand-jasper'
-                        }`}
-                    >
-                        Sổ tay Sửa lỗi sai ({(profile?.mistakeNotes || []).length})
-                    </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('phases')}
+                            className={`px-4 py-2 font-serif-title text-xs font-bold transition-all ${
+                                activeTab === 'phases'
+                                    ? 'bg-brand-cerulean text-white shadow-sm'
+                                    : 'text-brand-cerulean hover:text-brand-jasper'
+                            }`}
+                        >
+                            Lộ trình Giai đoạn ({(profile?.studyPhases || []).length})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('mistakes')}
+                            className={`px-4 py-2 font-serif-title text-xs font-bold transition-all ${
+                                activeTab === 'mistakes'
+                                    ? 'bg-brand-cerulean text-white shadow-sm'
+                                    : 'text-brand-cerulean hover:text-brand-jasper'
+                            }`}
+                        >
+                            Sổ tay Sửa lỗi ({(profile?.mistakeNotes || []).length})
+                        </button>
+                    </div>
                 </div>
-            </div>
 
             {/* TAB 1: TARGETS & COMBINATIONS */}
             {activeTab === 'targets' && (
@@ -245,7 +294,7 @@ export const ThptPersonalGoalView = ({
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                     <span className="px-2.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean font-serif-title font-bold text-xs rounded">
-                                        Khối xét tuyển: {profile?.combination || 'Chưa thiết lập'}
+                                        Khối xét tuyển: {profile?.combination ? `Khối ${profile.combination}` : 'Chưa thiết lập'}
                                     </span>
                                     {profile?.grade && (
                                         <span className="px-2.5 py-0.5 bg-brand-jasper/10 text-brand-jasper font-serif-title font-bold text-xs rounded">
@@ -268,7 +317,7 @@ export const ThptPersonalGoalView = ({
 
                             <div className="flex items-center gap-4 shrink-0 bg-brand-cream p-4 border border-brand-cerulean/15 rounded">
                                 <div className="text-center border-r border-brand-cerulean/20 pr-4">
-                                    <span className="text-xs font-serif text-gray-500 block">Tổng mục tiêu</span>
+                                    <span className="text-xs font-serif text-gray-500 block">Tổng mục tiêu (3 môn)</span>
                                     <p className="text-3xl font-serif-title font-bold text-brand-jasper">
                                         {profile?.targetTotalScore ? profile.targetTotalScore : '--'}
                                         {profile?.targetTotalScore ? <span className="text-sm font-normal text-gray-500"> đ</span> : ''}
@@ -299,15 +348,14 @@ export const ThptPersonalGoalView = ({
                             <form onSubmit={handleSaveTargets} className="mt-6 p-5 bg-brand-cream border border-brand-cerulean/20 space-y-5 animate-fade-in-down">
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
-                                        <label className="block text-xs font-serif-title text-brand-cerulean font-bold mb-1">
-                                            Khối thi xét tuyển
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={targetForm.combination}
-                                            onChange={e => setTargetForm({ ...targetForm, combination: e.target.value })}
-                                            placeholder="Vd: A00 (Toán, Lí, Hóa), D01..."
-                                            className="w-full input-editorial text-sm font-body px-2 py-1.5"
+                                        <EditorialSelect
+                                            label="Khối thi xét tuyển"
+                                            value={targetForm.combination || ''}
+                                            onChange={val => handleCombinationChange(val)}
+                                            options={THPT_COMBINATIONS.map(c => ({
+                                                value: c.value,
+                                                label: c.label
+                                            }))}
                                         />
                                     </div>
                                     <div className="sm:col-span-2">
@@ -318,41 +366,85 @@ export const ThptPersonalGoalView = ({
                                             type="text"
                                             value={targetForm.targetUniversity}
                                             onChange={e => setTargetForm({ ...targetForm, targetUniversity: e.target.value })}
-                                            placeholder="Vd: Đại học Bách Khoa - Ngành Khoa học Máy tính"
-                                            className="w-full input-editorial text-sm font-body px-2 py-1.5"
+                                            placeholder="Vd: Đại học Bách Khoa TP.HCM - Khoa học Máy tính"
+                                            className="w-full input-editorial text-sm font-body px-2 py-1.5 bg-white"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
-                                        <label className="block text-xs font-serif-title text-brand-cerulean font-bold mb-1">
-                                            Tổng điểm mục tiêu (3 môn)
-                                        </label>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className="block text-xs font-serif-title text-brand-cerulean font-bold">
+                                                Tổng điểm mục tiêu (3 môn khối)
+                                            </label>
+                                            {targetForm.combination && (
+                                                <span className="text-[10px] bg-brand-jasper/10 text-brand-jasper font-bold px-1.5 py-0.5 rounded border border-brand-jasper/20 flex items-center gap-1">
+                                                    <Zap size={10} /> Tự động tính
+                                                </span>
+                                            )}
+                                        </div>
                                         <input
                                             type="number"
                                             step="0.05"
                                             min="0"
                                             max="30"
-                                            value={targetForm.targetTotalScore}
+                                            value={targetForm.targetTotalScore || ''}
                                             onChange={e => setTargetForm({ ...targetForm, targetTotalScore: e.target.value })}
-                                            placeholder="Vd: 27.5"
-                                            className="w-full input-editorial text-sm font-body px-2 py-1.5 font-bold text-brand-jasper"
+                                            placeholder="0.0"
+                                            className="w-full input-editorial text-sm font-body px-2 py-1.5 font-bold text-brand-jasper bg-white"
                                         />
+                                        <p className="text-[10px] text-gray-500 font-sans mt-1">
+                                            {activeComboSubjects.length > 0
+                                                ? `Tự động cộng tổng điểm của 3 môn thuộc khối ${targetForm.combination}.`
+                                                : 'Tự động cập nhật khi bạn nhập điểm các môn thi ở bên dưới.'
+                                            }
+                                        </p>
                                     </div>
                                 </div>
 
                                 {/* Subject-specific Targets */}
                                 <div>
-                                    <label className="block text-xs font-serif-title text-brand-cerulean font-bold mb-2">
-                                        Điểm mục tiêu chi tiết theo từng môn thi:
-                                    </label>
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 mb-2">
+                                        <label className="block text-xs font-serif-title text-brand-cerulean font-bold">
+                                            Điểm mục tiêu chi tiết theo từng môn thi:
+                                        </label>
+                                        <span className="text-[11px] text-gray-600 font-sans italic">
+                                            {activeComboSubjects.length > 0 
+                                                ? `(3 môn thuộc khối ${targetForm.combination} được làm nổi bật, các môn ngoài khối sẽ mờ đi)`
+                                                : '(Chọn khối thi ở trên để tự động làm nổi bật 3 môn xét tuyển)'
+                                            }
+                                        </span>
+                                    </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                        {subjects.slice(0, 8).map(s => {
+                                        {subjects.map(s => {
+                                            const isComboSubj = activeComboSubjects.includes(s.id);
                                             const currentTarget = targetForm.subjectTargets.find(st => st.subjectId === s.id)?.target ?? '';
                                             return (
-                                                <div key={s.id} className="p-3 bg-white border border-brand-cerulean/15 rounded flex items-center justify-between">
-                                                    <span className="text-xs font-serif-title font-bold text-brand-cerulean">{s.name}</span>
+                                                <div
+                                                    key={s.id}
+                                                    className={`p-3 rounded flex items-center justify-between transition-all ${
+                                                        isComboSubj
+                                                            ? 'bg-white border-2 border-brand-cerulean shadow-md opacity-100 ring-2 ring-brand-cerulean/15'
+                                                            : activeComboSubjects.length > 0
+                                                                ? 'bg-gray-50/60 border border-dashed border-gray-300 opacity-40 hover:opacity-100 focus-within:opacity-100 focus-within:bg-white focus-within:border-brand-cerulean focus-within:shadow-sm'
+                                                                : 'bg-white border border-brand-cerulean/15 opacity-100'
+                                                    }`}
+                                                >
+                                                    <div className="space-y-0.5 pr-1">
+                                                        <span className={`text-xs font-serif-title font-bold block ${isComboSubj ? 'text-brand-cerulean' : 'text-gray-700'}`}>
+                                                            {s.name}
+                                                        </span>
+                                                        {isComboSubj ? (
+                                                            <span className="text-[9px] bg-brand-jasper text-white px-1.5 py-0.5 rounded font-sans font-bold uppercase tracking-wider inline-block">
+                                                                Môn khối
+                                                            </span>
+                                                        ) : activeComboSubjects.length > 0 ? (
+                                                            <span className="text-[10px] text-gray-400 font-sans italic block">
+                                                                Ngoài khối
+                                                            </span>
+                                                        ) : null}
+                                                    </div>
                                                     <input
                                                         type="number"
                                                         step="0.1"
@@ -361,7 +453,9 @@ export const ThptPersonalGoalView = ({
                                                         value={currentTarget}
                                                         onChange={e => handleUpdateSubjectTarget(s.id, e.target.value)}
                                                         placeholder="--"
-                                                        className="w-16 input-editorial text-xs font-body px-1 py-0.5 text-center font-bold text-brand-jasper"
+                                                        className={`w-14 input-editorial text-xs font-body px-1 py-1 text-center font-bold ${
+                                                            isComboSubj ? 'text-brand-jasper bg-brand-cream/60' : 'text-gray-700 bg-white'
+                                                        }`}
                                                     />
                                                 </div>
                                             );
@@ -398,12 +492,19 @@ export const ThptPersonalGoalView = ({
                             {(profile?.subjectTargets || []).length > 0 ? (
                                 profile.subjectTargets.map(st => {
                                     const subj = subjects.find(s => s.id === st.subjectId) || { name: st.subjectId, color: '#124874' };
+                                    const comboObj = THPT_COMBINATIONS.find(c => c.value === profile?.combination);
+                                    const isComboMember = (comboObj?.subjects || []).includes(st.subjectId);
                                     return (
-                                        <div key={st.subjectId} className="bg-white border border-brand-cerulean/20 p-5 shadow-sm space-y-2">
+                                        <div key={st.subjectId} className={`bg-white border p-5 shadow-sm space-y-2 rounded ${isComboMember ? 'border-brand-cerulean/40 ring-1 ring-brand-cerulean/20' : 'border-brand-cerulean/20'}`}>
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: subj.color }} />
                                                     <span className="font-serif-title font-bold text-brand-cerulean text-base">{subj.name}</span>
+                                                    {isComboMember && (
+                                                        <span className="text-[9px] bg-brand-jasper text-white px-1.5 py-0.5 rounded font-sans font-bold uppercase tracking-wider">
+                                                            Khối {profile.combination}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <span className="text-xs px-2 py-0.5 bg-brand-cream border border-brand-cerulean/20 font-bold text-brand-jasper">
                                                     Mục tiêu: {st.target} đ
@@ -544,14 +645,13 @@ export const ThptPersonalGoalView = ({
                                     required
                                 />
                             </div>
-                            <div className="w-full sm:w-48">
-                                <label className="block text-xs font-serif-title text-brand-cerulean mb-1">Thời gian dự kiến</label>
-                                <input
-                                    type="text"
+                            <div className="w-full sm:w-64">
+                                <EditorialDatePicker
+                                    label="Thời gian dự kiến"
                                     value={newPhaseTimeline}
-                                    onChange={e => setNewPhaseTimeline(e.target.value)}
-                                    placeholder="Vd: Tháng 9 - Tháng 12"
-                                    className="w-full input-editorial text-xs font-body px-2 py-1.5"
+                                    onChange={setNewPhaseTimeline}
+                                    placeholder="Chọn mốc hoặc khoảng ngày..."
+                                    isRange={true}
                                 />
                             </div>
                             <button
@@ -646,10 +746,10 @@ export const ThptPersonalGoalView = ({
                                         value={mistakeForm.category}
                                         onChange={val => setMistakeForm({ ...mistakeForm, category: val })}
                                         options={[
-                                            { value: 'Bẫy đề thi', label: '⚠️ Bẫy đề thi' },
-                                            { value: 'Lỗi kiến thức', label: '📚 Lỗi kiến thức còn hổng' },
-                                            { value: 'Tính toán ẩu', label: '✏️ Lỗi tính toán ẩu' },
-                                            { value: 'Kinh nghiệm làm bài', label: '💡 Kinh nghiệm phân bố giờ' }
+                                            { value: 'Bẫy đề thi', label: 'Bẫy đề thi', icon: AlertTriangle, iconClassName: 'text-amber-500' },
+                                            { value: 'Lỗi kiến thức', label: 'Lỗi kiến thức còn hổng', icon: BookOpen, iconClassName: 'text-brand-cerulean' },
+                                            { value: 'Tính toán ẩu', label: 'Lỗi tính toán ẩu', icon: Calculator, iconClassName: 'text-brand-jasper' },
+                                            { value: 'Kinh nghiệm làm bài', label: 'Kinh nghiệm phân bố giờ', icon: Lightbulb, iconClassName: 'text-amber-600' }
                                         ]}
                                         size="sm"
                                     />
@@ -670,8 +770,8 @@ export const ThptPersonalGoalView = ({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-serif-title text-brand-jasper mb-1">
-                                        ❌ Lỗi tôi đã mắc phải (Tại sao sai?):
+                                    <label className="block text-xs font-serif-title text-brand-jasper font-bold mb-1 flex items-center gap-1.5">
+                                        <AlertCircle size={14} className="text-brand-jasper shrink-0" /> Lỗi tôi đã mắc phải (Tại sao sai?):
                                     </label>
                                     <textarea
                                         rows={3}
@@ -683,8 +783,8 @@ export const ThptPersonalGoalView = ({
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-serif-title text-emerald-800 mb-1">
-                                        ✅ Cách khắc phục & Ghi nhớ lần sau:
+                                    <label className="block text-xs font-serif-title text-emerald-800 font-bold mb-1 flex items-center gap-1.5">
+                                        <CheckCircle2 size={14} className="text-emerald-700 shrink-0" /> Cách khắc phục & Ghi nhớ lần sau:
                                     </label>
                                     <textarea
                                         rows={3}

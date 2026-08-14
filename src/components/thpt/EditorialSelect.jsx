@@ -23,6 +23,7 @@ export const EditorialSelect = ({
 
     const selectedOption = options.find(opt => String(opt.value) === String(value));
     const displayLabel = selectedOption?.label || selectedOption?.name || value || placeholder;
+    const SelectedIcon = selectedOption?.icon;
 
     const updateCoords = () => {
         if (buttonRef.current) {
@@ -105,9 +106,17 @@ export const EditorialSelect = ({
                         : 'py-2 px-3 border border-brand-cerulean/30 hover:border-brand-jasper focus:border-brand-jasper text-sm font-body shadow-sm'
                 } ${buttonClassName} ${isOpen ? 'ring-1 ring-brand-jasper border-brand-jasper' : ''}`}
             >
-                <span className="truncate text-brand-ink pr-2 font-medium" title={typeof displayLabel === 'string' ? displayLabel : ''}>
-                    {displayLabel}
-                </span>
+                <div className="flex items-center gap-2 truncate pr-2 min-w-0">
+                    {SelectedIcon && (
+                        <SelectedIcon
+                            size={isSmall ? 13 : 15}
+                            className={selectedOption?.iconClassName || 'text-brand-cerulean shrink-0'}
+                        />
+                    )}
+                    <span className="truncate text-brand-ink font-medium" title={typeof displayLabel === 'string' ? displayLabel : ''}>
+                        {displayLabel}
+                    </span>
+                </div>
                 <ChevronDown
                     size={isSmall ? 13 : 15}
                     className={`text-brand-cerulean shrink-0 transition-transform duration-200 group-hover:text-brand-jasper ${
@@ -131,6 +140,7 @@ export const EditorialSelect = ({
                     {options.map((opt) => {
                         const isSelected = String(value) === String(opt.value);
                         const labelText = opt.label || opt.name || opt.value;
+                        const OptionIcon = opt.icon;
                         return (
                             <div
                                 key={opt.value}
@@ -141,7 +151,15 @@ export const EditorialSelect = ({
                                         : 'text-brand-ink hover:bg-brand-cerulean/10 hover:text-brand-jasper'
                                 }`}
                             >
-                                <span className="truncate pr-2">{labelText}</span>
+                                <div className="flex items-center gap-2 truncate pr-2 min-w-0">
+                                    {OptionIcon && (
+                                        <OptionIcon
+                                            size={14}
+                                            className={isSelected ? 'text-brand-cream shrink-0' : (opt.iconClassName || 'text-brand-cerulean shrink-0')}
+                                        />
+                                    )}
+                                    <span className="truncate">{labelText}</span>
+                                </div>
                                 {isSelected && (
                                     <Check size={14} className="shrink-0 text-brand-cream" />
                                 )}
