@@ -15,9 +15,13 @@ export default {
         }
       },
       fontFamily: {
-        serif: ['"Playfair Display"', 'serif'],
-        body: ['"Newsreader"', 'serif'],
-        sans: ['system-ui', 'sans-serif']
+        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+        'serif-title': ['"Playfair Display"', 'Georgia', 'serif'],
+        title: ['"Playfair Display"', 'Georgia', 'serif'],
+        body: ['"Newsreader"', 'Georgia', 'serif'],
+        newsreader: ['"Newsreader"', 'Georgia', 'serif'],
+        sans: ['"Newsreader"', 'Georgia', 'serif'],
+        mono: ['"JetBrains Mono"', 'monospace', 'ui-monospace']
       },
       boxShadow: {
         'editorial': '4px 4px 0px 0px rgba(18,72,116,0.1)',

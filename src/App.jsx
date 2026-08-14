@@ -34,7 +34,12 @@ import {
     List,
     Link2,
     Search,
-    Unlink
+    Unlink,
+    Users,
+    TrendingUp,
+    CheckSquare,
+    Sparkles,
+    AlertCircle
 } from 'lucide-react';
 import {
     auth,
@@ -54,6 +59,19 @@ import { signOut } from 'firebase/auth';
 import { writeBatch } from 'firebase/firestore';
 import logoImg from './assets/logo.png';
 import {db} from './firebase';
+
+import {
+    DEFAULT_THPT_SUBJECTS,
+    DEFAULT_THPT_YEARS,
+    DEFAULT_THPT_EXAM_TYPES,
+    DEFAULT_THPT_EXAMS,
+    DEFAULT_THPT_PERSONAL_PROFILE,
+    DEFAULT_THPT_RESULTS
+} from './components/thpt/ThptDemoData';
+import { ThptExamsView } from './components/thpt/ThptExamsView';
+import { ThptPersonalGoalView } from './components/thpt/ThptPersonalGoalView';
+import { ThptPersonalTrackingView } from './components/thpt/ThptPersonalTrackingView';
+import { ThptPersonalTestModal } from './components/thpt/ThptPersonalTestModal';
 
 // Helper for persistent User ID across page reloads
 const getUserId = (currentUser) => {
@@ -77,6 +95,12 @@ const STORAGE_KEYS = {
     EVENTS: 'pedagogy_events',
     STUDY_LOGS: 'pedagogy_study_logs',
     RESOURCES: 'pedagogy_resources',
+    THPT_SUBJECTS: 'pedagogy_thpt_subjects',
+    THPT_YEARS: 'pedagogy_thpt_years',
+    THPT_EXAM_TYPES: 'pedagogy_thpt_exam_types',
+    THPT_EXAMS: 'pedagogy_thpt_exams',
+    THPT_PROFILE: 'pedagogy_thpt_profile',
+    THPT_RESULTS: 'pedagogy_thpt_results',
 };
 
 const DEFAULT_PROFILE = {
@@ -1125,7 +1149,20 @@ const calculateOverallGPA = (modules, programs = [], selectedProgramFilter = 'al
 // ─── VIEWS ─────────────────────────────────────────────────────────────────
 
 // 1. DASHBOARD VIEW
-const DashboardView = ({ programs, modules, events, studyLogs, navigate, onOpenCertificate, selectedProgramFilter = 'all', setSelectedProgramFilter }) => {
+const DashboardView = ({
+    programs,
+    modules,
+    events,
+    studyLogs,
+    thptProfile,
+    thptExams = [],
+    thptResults = [],
+    thptSubjects = [],
+    navigate,
+    onOpenCertificate,
+    selectedProgramFilter = 'all',
+    setSelectedProgramFilter
+}) => {
     const normalizedPrograms = programs.map(normalizeProgram);
     const activePrograms = selectedProgramFilter === 'all'
         ? normalizedPrograms.filter(p => p.isEnrolled !== false && p.status !== 'completed')
@@ -1144,6 +1181,20 @@ const DashboardView = ({ programs, modules, events, studyLogs, navigate, onOpenC
 
     const overall = calculateOverallGPA(modules, normalizedPrograms, selectedProgramFilter);
     const upcomingEvents = [...events].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
+
+    // THPT Preparation Calculations (Personalized & Clean)
+    const thptExamDate = new Date('2026-06-26T07:30:00');
+    const today = new Date();
+    const diffTime = thptExamDate - today;
+    const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+    const thptResultsCount = (thptResults || []).length;
+    const avgScore = thptResultsCount > 0
+        ? (thptResults.reduce((s, r) => s + (Number(r.score) || 0), 0) / thptResultsCount).toFixed(1)
+        : '--';
+    const maxScore = thptResultsCount > 0
+        ? Math.max(...thptResults.map(r => Number(r.score) || 0)).toFixed(1)
+        : '--';
 
     // Compute dynamic metric cards based on selectedProgramFilter and evalType
     let metricCards = null;
@@ -1290,16 +1341,6 @@ const DashboardView = ({ programs, modules, events, studyLogs, navigate, onOpenC
                     <p className="text-xl text-gray-600 font-body">Hệ thống quản lý tiến độ & kết quả cá nhân đa mô hình.</p>
                 </div>
                 <div className="flex gap-4 items-center flex-wrap w-full md:w-auto">
-                    {setSelectedProgramFilter && (
-                        <div className="w-full md:w-72">
-                            <EditorialSelect
-                                label="Đang xem chương trình"
-                                value={selectedProgramFilter}
-                                onChange={val => setSelectedProgramFilter(val)}
-                                options={programOptions}
-                            />
-                        </div>
-                    )}
                     {(selectedProgramFilter === 'all' || evalType === 'credits') && (
                         <>
                             <div className="bg-brand-cerulean text-white p-3.5 text-center border-editorial shadow-editorial min-w-[100px]">
@@ -1317,6 +1358,110 @@ const DashboardView = ({ programs, modules, events, studyLogs, navigate, onOpenC
 
             {/* Quick Metrics Grid */}
             {metricCards}
+
+            {/* THPT Preparation & University Goal Section */}
+            <section className="bg-white border-editorial p-6 sm:p-8 shadow-editorial relative overflow-hidden space-y-6">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-jasper"></div>
+
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-brand-cerulean/20">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs uppercase tracking-widest text-brand-jasper font-bold flex items-center gap-1.5">
+                                <GraduationCap size={14} /> Kỳ thi Tốt nghiệp THPT 2026
+                            </span>
+                            {diffDays > 0 && (
+                                <span className="px-2 py-0.5 bg-brand-jasper/10 text-brand-jasper font-bold text-[11px] rounded border border-brand-jasper/20">
+                                    Còn {diffDays} ngày
+                                </span>
+                            )}
+                        </div>
+                        <h3 className="text-2xl font-serif-title font-bold text-brand-cerulean">
+                            Mục tiêu Ôn thi & Luyện đề THPT Quốc gia
+                        </h3>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                            type="button"
+                            onClick={() => navigate('thpt_tracking')}
+                            className="px-3.5 py-1.5 bg-brand-jasper text-white font-sans text-xs font-bold shadow-sm hover:bg-brand-cerulean transition-all flex items-center gap-1.5 rounded"
+                        >
+                            <Plus size={13} /> Nhập điểm bài làm
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => navigate('thpt_goals')}
+                            className="px-3.5 py-1.5 bg-brand-cream border border-brand-cerulean/30 hover:border-brand-jasper text-brand-cerulean text-xs font-bold shadow-sm transition-all rounded"
+                        >
+                            Quản lý mục tiêu &rarr;
+                        </button>
+                    </div>
+                </div>
+
+                {/* THPT KPI Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Goal Card */}
+                    <div className="p-4 bg-brand-cream border border-brand-cerulean/15 rounded space-y-1">
+                        <span className="text-xs text-gray-500 font-serif block">Trường & Ngành mục tiêu</span>
+                        <h4 className={`text-base font-serif-title font-bold line-clamp-1 ${thptProfile?.targetUniversity ? 'text-brand-cerulean' : 'text-gray-400 italic'}`}>
+                            {thptProfile?.targetUniversity || 'Chưa thiết lập mục tiêu'}
+                        </h4>
+                        <div className="flex items-center justify-between pt-2 border-t border-brand-cerulean/10 text-xs">
+                            <span className="text-gray-500">Khối: <strong>{thptProfile?.combination || '--'}</strong></span>
+                            <span className="text-brand-jasper font-bold font-serif-title">
+                                Mục tiêu: {thptProfile?.targetTotalScore > 0 ? `${thptProfile.targetTotalScore} đ` : '--'}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Progress & Average Score */}
+                    <div className="p-4 bg-brand-cream border border-brand-cerulean/15 rounded space-y-1">
+                        <span className="text-xs text-gray-500 font-serif block">Tiến độ Luyện đề</span>
+                        <div className="flex items-baseline justify-between">
+                            <h4 className="text-2xl font-serif-title font-bold text-brand-cerulean">
+                                {thptResultsCount} <span className="text-xs font-sans text-gray-500 font-normal">lượt đã luyện</span>
+                            </h4>
+                            <span className="text-xs font-bold text-brand-jasper">
+                                ĐTB: {avgScore} {avgScore !== '--' ? 'đ' : ''}
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-brand-cerulean/10 text-xs text-gray-500">
+                            <span>Kỷ lục cao nhất: <strong className="text-emerald-700">{maxScore !== '--' ? `${maxScore} đ` : '--'}</strong></span>
+                            <button onClick={() => navigate('thpt_tracking')} className="text-brand-cerulean hover:underline font-bold">
+                                Xem biểu đồ
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Mistakes & Tips */}
+                    <div className="p-4 bg-brand-cream border border-brand-cerulean/15 rounded space-y-1">
+                        <span className="text-xs text-gray-500 font-serif block">Sổ tay Rút kinh nghiệm</span>
+                        <div className="flex items-baseline justify-between">
+                            <h4 className="text-2xl font-serif-title font-bold text-brand-cerulean">
+                                {(thptProfile?.mistakeNotes || []).length} <span className="text-xs font-sans text-gray-500 font-normal">ghi chú bẫy/lỗi</span>
+                            </h4>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-brand-cerulean/10 text-xs">
+                            <span className="text-gray-500 truncate max-w-[170px]">
+                                {(thptProfile?.mistakeNotes || []).length > 0 ? (thptProfile.mistakeNotes[0].title) : 'Chưa có ghi chú'}
+                            </span>
+                            <button onClick={() => navigate('thpt_goals')} className="text-brand-jasper hover:underline font-bold shrink-0">
+                                Mở sổ tay
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Quick Mistake Tip Banner (if any mistake exists) */}
+                {(thptProfile?.mistakeNotes || []).length > 0 && (
+                    <div className="p-3 bg-red-50/60 border border-brand-jasper/20 rounded flex items-start gap-3">
+                        <AlertCircle size={16} className="text-brand-jasper shrink-0 mt-0.5" />
+                        <div className="text-xs text-gray-700 font-body">
+                            <strong className="text-brand-jasper font-serif-title">Ghi nhớ bẫy đề thi gần nhất:</strong> {thptProfile.mistakeNotes[0].title} — <span className="italic">{thptProfile.mistakeNotes[0].remedy || thptProfile.mistakeNotes[0].mistake}</span>
+                        </div>
+                    </div>
+                )}
+            </section>
 
             {/* Certificate Quick Banner */}
             <section className="bg-gradient-to-r from-blue-50/80 via-blue-50/50 to-blue-100/40 border-2 border-brand-cerulean/60 p-6 shadow-editorial flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -4567,6 +4712,24 @@ const getSEOAndPath = (currentView, activeProgramId, activeModuleId, programs, m
                 description: 'Quản lý thông tin mã học viên Nguyễn Huỳnh Phúc Khang, lớp khóa học 2026, khoa Sư phạm Kỹ thuật.',
                 path: '/ho-so-ca-nhan'
             };
+        case 'thpt_exams':
+            return {
+                title: 'Kho Đề Thi THPT & Đáp Án Chi Tiết | Pedagogy',
+                description: 'Quản lý kho đề thi thử, đề chính thức THPT Quốc gia, công thức toán KaTeX và lời giải chi tiết.',
+                path: '/de-thi-thpt'
+            };
+        case 'thpt_goals':
+            return {
+                title: 'Mục Tiêu & Kế Hoạch Ôn Thi THPT 2026 | Pedagogy',
+                description: 'Mục tiêu điểm số Đại học, lộ trình ôn thi 4 giai đoạn và sổ tay rút kinh nghiệm cá nhân.',
+                path: '/muc-tieu-thpt'
+            };
+        case 'thpt_tracking':
+            return {
+                title: 'Nhật Ký & Tiến Độ Luyện Đề Cá Nhân | Pedagogy',
+                description: 'Ghi nhận bài giải đề, tự chấm bài trắc nghiệm và biểu đồ phân tích tiến bộ điểm thi của tôi.',
+                path: '/tien-do-thpt'
+            };
         default:
             return {
                 title: 'Pedagogy - Quản Lý Giáo Dục Cá Nhân',
@@ -4594,6 +4757,9 @@ export default function App() {
     const [currentView, setCurrentView] = useState(() => {
         if (typeof window === 'undefined') return 'dashboard';
         const path = window.location.pathname.toLowerCase();
+        if (path.startsWith('/de-thi-thpt')) return 'thpt_exams';
+        if (path.startsWith('/muc-tieu-thpt')) return 'thpt_goals';
+        if (path.startsWith('/tien-do-thpt')) return 'thpt_tracking';
         if (path.startsWith('/chuong-trinh-dao-tao/')) return 'program_detail';
         if (path.startsWith('/chuong-trinh-dao-tao')) return 'programs';
         if (path.startsWith('/hoc-phan')) return 'module_detail';
@@ -4687,6 +4853,83 @@ export default function App() {
     const [studyLogs, setStudyLogs] = useState(() => []);
     const [resources, setResources] = useState(() => []);
 
+    // THPT Data States
+    const [thptSubjects, setThptSubjects] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const local = localStorage.getItem(STORAGE_KEYS.THPT_SUBJECTS);
+            if (local) try { return JSON.parse(local); } catch (e) {}
+        }
+        return DEFAULT_THPT_SUBJECTS;
+    });
+
+    const [thptYears, setThptYears] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const local = localStorage.getItem(STORAGE_KEYS.THPT_YEARS);
+            if (local) try { return JSON.parse(local); } catch (e) {}
+        }
+        return DEFAULT_THPT_YEARS;
+    });
+
+    const [thptExamTypes, setThptExamTypes] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const local = localStorage.getItem(STORAGE_KEYS.THPT_EXAM_TYPES);
+            if (local) try { return JSON.parse(local); } catch (e) {}
+        }
+        return DEFAULT_THPT_EXAM_TYPES;
+    });
+
+    const [thptExams, setThptExams] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const local = localStorage.getItem(STORAGE_KEYS.THPT_EXAMS);
+            if (local) {
+                try {
+                    const parsed = JSON.parse(local);
+                    return parsed.filter(e => !e.id.startsWith('exam_toan_') && !e.id.startsWith('exam_vatly_') && !e.id.startsWith('exam_hoahoc_') && !e.id.startsWith('exam_tienganh_'));
+                } catch (e) {}
+            }
+        }
+        return DEFAULT_THPT_EXAMS;
+    });
+
+    const [thptProfile, setThptProfile] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const local = localStorage.getItem(STORAGE_KEYS.THPT_PROFILE);
+            if (local) {
+                try {
+                    const parsed = JSON.parse(local);
+                    if (parsed.targetUniversity === 'Đại học Bách Khoa TP.HCM - Ngành Khoa học Máy tính' ||
+                        parsed.targetUniversity === 'Đại học Bách Khoa - Ngành Khoa học Máy tính' ||
+                        parsed.targetUniversity === 'Đại học Bách Khoa TP.HCM - Khoa học Máy tính') {
+                        parsed.targetUniversity = '';
+                        parsed.targetTotalScore = 0;
+                        parsed.combination = '';
+                        parsed.subjectTargets = [];
+                    }
+                    if (parsed.mistakeNotes) {
+                        parsed.mistakeNotes = parsed.mistakeNotes.filter(m => !m.id.startsWith('mis_00'));
+                    }
+                    return parsed;
+                } catch (e) {}
+            }
+        }
+        return DEFAULT_THPT_PERSONAL_PROFILE;
+    });
+
+    const [thptResults, setThptResults] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const local = localStorage.getItem(STORAGE_KEYS.THPT_RESULTS);
+            if (local) {
+                try {
+                    const parsed = JSON.parse(local);
+                    return parsed.filter(r => !r.id.startsWith('res_00'));
+                } catch (e) {}
+            }
+        }
+        return DEFAULT_THPT_RESULTS;
+    });
+
+    const [isGlobalTestEntryOpen, setIsGlobalTestEntryOpen] = useState(false);
+
     const handleToggleEnrollProgram = async (programId) => {
         let updatedProgram = null;
         
@@ -4746,8 +4989,21 @@ export default function App() {
             localStorage.setItem(`${STORAGE_KEYS.EVENTS}_${user.uid}`, JSON.stringify(events));
             localStorage.setItem(`${STORAGE_KEYS.STUDY_LOGS}_${user.uid}`, JSON.stringify(studyLogs));
             localStorage.setItem(`${STORAGE_KEYS.RESOURCES}_${user.uid}`, JSON.stringify(resources));
+            localStorage.setItem(`${STORAGE_KEYS.THPT_SUBJECTS}_${user.uid}`, JSON.stringify(thptSubjects));
+            localStorage.setItem(`${STORAGE_KEYS.THPT_YEARS}_${user.uid}`, JSON.stringify(thptYears));
+            localStorage.setItem(`${STORAGE_KEYS.THPT_EXAM_TYPES}_${user.uid}`, JSON.stringify(thptExamTypes));
+            localStorage.setItem(`${STORAGE_KEYS.THPT_EXAMS}_${user.uid}`, JSON.stringify(thptExams));
+            localStorage.setItem(`${STORAGE_KEYS.THPT_PROFILE}_${user.uid}`, JSON.stringify(thptProfile));
+            localStorage.setItem(`${STORAGE_KEYS.THPT_RESULTS}_${user.uid}`, JSON.stringify(thptResults));
+        } else {
+            localStorage.setItem(STORAGE_KEYS.THPT_SUBJECTS, JSON.stringify(thptSubjects));
+            localStorage.setItem(STORAGE_KEYS.THPT_YEARS, JSON.stringify(thptYears));
+            localStorage.setItem(STORAGE_KEYS.THPT_EXAM_TYPES, JSON.stringify(thptExamTypes));
+            localStorage.setItem(STORAGE_KEYS.THPT_EXAMS, JSON.stringify(thptExams));
+            localStorage.setItem(STORAGE_KEYS.THPT_PROFILE, JSON.stringify(thptProfile));
+            localStorage.setItem(STORAGE_KEYS.THPT_RESULTS, JSON.stringify(thptResults));
         }
-    }, [user, profile, programs, modules, events, studyLogs, resources]);
+    }, [user, profile, programs, modules, events, studyLogs, resources, thptSubjects, thptYears, thptExamTypes, thptExams, thptProfile, thptResults]);
 
     // Firestore Realtime Sync Logic (Strict per-account Cloud Sync)
     const syncFirestoreData = async (userId, googleUser) => {
@@ -4785,6 +5041,12 @@ export default function App() {
                 await setDoc(profileRef, initProfile);
             }
 
+            // Cleanup legacy mock docs from Firestore if present
+            const mockExams = ['exam_toan_2025_001', 'exam_vatly_2025_002', 'exam_hoahoc_2025_003', 'exam_tienganh_2025_004'];
+            mockExams.forEach(id => { deleteDoc(getDocRef(userId, 'thptExams', id)).catch(() => {}); });
+            const mockResults = ['res_001', 'res_002', 'res_003', 'res_004', 'res_005'];
+            mockResults.forEach(id => { deleteDoc(getDocRef(userId, 'thptResults', id)).catch(() => {}); });
+
             onSnapshot(getCollectionRef(userId, 'programs'), (snapshot) => {
                 setPrograms(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
             });
@@ -4804,6 +5066,45 @@ export default function App() {
             onSnapshot(getCollectionRef(userId, 'resources'), (snapshot) => {
                 setResources(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
             });
+
+            onSnapshot(getCollectionRef(userId, 'thptExams'), (snapshot) => {
+                const cleanExams = snapshot.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(e => !e.id.startsWith('exam_toan_') && !e.id.startsWith('exam_vatly_') && !e.id.startsWith('exam_hoahoc_') && !e.id.startsWith('exam_tienganh_'));
+                setThptExams(cleanExams);
+            });
+
+            onSnapshot(getDocRef(userId, 'thptProfile', 'main'), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    let modified = false;
+                    if (data.targetUniversity === 'Đại học Bách Khoa TP.HCM - Ngành Khoa học Máy tính' ||
+                        data.targetUniversity === 'Đại học Bách Khoa - Ngành Khoa học Máy tính' ||
+                        data.targetUniversity === 'Đại học Bách Khoa TP.HCM - Khoa học Máy tính') {
+                        data.targetUniversity = '';
+                        data.targetTotalScore = 0;
+                        data.combination = '';
+                        data.subjectTargets = [];
+                        modified = true;
+                    }
+                    if (data.mistakeNotes) {
+                        const originalLen = data.mistakeNotes.length;
+                        data.mistakeNotes = data.mistakeNotes.filter(m => !m.id.startsWith('mis_00'));
+                        if (data.mistakeNotes.length !== originalLen) modified = true;
+                    }
+                    if (modified) {
+                        setDoc(getDocRef(userId, 'thptProfile', 'main'), data).catch(() => {});
+                    }
+                    setThptProfile(data);
+                }
+            });
+
+            onSnapshot(getCollectionRef(userId, 'thptResults'), (snapshot) => {
+                const cleanResults = snapshot.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(r => !r.id.startsWith('res_00'));
+                setThptResults(cleanResults);
+            });
         } catch (err) {
             console.warn("Firestore sync setup error:", err);
         }
@@ -4821,6 +5122,9 @@ export default function App() {
             setEvents([]);
             setStudyLogs([]);
             setResources([]);
+            setThptExams(DEFAULT_THPT_EXAMS);
+            setThptProfile(DEFAULT_THPT_PERSONAL_PROFILE);
+            setThptResults(DEFAULT_THPT_RESULTS);
             Object.values(STORAGE_KEYS).forEach(key => {
                 localStorage.removeItem(key);
                 if (user?.uid) localStorage.removeItem(`${key}_${user.uid}`);
@@ -4914,6 +5218,79 @@ export default function App() {
         try { await setDoc(getDocRef(userId, 'profile', 'main'), updatedProfile); } catch (err) {}
     };
 
+    // THPT Exam Mutators
+    const handleSaveThptExam = async (savedExam) => {
+        setThptExams(prev => {
+            const exists = prev.some(e => e.id === savedExam.id);
+            if (exists) return prev.map(e => e.id === savedExam.id ? savedExam : e);
+            return [savedExam, ...prev];
+        });
+        const userId = getUserId(user);
+        try { await setDoc(getDocRef(userId, 'thptExams', savedExam.id), savedExam); } catch (err) {}
+    };
+
+    const handleDeleteThptExam = async (examId) => {
+        setThptExams(prev => prev.filter(e => e.id !== examId));
+        const userId = getUserId(user);
+        try { await deleteDoc(getDocRef(userId, 'thptExams', examId)); } catch (err) {}
+    };
+
+    const handleDuplicateThptExam = async (exam) => {
+        const duplicated = {
+            ...JSON.parse(JSON.stringify(exam)),
+            id: 'exam_' + Date.now(),
+            code: (exam.code || 'DE') + '-COPY',
+            title: exam.title + ' (Bản sao)',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        handleSaveThptExam(duplicated);
+        showToast('Đã nhân bản đề thi thành công');
+    };
+
+    // THPT Personal Profile Mutator
+    const handleUpdateThptProfile = async (updatedProfile) => {
+        setThptProfile(updatedProfile);
+        const userId = getUserId(user);
+        try { await setDoc(getDocRef(userId, 'thptProfile', 'main'), updatedProfile); } catch (err) {}
+    };
+
+    // THPT Result Mutators
+    const handleSaveThptResult = async (savedResult) => {
+        setThptResults(prev => {
+            const exists = prev.some(r => r.id === savedResult.id);
+            if (exists) return prev.map(r => r.id === savedResult.id ? savedResult : r);
+            return [savedResult, ...prev];
+        });
+        const userId = getUserId(user);
+        try { await setDoc(getDocRef(userId, 'thptResults', savedResult.id), savedResult); } catch (err) {}
+    };
+
+    const handleDeleteThptResult = async (resultId) => {
+        setThptResults(prev => prev.filter(r => r.id !== resultId));
+        const userId = getUserId(user);
+        try { await deleteDoc(getDocRef(userId, 'thptResults', resultId)); } catch (err) {}
+    };
+
+    // THPT Metadata Mutators
+    const handleUpdateThptSubjects = async (updatedSubjects) => {
+        setThptSubjects(updatedSubjects);
+        const userId = getUserId(user);
+        try { await setDoc(getDocRef(userId, 'thptMetadata', 'subjects'), { list: updatedSubjects }); } catch (err) {}
+    };
+
+    const handleUpdateThptYears = async (updatedYears) => {
+        setThptYears(updatedYears);
+        const userId = getUserId(user);
+        try { await setDoc(getDocRef(userId, 'thptMetadata', 'years'), { list: updatedYears }); } catch (err) {}
+    };
+
+    const handleUpdateThptExamTypes = async (updatedTypes) => {
+        setThptExamTypes(updatedTypes);
+        const userId = getUserId(user);
+        try { await setDoc(getDocRef(userId, 'thptMetadata', 'examTypes'), { list: updatedTypes }); } catch (err) {}
+    };
+
     // SEO & Friendly URL Sync Effect
     useEffect(() => {
         const seo = getSEOAndPath(currentView, activeProgramId, activeModuleId, programs, modules);
@@ -4952,7 +5329,10 @@ export default function App() {
                 if (e.state.activeModuleId) setActiveModuleId(e.state.activeModuleId);
             } else {
                 const path = window.location.pathname.toLowerCase();
-                if (path.startsWith('/chuong-trinh-dao-tao/')) setCurrentView('program_detail');
+                if (path.startsWith('/de-thi-thpt')) setCurrentView('thpt_exams');
+                else if (path.startsWith('/muc-tieu-thpt')) setCurrentView('thpt_goals');
+                else if (path.startsWith('/tien-do-thpt')) setCurrentView('thpt_tracking');
+                else if (path.startsWith('/chuong-trinh-dao-tao/')) setCurrentView('program_detail');
                 else if (path.startsWith('/chuong-trinh-dao-tao')) setCurrentView('programs');
                 else if (path.startsWith('/hoc-phan')) setCurrentView('module_detail');
                 else if (path.startsWith('/de-cuong')) setCurrentView('syllabus');
@@ -5099,6 +5479,23 @@ if (!user) {
                     <button onClick={() => navigate('resources')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'resources' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
                         <FolderOpen size={18} /> Học liệu & Nhật ký
                     </button>
+
+                    {/* THPT Personal Examination Suite */}
+                    <div className="pt-2 border-t border-brand-cerulean/15 space-y-2">
+                        <span className="px-1 text-[10px] font-serif-title uppercase tracking-widest text-brand-cerulean/70 font-bold block">
+                            Luyện Thi THPT Cá Nhân
+                        </span>
+                        <button onClick={() => navigate('thpt_exams')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'thpt_exams' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
+                            <FileText size={18} /> Đề thi & Đáp án
+                        </button>
+                        <button onClick={() => navigate('thpt_goals')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'thpt_goals' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
+                            <Target size={18} /> Mục tiêu & Kế hoạch
+                        </button>
+                        <button onClick={() => navigate('thpt_tracking')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'thpt_tracking' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
+                            <TrendingUp size={18} /> Nhật ký & Tiến độ
+                        </button>
+                    </div>
+
                     <button onClick={() => navigate('profile')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'profile' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
                         <User size={18} /> Hồ sơ cá nhân
                     </button>
@@ -5125,7 +5522,20 @@ if (!user) {
                     <img src={logoImg} alt="Logo" className="w-8 h-8 rounded-full" />
                     <h1 className="font-serif-title text-2xl text-brand-cerulean">Pedagogy</h1>
                 </div>
-                <button onClick={() => alert('Mobile menu - hãy sử dụng trên máy tính để có trải nghiệm đầy đủ nhất')}><Menu /></button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => navigate('thpt_goals')}
+                        className="px-2 py-1 bg-brand-cerulean text-white rounded text-xs font-bold"
+                    >
+                        Mục tiêu
+                    </button>
+                    <button
+                        onClick={() => navigate('thpt_tracking')}
+                        className="px-2 py-1 bg-brand-jasper text-white rounded text-xs font-bold"
+                    >
+                        Tiến độ
+                    </button>
+                </div>
             </div>
 
             {/* Main Content Area (Independent Vertical Scroll with Fade Up Animation) */}
@@ -5139,9 +5549,14 @@ if (!user) {
                         modules={modules}
                         events={events}
                         studyLogs={studyLogs}
+                        thptProfile={thptProfile}
+                        thptExams={thptExams}
+                        thptResults={thptResults}
+                        thptSubjects={thptSubjects}
                         navigate={navigate}
                         onOpenCertificate={() => setIsCertModalOpen(true)}
                         selectedProgramFilter={selectedProgramFilter}
+                        setSelectedProgramFilter={setSelectedProgramFilter}
                     />
                 )}
                 {currentView === 'programs' && (
@@ -5192,6 +5607,41 @@ if (!user) {
                         onDeleteResource={handleDeleteResource}
                     />
                 )}
+                {currentView === 'thpt_exams' && (
+                    <ThptExamsView
+                        exams={thptExams}
+                        subjects={thptSubjects}
+                        years={thptYears}
+                        examTypes={thptExamTypes}
+                        onSaveExam={handleSaveThptExam}
+                        onDeleteExam={handleDeleteThptExam}
+                        onDuplicateExam={handleDuplicateThptExam}
+                        onUpdateSubjects={handleUpdateThptSubjects}
+                        onUpdateYears={handleUpdateThptYears}
+                        onUpdateExamTypes={handleUpdateThptExamTypes}
+                        showToast={showToast}
+                    />
+                )}
+                {currentView === 'thpt_goals' && (
+                    <ThptPersonalGoalView
+                        profile={thptProfile}
+                        subjects={thptSubjects}
+                        results={thptResults}
+                        onUpdateProfile={handleUpdateThptProfile}
+                        showToast={showToast}
+                    />
+                )}
+                {currentView === 'thpt_tracking' && (
+                    <ThptPersonalTrackingView
+                        profile={thptProfile}
+                        exams={thptExams}
+                        results={thptResults}
+                        subjects={thptSubjects}
+                        onSaveResult={handleSaveThptResult}
+                        onDeleteResult={handleDeleteThptResult}
+                        showToast={showToast}
+                    />
+                )}
                 {currentView === 'profile' && (
                     <ProfileView
                         profile={profile}
@@ -5201,6 +5651,16 @@ if (!user) {
                     />
                 )}
             </main>
+
+            {/* Global Quick Test Entry Modal */}
+            <ThptPersonalTestModal
+                isOpen={isGlobalTestEntryOpen}
+                onClose={() => setIsGlobalTestEntryOpen(false)}
+                exams={thptExams}
+                subjects={thptSubjects}
+                onSaveResult={handleSaveThptResult}
+                showToast={showToast}
+            />
 
             {/* Auth Login / Logout Transition Overlay */}
             {authLoadingState && createPortal(

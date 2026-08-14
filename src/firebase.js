@@ -47,6 +47,11 @@ export const COLLECTIONS = {
     COURSES: "courses",
     SYLLABI: "syllabi",
     LEARNER_PROGRESS: "learnerProgress",
+    THPT_EXAMS: "thpt_exams",
+    THPT_STUDENTS: "thpt_students",
+    THPT_RESULTS: "thpt_results",
+    THPT_SUBJECTS: "thpt_subjects",
+    THPT_METADATA: "thpt_metadata",
 };
 
 export const googleProvider = new GoogleAuthProvider();

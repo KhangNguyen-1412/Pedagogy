@@ -2,15 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-    background-color: #FDFBF7;
-    color: #1A1A1A;
-    font-family: 'Newsreader', serif;
-    -webkit-font-smoothing: antialiased;
-}
+@layer base {
+    html, body {
+        background-color: #FDFBF7;
+        color: #1A1A1A;
+        font-family: 'Newsreader', Georgia, serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
 
-h1, h2, h3, h4, h5, h6, .font-serif-title {
-    font-family: 'Playfair Display', serif;
+    h1, h2, h3, h4, h5, h6, .font-serif-title, .font-title, .font-serif {
+        font-family: 'Playfair Display', Georgia, serif;
+    }
+
+    p, span, div, button, input, textarea, select, label, table, th, td, a, li, blockquote {
+        font-family: 'Newsreader', Georgia, serif;
+    }
+
+    .font-serif-title {
+        font-family: 'Playfair Display', Georgia, serif !important;
+    }
+
+    .font-serif {
+        font-family: 'Playfair Display', Georgia, serif !important;
+    }
+
+    .font-body, .font-sans {
+        font-family: 'Newsreader', Georgia, serif !important;
+    }
 }
 
 ::-webkit-scrollbar { width: 8px; }
