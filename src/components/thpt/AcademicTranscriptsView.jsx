@@ -1713,7 +1713,75 @@ export const AcademicTranscriptsView = ({
                                         Giấy khen & Danh hiệu Khen thưởng Lớp {selectedPrimaryGrade} (Từng học kỳ):
                                     </span>
                                 </div>
-                                    </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <CertificateUploadCard
+                                        label="Giấy khen Học kỳ 1 (HK1)"
+                                        iconColor="text-amber-600"
+                                        titleValue={currentPrimaryGradeData.awardHk1}
+                                        imageValue={currentPrimaryGradeData.awardHk1Img}
+                                        placeholder="Vd: Khen thưởng Học sinh Tiêu biểu HK1..."
+                                        onTitleChange={val => setTranscripts(prev => ({
+                                            ...prev,
+                                            primarySchool: {
+                                                ...prev.primarySchool,
+                                                [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awardHk1: val }
+                                            }
+                                        }))}
+                                        onImageChange={img => setTranscripts(prev => ({
+                                            ...prev,
+                                            primarySchool: {
+                                                ...prev.primarySchool,
+                                                [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awardHk1Img: img }
+                                            }
+                                        }))}
+                                        onPreviewImage={(img, title) => setPreviewModal({ isOpen: true, imageUrl: img, title })}
+                                    />
+
+                                    <CertificateUploadCard
+                                        label="Giấy khen Học kỳ 2 (HK2)"
+                                        iconColor="text-amber-600"
+                                        titleValue={currentPrimaryGradeData.awardHk2}
+                                        imageValue={currentPrimaryGradeData.awardHk2Img}
+                                        placeholder="Vd: Khen thưởng Học sinh Xuất sắc HK2..."
+                                        onTitleChange={val => setTranscripts(prev => ({
+                                            ...prev,
+                                            primarySchool: {
+                                                ...prev.primarySchool,
+                                                [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awardHk2: val }
+                                            }
+                                        }))}
+                                        onImageChange={img => setTranscripts(prev => ({
+                                            ...prev,
+                                            primarySchool: {
+                                                ...prev.primarySchool,
+                                                [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awardHk2Img: img }
+                                            }
+                                        }))}
+                                        onPreviewImage={(img, title) => setPreviewModal({ isOpen: true, imageUrl: img, title })}
+                                    />
+
+                                    <CertificateUploadCard
+                                        label="Giấy khen Cả năm"
+                                        iconColor="text-amber-700"
+                                        titleValue={currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards}
+                                        imageValue={currentPrimaryGradeData.awardYearImg}
+                                        placeholder="Vd: Khen thưởng Học sinh Xuất sắc, Vở sạch chữ đẹp..."
+                                        onTitleChange={val => setTranscripts(prev => ({
+                                            ...prev,
+                                            primarySchool: {
+                                                ...prev.primarySchool,
+                                                [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awardYear: val, awards: val }
+                                            }
+                                        }))}
+                                        onImageChange={img => setTranscripts(prev => ({
+                                            ...prev,
+                                            primarySchool: {
+                                                ...prev.primarySchool,
+                                                [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awardYearImg: img }
+                                            }
+                                        }))}
+                                        onPreviewImage={(img, title) => setPreviewModal({ isOpen: true, imageUrl: img, title })}
+                                    />
                                 </div>
                             </div>
 
@@ -1726,6 +1794,40 @@ export const AcademicTranscriptsView = ({
                                     <Save size={14} /> Lưu điểm Lớp {selectedPrimaryGrade}
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* LIGHTBOX MODAL: Xem phóng to ảnh Giấy khen */}
+            {previewModal.isOpen && (
+                <div 
+                    className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+                    onClick={() => setPreviewModal({ isOpen: false, imageUrl: '', title: '' })}
+                >
+                    <div 
+                        className="relative max-w-4xl max-h-[90vh] w-full bg-white p-4 rounded-xs shadow-2xl border-2 border-brand-cerulean space-y-3 animate-scale-up"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between pb-2 border-b border-brand-cerulean/20">
+                            <h4 className="font-serif-title font-bold text-brand-cerulean flex items-center gap-2 text-base">
+                                <Award size={20} className="text-amber-600" />
+                                {previewModal.title || 'Ảnh Giấy khen'}
+                            </h4>
+                            <button
+                                type="button"
+                                onClick={() => setPreviewModal({ isOpen: false, imageUrl: '', title: '' })}
+                                className="p-1.5 text-gray-500 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="overflow-auto max-h-[75vh] flex items-center justify-center bg-stone-900/5 rounded-xs p-2">
+                            <img 
+                                src={previewModal.imageUrl} 
+                                alt={previewModal.title} 
+                                className="max-h-[70vh] max-w-full object-contain rounded-xs shadow-md"
+                            />
                         </div>
                     </div>
                 </div>
