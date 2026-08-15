@@ -35,7 +35,7 @@ export const PRIMARY_SUBJECTS = [
     { id: 'vietnamese', name: 'Tiếng Việt', color: '#124874', hasScore: true },
     { id: 'math', name: 'Toán', color: '#124874', hasScore: true },
     { id: 'english', name: 'Tiếng Anh', color: '#124874', hasScore: true, grades: ['4', '5'] },
-    { id: 'science', name: 'Khoa học (Tự nhiên & Xã hội)', color: '#124874', hasScore: true },
+    { id: 'science', name: 'Khoa học (Tự nhiên & Xã hội)', color: '#124874', hasScore: true, isSplit5: true },
     { id: 'history_geography', name: 'Lịch sử & Địa lí', color: '#124874', hasScore: true, grades: ['4', '5'] },
     { id: 'informatics_tech', name: 'Tin học & Công nghệ', color: '#124874', hasScore: true, grades: ['3', '4', '5'] },
     { id: 'ethics', name: 'Đạo đức', color: '#124874', hasScore: true, isSplit5: true },
