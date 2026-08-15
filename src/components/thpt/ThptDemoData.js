@@ -14,6 +14,7 @@ export const DEFAULT_THPT_SUBJECTS = [
     { id: 'geography', name: 'Địa lí', code: 'DIALY', color: '#124874', icon: 'Globe' },
     { id: 'economic_law', name: 'Kinh tế & Pháp luật', code: 'GDKTPL', color: '#124874', icon: 'Scale' },
     { id: 'informatics', name: 'Tin học', code: 'TINHOC', color: '#124874', icon: 'Binary' },
+    { id: 'pe', name: 'Thể dục (Giáo dục thể chất)', code: 'THE_DUC', color: '#124874', icon: 'Activity' },
 ];
 
 export const DEFAULT_THPT_YEARS = [

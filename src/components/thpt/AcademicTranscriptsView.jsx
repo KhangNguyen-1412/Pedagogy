@@ -8,19 +8,23 @@ import { EditorialSelect } from './EditorialSelect';
 import { OFFICIAL_THPT_SUBJECTS } from './ThptPersonalGoalView';
 
 /**
- * Danh mục Môn học THCS chuẩn GDPT
+ * Danh mục Môn học THCS
  */
 export const THCS_SUBJECTS = [
     { id: 'math', name: 'Toán học', color: '#124874' },
     { id: 'literature', name: 'Ngữ văn', color: '#124874' },
     { id: 'english', name: 'Tiếng Anh (Ngoại ngữ 1)', color: '#124874' },
-    { id: 'science', name: 'Khoa học Tự nhiên (Lý - Hóa - Sinh)', color: '#124874' },
-    { id: 'history_geography', name: 'Lịch sử & Địa lí', color: '#124874' },
+    { id: 'physics', name: 'Vật lí', color: '#124874' },
+    { id: 'chemistry', name: 'Hóa học', color: '#124874' },
+    { id: 'biology', name: 'Sinh học', color: '#124874' },
+    { id: 'history', name: 'Lịch sử', color: '#124874' },
+    { id: 'geography', name: 'Địa lí', color: '#124874' },
     { id: 'civics', name: 'Giáo dục công dân (GDCD)', color: '#124874' },
     { id: 'informatics', name: 'Tin học', color: '#124874' },
     { id: 'technology', name: 'Công nghệ', color: '#124874' },
-    { id: 'pe', name: 'Giáo dục thể chất', color: '#124874' },
-    { id: 'arts', name: 'Nghệ thuật (Âm nhạc, Mĩ thuật)', color: '#124874' },
+    { id: 'pe', name: 'Thể dục (Giáo dục thể chất)', color: '#124874' },
+    { id: 'music', name: 'Âm nhạc', color: '#124874' },
+    { id: 'art', name: 'Mĩ thuật', color: '#124874' },
 ];
 
 /**
