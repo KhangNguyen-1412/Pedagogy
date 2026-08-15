@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-    BookMarked, Award, GraduationCap, School, Calculator,
+    BookMarked, Award, GraduationCap, School,
     Save, Edit2, CheckCircle2, ChevronRight, Sparkles, Building2,
     Calendar, TrendingUp, HelpCircle, Check, Plus
 } from 'lucide-react';
 import { EditorialSelect } from './EditorialSelect';
-import { THPT_COMBINATIONS, OFFICIAL_THPT_SUBJECTS } from './ThptPersonalGoalView';
+import { OFFICIAL_THPT_SUBJECTS } from './ThptPersonalGoalView';
 
 /**
  * Danh mục Môn học THCS chuẩn GDPT
@@ -39,6 +39,34 @@ export const PRIMARY_SUBJECTS = [
     { id: 'activities', name: 'Hoạt động trải nghiệm', color: '#124874', hasScore: false }
 ];
 
+export const TRANSCRIPT_RANK_OPTIONS = [
+    { value: 'Học sinh Xuất sắc', label: 'Học sinh Xuất sắc' },
+    { value: 'Học sinh Giỏi', label: 'Học sinh Giỏi' },
+    { value: 'Học sinh Khá', label: 'Học sinh Khá' },
+    { value: 'Học sinh Đạt', label: 'Học sinh Đạt' },
+    { value: 'Chưa đạt', label: 'Chưa đạt' },
+];
+
+export const TRANSCRIPT_CONDUCT_OPTIONS = [
+    { value: 'Tốt', label: 'Tốt' },
+    { value: 'Khá', label: 'Khá' },
+    { value: 'Đạt', label: 'Đạt' },
+    { value: 'Chưa đạt', label: 'Chưa đạt' },
+];
+
+export const PRIMARY_EVAL_RESULT_OPTIONS = [
+    { value: 'Hoàn thành Xuất sắc', label: 'Hoàn thành Xuất sắc' },
+    { value: 'Hoàn thành Tốt', label: 'Hoàn thành Tốt' },
+    { value: 'Hoàn thành', label: 'Hoàn thành' },
+    { value: 'Chưa hoàn thành', label: 'Chưa hoàn thành' },
+];
+
+export const PRIMARY_SUBJECT_STATUS_OPTIONS = [
+    { value: 'T', label: 'Tốt (T)' },
+    { value: 'H', label: 'Hoàn thành (H)' },
+    { value: 'C', label: 'Chưa HT (C)' },
+];
+
 /**
  * AcademicTranscriptsView - Quản lý Học bạ 3 Cấp (Tiểu học - THCS - THPT)
  * Đầy đủ bảng điểm chi tiết từng môn, từng học kỳ cho tất cả các cấp học
@@ -51,10 +79,10 @@ export const AcademicTranscriptsView = ({
     const [activeTab, setActiveTab] = useState(() => {
         if (typeof window !== 'undefined') {
             const saved = sessionStorage.getItem('pedagogy_transcript_tab');
-            if (saved) return saved;
+            if (saved && saved !== 'simulator') return saved;
         }
         return 'high_school';
-    }); // 'high_school' | 'secondary' | 'primary' | 'simulator'
+    }); // 'high_school' | 'secondary' | 'primary'
 
     const [selectedThptGrade, setSelectedThptGrade] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -95,18 +123,18 @@ export const AcademicTranscriptsView = ({
             highSchool: {
                 schoolName: profile?.school || '',
                 graduationYear: profile?.officialExamYear || '2026',
-                grade10: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt' },
-                grade11: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt' },
-                grade12: { scores: {}, gpa: '', rank: 'Học sinh Xuất sắc', conduct: 'Tốt' },
+                grade10: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+                grade11: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+                grade12: { scores: {}, gpa: '', rank: 'Học sinh Xuất sắc', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
                 ...(profile?.transcripts?.highSchool || {})
             },
             secondarySchool: {
                 schoolName: '',
                 graduationYear: '',
-                grade6: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt' },
-                grade7: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt' },
-                grade8: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt' },
-                grade9: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt' },
+                grade6: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+                grade7: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+                grade8: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+                grade9: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
                 entranceExam10: {
                     schoolAdmitted: profile?.school || '',
                     mathScore: '',
@@ -120,11 +148,11 @@ export const AcademicTranscriptsView = ({
             primarySchool: {
                 schoolName: '',
                 graduationYear: '',
-                grade1: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awards: '' },
-                grade2: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awards: '' },
-                grade3: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awards: '' },
-                grade4: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awards: '' },
-                grade5: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awards: '' },
+                grade1: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+                grade2: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+                grade3: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+                grade4: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+                grade5: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
                 ...(profile?.transcripts?.primarySchool || {})
             }
         };
@@ -292,50 +320,10 @@ export const AcademicTranscriptsView = ({
         });
     };
 
-    // Helper: Compute average score for a combination under a specific method
-    const computeCombinationScore = (comboCode, method) => {
-        const combo = THPT_COMBINATIONS.find(c => c.value === comboCode);
-        if (!combo || !combo.subjects || combo.subjects.length === 0) return null;
-
-        const hs = transcripts.highSchool;
-        let sum = 0;
-        let validSubjectsCount = 0;
-
-        for (const subjId of combo.subjects) {
-            let subjScore = null;
-            if (method === 'grade12_final') {
-                subjScore = hs.grade12?.scores?.[subjId]?.final;
-            } else if (method === '3_years_avg') {
-                const f10 = hs.grade10?.scores?.[subjId]?.final;
-                const f11 = hs.grade11?.scores?.[subjId]?.final;
-                const f12 = hs.grade12?.scores?.[subjId]?.final;
-                if (f10 !== undefined && f11 !== undefined && f12 !== undefined && f10 !== '' && f11 !== '' && f12 !== '') {
-                    subjScore = (Number(f10) + Number(f11) + Number(f12)) / 3;
-                }
-            } else if (method === '5_semesters') {
-                const s1 = hs.grade10?.scores?.[subjId]?.hk1;
-                const s2 = hs.grade10?.scores?.[subjId]?.hk2;
-                const s3 = hs.grade11?.scores?.[subjId]?.hk1;
-                const s4 = hs.grade11?.scores?.[subjId]?.hk2;
-                const s5 = hs.grade12?.scores?.[subjId]?.hk1;
-                if ([s1, s2, s3, s4, s5].every(s => s !== undefined && s !== '' && !isNaN(Number(s)))) {
-                    subjScore = (Number(s1) + Number(s2) + Number(s3) + Number(s4) + Number(s5)) / 5;
-                }
-            }
-
-            if (subjScore !== null && subjScore !== undefined && !isNaN(Number(subjScore))) {
-                sum += Number(subjScore);
-                validSubjectsCount++;
-            }
-        }
-
-        return validSubjectsCount === combo.subjects.length ? Number(sum.toFixed(2)) : null;
-    };
-
     // Active Grade Data for each level
-    const currentThptGradeData = transcripts.highSchool[`grade${selectedThptGrade}`] || { scores: {}, gpa: '', rank: '', conduct: 'Tốt' };
-    const currentThcsGradeData = transcripts.secondarySchool[`grade${selectedThcsGrade}`] || { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt' };
-    const currentPrimaryGradeData = transcripts.primarySchool[`grade${selectedPrimaryGrade}`] || { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awards: '' };
+    const currentThptGradeData = transcripts.highSchool[`grade${selectedThptGrade}`] || { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' };
+    const currentThcsGradeData = transcripts.secondarySchool[`grade${selectedThcsGrade}`] || { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' };
+    const currentPrimaryGradeData = transcripts.primarySchool[`grade${selectedPrimaryGrade}`] || { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' };
 
     return (
         <div className="max-w-5xl mx-auto space-y-8 animate-fade-in-up">
@@ -343,10 +331,10 @@ export const AcademicTranscriptsView = ({
             <header className="sticky -top-6 md:-top-12 z-20 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 border-b-2 border-brand-cerulean flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-3xl sm:text-4xl font-serif-title text-brand-cerulean mt-1 flex items-center gap-2">
-                        Học bạ 3 Cấp & Điểm Xét tuyển
+                        Học bạ 3 Cấp (Tiểu học - THCS - THPT)
                     </h2>
                     <p className="text-sm text-gray-600 mt-1 font-body">
-                        Quản lý đầy đủ bảng điểm chi tiết từng môn của Tiểu học, THCS, THPT và tính toán điểm xét tuyển học bạ vào các trường Đại học.
+                        Quản lý đầy đủ bảng điểm chi tiết từng môn và danh hiệu khen thưởng của Tiểu học, THCS và THPT.
                     </p>
                 </div>
 
@@ -427,46 +415,6 @@ export const AcademicTranscriptsView = ({
                         <span className="text-amber-800 font-bold">5 Năm Hoàn thành Xuất sắc</span>
                     </div>
                 </div>
-            </div>
-
-            {/* TAB SELECTOR PILL */}
-            <div className="flex items-center bg-white border border-brand-cerulean/30 shadow-sm p-1 flex-wrap gap-1">
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('high_school')}
-                    className={`px-4 py-2 font-serif-title text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        activeTab === 'high_school' ? 'bg-brand-cerulean text-white shadow-sm' : 'text-brand-cerulean hover:text-brand-jasper'
-                    }`}
-                >
-                    <GraduationCap size={15} /> Cấp 3: THPT (Lớp 10, 11, 12)
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('secondary')}
-                    className={`px-4 py-2 font-serif-title text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        activeTab === 'secondary' ? 'bg-brand-cerulean text-white shadow-sm' : 'text-brand-cerulean hover:text-brand-jasper'
-                    }`}
-                >
-                    <School size={15} /> Cấp 2: THCS (Lớp 6, 7, 8, 9)
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('primary')}
-                    className={`px-4 py-2 font-serif-title text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        activeTab === 'primary' ? 'bg-brand-cerulean text-white shadow-sm' : 'text-brand-cerulean hover:text-brand-jasper'
-                    }`}
-                >
-                    <Award size={15} /> Cấp 1: Tiểu học (Lớp 1 - 5)
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('simulator')}
-                    className={`px-4 py-2 font-serif-title text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        activeTab === 'simulator' ? 'bg-brand-jasper text-white shadow-sm' : 'text-brand-jasper hover:text-brand-cerulean'
-                    }`}
-                >
-                    <Calculator size={15} /> ⚡ Tính Điểm Xét Học Bạ Đại Học
-                </button>
             </div>
 
             {/* TAB 1: CẤP 3 - THPT */}
@@ -551,10 +499,32 @@ export const AcademicTranscriptsView = ({
                                 ))}
                             </div>
 
-                            <div className="flex items-center gap-3 text-xs">
+                            <div className="flex items-center gap-3 text-xs flex-wrap">
                                 <span>ĐTB Năm Lớp {selectedThptGrade}: <strong className="text-brand-jasper text-sm">{currentThptGradeData.gpa || '--'} đ</strong></span>
                                 <span>•</span>
                                 <span>Xếp loại: <strong className="text-brand-cerulean">{currentThptGradeData.rank || 'Học sinh Giỏi'}</strong></span>
+                                {(currentThptGradeData.awardHk1 || currentThptGradeData.awardHk2 || currentThptGradeData.awardYear || currentThptGradeData.awards) && (
+                                    <>
+                                        <span>•</span>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            {currentThptGradeData.awardHk1 && (
+                                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium" title="Giấy khen HK1">
+                                                    <Award size={11} className="text-amber-600" /> HK1: {currentThptGradeData.awardHk1}
+                                                </span>
+                                            )}
+                                            {currentThptGradeData.awardHk2 && (
+                                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium" title="Giấy khen HK2">
+                                                    <Award size={11} className="text-amber-600" /> HK2: {currentThptGradeData.awardHk2}
+                                                </span>
+                                            )}
+                                            {(currentThptGradeData.awardYear || currentThptGradeData.awards) && (
+                                                <span className="inline-flex items-center gap-1 bg-brand-jasper/10 text-brand-jasper border border-brand-jasper/30 px-2 py-0.5 rounded-xs text-[11px] font-bold" title="Giấy khen Cả năm">
+                                                    <Award size={11} className="text-brand-jasper" /> Cả năm: {currentThptGradeData.awardYear || currentThptGradeData.awards}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -625,50 +595,118 @@ export const AcademicTranscriptsView = ({
                             </table>
                         </div>
 
-                        {/* Footer Grade Settings */}
-                        <div className="p-4 bg-brand-cream border border-brand-cerulean/20 rounded-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                            <div className="flex items-center gap-4 text-xs">
-                                <div>
-                                    <span className="font-serif-title font-bold text-brand-cerulean mr-2">Xếp loại Học lực:</span>
-                                    <input
-                                        type="text"
-                                        value={currentThptGradeData.rank}
-                                        onChange={e => setTranscripts(prev => ({
-                                            ...prev,
-                                            highSchool: {
-                                                ...prev.highSchool,
-                                                [`grade${selectedThptGrade}`]: { ...currentThptGradeData, rank: e.target.value }
-                                            }
-                                        }))}
-                                        placeholder="Học sinh Giỏi / Xuất sắc"
-                                        className="bg-white border border-brand-cerulean/30 px-2 py-1 text-xs font-bold text-brand-cerulean rounded-xs"
-                                    />
+                        {/* Footer Grade Settings & Semester Awards */}
+                        <div className="p-5 bg-brand-cream border border-brand-cerulean/20 rounded-xs space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <EditorialSelect
+                                    label="Xếp loại Học lực:"
+                                    value={currentThptGradeData.rank || 'Học sinh Giỏi'}
+                                    onChange={val => setTranscripts(prev => ({
+                                        ...prev,
+                                        highSchool: {
+                                            ...prev.highSchool,
+                                            [`grade${selectedThptGrade}`]: { ...currentThptGradeData, rank: val }
+                                        }
+                                    }))}
+                                    options={TRANSCRIPT_RANK_OPTIONS}
+                                    size="sm"
+                                />
+                                <EditorialSelect
+                                    label="Hạnh kiểm / Rèn luyện:"
+                                    value={currentThptGradeData.conduct || 'Tốt'}
+                                    onChange={val => setTranscripts(prev => ({
+                                        ...prev,
+                                        highSchool: {
+                                            ...prev.highSchool,
+                                            [`grade${selectedThptGrade}`]: { ...currentThptGradeData, conduct: val }
+                                        }
+                                    }))}
+                                    options={TRANSCRIPT_CONDUCT_OPTIONS}
+                                    size="sm"
+                                />
+                            </div>
+
+                            {/* Semester Awards (Giấy khen từng học kỳ) */}
+                            <div className="pt-3 border-t border-brand-cerulean/15 space-y-2.5">
+                                <div className="flex items-center gap-1.5">
+                                    <Award size={15} className="text-brand-jasper" />
+                                    <span className="font-serif-title font-bold text-xs text-brand-cerulean uppercase tracking-wider">
+                                        Giấy khen & Danh hiệu Khen thưởng Lớp {selectedThptGrade} (Từng học kỳ):
+                                    </span>
                                 </div>
-                                <div>
-                                    <span className="font-serif-title font-bold text-brand-cerulean mr-2">Hạnh kiểm:</span>
-                                    <input
-                                        type="text"
-                                        value={currentThptGradeData.conduct}
-                                        onChange={e => setTranscripts(prev => ({
-                                            ...prev,
-                                            highSchool: {
-                                                ...prev.highSchool,
-                                                [`grade${selectedThptGrade}`]: { ...currentThptGradeData, conduct: e.target.value }
-                                            }
-                                        }))}
-                                        placeholder="Tốt"
-                                        className="bg-white border border-brand-cerulean/30 px-2 py-1 text-xs font-bold text-brand-cerulean rounded-xs"
-                                    />
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
+                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
+                                            <Award size={12} className="text-amber-600" />
+                                            Giấy khen Học kỳ 1 (HK1):
+                                        </span>
+                                        <input
+                                            type="text"
+                                            value={currentThptGradeData.awardHk1 || ''}
+                                            onChange={e => setTranscripts(prev => ({
+                                                ...prev,
+                                                highSchool: {
+                                                    ...prev.highSchool,
+                                                    [`grade${selectedThptGrade}`]: { ...currentThptGradeData, awardHk1: e.target.value }
+                                                }
+                                            }))}
+                                            placeholder="Vd: Giấy khen Học sinh Giỏi HK1..."
+                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-brand-jasper focus:bg-white"
+                                        />
+                                    </div>
+                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
+                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
+                                            <Award size={12} className="text-amber-600" />
+                                            Giấy khen Học kỳ 2 (HK2):
+                                        </span>
+                                        <input
+                                            type="text"
+                                            value={currentThptGradeData.awardHk2 || ''}
+                                            onChange={e => setTranscripts(prev => ({
+                                                ...prev,
+                                                highSchool: {
+                                                    ...prev.highSchool,
+                                                    [`grade${selectedThptGrade}`]: { ...currentThptGradeData, awardHk2: e.target.value }
+                                                }
+                                            }))}
+                                            placeholder="Vd: Giấy khen Học sinh Giỏi HK2..."
+                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-brand-jasper focus:bg-white"
+                                        />
+                                    </div>
+                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
+                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
+                                            <Award size={12} className="text-brand-jasper" />
+                                            Giấy khen Cả năm:
+                                        </span>
+                                        <input
+                                            type="text"
+                                            value={currentThptGradeData.awardYear || currentThptGradeData.awards || ''}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                setTranscripts(prev => ({
+                                                    ...prev,
+                                                    highSchool: {
+                                                        ...prev.highSchool,
+                                                        [`grade${selectedThptGrade}`]: { ...currentThptGradeData, awardYear: val, awards: val }
+                                                    }
+                                                }));
+                                            }}
+                                            placeholder="Vd: Học sinh Xuất sắc cả năm..."
+                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-brand-jasper focus:bg-white"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={() => handleSaveAll(transcripts)}
-                                className="px-4 py-2 bg-brand-cerulean text-white font-serif-title text-xs font-bold shadow-xs hover:bg-brand-jasper transition-all flex items-center gap-1"
-                            >
-                                <Save size={13} /> Lưu điểm Lớp {selectedThptGrade}
-                            </button>
+                            <div className="flex justify-end pt-2 border-t border-brand-cerulean/15">
+                                <button
+                                    type="button"
+                                    onClick={() => handleSaveAll(transcripts)}
+                                    className="px-5 py-2 bg-brand-cerulean text-white font-serif-title text-xs font-bold shadow-xs hover:bg-brand-jasper transition-all flex items-center gap-1.5"
+                                >
+                                    <Save size={14} /> Lưu điểm Lớp {selectedThptGrade}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -757,10 +795,32 @@ export const AcademicTranscriptsView = ({
                                 ))}
                             </div>
 
-                            <div className="flex items-center gap-3 text-xs">
+                            <div className="flex items-center gap-3 text-xs flex-wrap">
                                 <span>ĐTB Năm Lớp {selectedThcsGrade}: <strong className="text-emerald-700 text-sm">{currentThcsGradeData.gpa || '--'} đ</strong></span>
                                 <span>•</span>
                                 <span>Xếp loại: <strong className="text-brand-cerulean">{currentThcsGradeData.rank || 'Học sinh Giỏi'}</strong></span>
+                                {(currentThcsGradeData.awardHk1 || currentThcsGradeData.awardHk2 || currentThcsGradeData.awardYear || currentThcsGradeData.awards) && (
+                                    <>
+                                        <span>•</span>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            {currentThcsGradeData.awardHk1 && (
+                                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium" title="Giấy khen HK1">
+                                                    <Award size={11} className="text-amber-600" /> HK1: {currentThcsGradeData.awardHk1}
+                                                </span>
+                                            )}
+                                            {currentThcsGradeData.awardHk2 && (
+                                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium" title="Giấy khen HK2">
+                                                    <Award size={11} className="text-amber-600" /> HK2: {currentThcsGradeData.awardHk2}
+                                                </span>
+                                            )}
+                                            {(currentThcsGradeData.awardYear || currentThcsGradeData.awards) && (
+                                                <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded-xs text-[11px] font-bold" title="Giấy khen Cả năm">
+                                                    <Award size={11} className="text-emerald-700" /> Cả năm: {currentThcsGradeData.awardYear || currentThcsGradeData.awards}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -831,50 +891,118 @@ export const AcademicTranscriptsView = ({
                             </table>
                         </div>
 
-                        {/* Footer THCS Grade Settings */}
-                        <div className="p-4 bg-brand-cream border border-brand-cerulean/20 rounded-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                            <div className="flex items-center gap-4 text-xs">
-                                <div>
-                                    <span className="font-serif-title font-bold text-brand-cerulean mr-2">Xếp loại Học lực:</span>
-                                    <input
-                                        type="text"
-                                        value={currentThcsGradeData.rank}
-                                        onChange={e => setTranscripts(prev => ({
-                                            ...prev,
-                                            secondarySchool: {
-                                                ...prev.secondarySchool,
-                                                [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, rank: e.target.value }
-                                            }
-                                        }))}
-                                        placeholder="Học sinh Giỏi"
-                                        className="bg-white border border-brand-cerulean/30 px-2 py-1 text-xs font-bold text-brand-cerulean rounded-xs"
-                                    />
+                        {/* Footer THCS Grade Settings & Semester Awards */}
+                        <div className="p-5 bg-brand-cream border border-brand-cerulean/20 rounded-xs space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <EditorialSelect
+                                    label="Xếp loại Học lực:"
+                                    value={currentThcsGradeData.rank || 'Học sinh Giỏi'}
+                                    onChange={val => setTranscripts(prev => ({
+                                        ...prev,
+                                        secondarySchool: {
+                                            ...prev.secondarySchool,
+                                            [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, rank: val }
+                                        }
+                                    }))}
+                                    options={TRANSCRIPT_RANK_OPTIONS}
+                                    size="sm"
+                                />
+                                <EditorialSelect
+                                    label="Hạnh kiểm / Rèn luyện:"
+                                    value={currentThcsGradeData.conduct || 'Tốt'}
+                                    onChange={val => setTranscripts(prev => ({
+                                        ...prev,
+                                        secondarySchool: {
+                                            ...prev.secondarySchool,
+                                            [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, conduct: val }
+                                        }
+                                    }))}
+                                    options={TRANSCRIPT_CONDUCT_OPTIONS}
+                                    size="sm"
+                                />
+                            </div>
+
+                            {/* Semester Awards (Giấy khen từng học kỳ) */}
+                            <div className="pt-3 border-t border-brand-cerulean/15 space-y-2.5">
+                                <div className="flex items-center gap-1.5">
+                                    <Award size={15} className="text-emerald-700" />
+                                    <span className="font-serif-title font-bold text-xs text-brand-cerulean uppercase tracking-wider">
+                                        Giấy khen & Danh hiệu Khen thưởng Lớp {selectedThcsGrade} (Từng học kỳ):
+                                    </span>
                                 </div>
-                                <div>
-                                    <span className="font-serif-title font-bold text-brand-cerulean mr-2">Hạnh kiểm:</span>
-                                    <input
-                                        type="text"
-                                        value={currentThcsGradeData.conduct}
-                                        onChange={e => setTranscripts(prev => ({
-                                            ...prev,
-                                            secondarySchool: {
-                                                ...prev.secondarySchool,
-                                                [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, conduct: e.target.value }
-                                            }
-                                        }))}
-                                        placeholder="Tốt"
-                                        className="bg-white border border-brand-cerulean/30 px-2 py-1 text-xs font-bold text-brand-cerulean rounded-xs"
-                                    />
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
+                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
+                                            <Award size={12} className="text-amber-600" />
+                                            Giấy khen Học kỳ 1 (HK1):
+                                        </span>
+                                        <input
+                                            type="text"
+                                            value={currentThcsGradeData.awardHk1 || ''}
+                                            onChange={e => setTranscripts(prev => ({
+                                                ...prev,
+                                                secondarySchool: {
+                                                    ...prev.secondarySchool,
+                                                    [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, awardHk1: e.target.value }
+                                                }
+                                            }))}
+                                            placeholder="Vd: Giấy khen Học sinh Giỏi HK1..."
+                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-emerald-600 focus:bg-white"
+                                        />
+                                    </div>
+                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
+                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
+                                            <Award size={12} className="text-amber-600" />
+                                            Giấy khen Học kỳ 2 (HK2):
+                                        </span>
+                                        <input
+                                            type="text"
+                                            value={currentThcsGradeData.awardHk2 || ''}
+                                            onChange={e => setTranscripts(prev => ({
+                                                ...prev,
+                                                secondarySchool: {
+                                                    ...prev.secondarySchool,
+                                                    [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, awardHk2: e.target.value }
+                                                }
+                                            }))}
+                                            placeholder="Vd: Giấy khen Học sinh Giỏi HK2..."
+                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-emerald-600 focus:bg-white"
+                                        />
+                                    </div>
+                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
+                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
+                                            <Award size={12} className="text-emerald-700" />
+                                            Giấy khen Cả năm:
+                                        </span>
+                                        <input
+                                            type="text"
+                                            value={currentThcsGradeData.awardYear || currentThcsGradeData.awards || ''}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                setTranscripts(prev => ({
+                                                    ...prev,
+                                                    secondarySchool: {
+                                                        ...prev.secondarySchool,
+                                                        [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, awardYear: val, awards: val }
+                                                    }
+                                                }));
+                                            }}
+                                            placeholder="Vd: Giấy khen Học sinh Giỏi cả năm, Cháu ngoan Bác Hồ..."
+                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-emerald-600 focus:bg-white"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={() => handleSaveAll(transcripts)}
-                                className="px-4 py-2 bg-emerald-700 text-white font-serif-title text-xs font-bold shadow-xs hover:bg-emerald-800 transition-all flex items-center gap-1"
-                            >
-                                <Save size={13} /> Lưu điểm Lớp {selectedThcsGrade}
-                            </button>
+                            <div className="flex justify-end pt-2 border-t border-brand-cerulean/15">
+                                <button
+                                    type="button"
+                                    onClick={() => handleSaveAll(transcripts)}
+                                    className="px-5 py-2 bg-emerald-700 text-white font-serif-title text-xs font-bold shadow-xs hover:bg-emerald-800 transition-all flex items-center gap-1.5"
+                                >
+                                    <Save size={14} /> Lưu điểm Lớp {selectedThcsGrade}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -1102,10 +1230,32 @@ export const AcademicTranscriptsView = ({
                                 ))}
                             </div>
 
-                            <div className="flex items-center gap-3 text-xs">
+                            <div className="flex items-center gap-3 text-xs flex-wrap">
                                 <span>ĐTB Văn Hóa Lớp {selectedPrimaryGrade}: <strong className="text-amber-800 text-sm">{currentPrimaryGradeData.gpa || '--'} đ</strong></span>
                                 <span>•</span>
                                 <span>Đánh giá: <strong className="text-brand-cerulean">{currentPrimaryGradeData.result || 'Hoàn thành Xuất sắc'}</strong></span>
+                                {(currentPrimaryGradeData.awardHk1 || currentPrimaryGradeData.awardHk2 || currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards) && (
+                                    <>
+                                        <span>•</span>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            {currentPrimaryGradeData.awardHk1 && (
+                                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium" title="Giấy khen HK1">
+                                                    <Award size={11} className="text-amber-600" /> HK1: {currentPrimaryGradeData.awardHk1}
+                                                </span>
+                                            )}
+                                            {currentPrimaryGradeData.awardHk2 && (
+                                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium" title="Giấy khen HK2">
+                                                    <Award size={11} className="text-amber-600" /> HK2: {currentPrimaryGradeData.awardHk2}
+                                                </span>
+                                            )}
+                                            {(currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards) && (
+                                                <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-xs text-[11px] font-bold" title="Giấy khen Cả năm">
+                                                    <Award size={11} className="text-amber-700" /> Cả năm: {currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -1178,15 +1328,13 @@ export const AcademicTranscriptsView = ({
                                                 )}
 
                                                 <td className="py-2 px-3 text-center">
-                                                    <select
+                                                    <EditorialSelect
                                                         value={subjScore.status || 'T'}
-                                                        onChange={e => handleUpdatePrimaryScore(selectedPrimaryGrade, subj.id, 'status', e.target.value)}
-                                                        className="bg-white border border-brand-cerulean/25 px-1.5 py-1 text-xs font-serif font-bold text-brand-cerulean rounded-xs"
-                                                    >
-                                                        <option value="T">Hoàn thành Tốt (T)</option>
-                                                        <option value="H">Hoàn thành (H)</option>
-                                                        <option value="C">Chưa hoàn thành (C)</option>
-                                                    </select>
+                                                        onChange={val => handleUpdatePrimaryScore(selectedPrimaryGrade, subj.id, 'status', val)}
+                                                        options={PRIMARY_SUBJECT_STATUS_OPTIONS}
+                                                        size="sm"
+                                                        className="w-28 mx-auto"
+                                                    />
                                                 </td>
 
                                                 <td className="py-2 px-3">
@@ -1205,42 +1353,93 @@ export const AcademicTranscriptsView = ({
                             </table>
                         </div>
 
-                        {/* Footer Primary Grade Settings & Awards */}
-                        <div className="p-4 bg-brand-cream border border-brand-cerulean/20 rounded-xs space-y-3">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                                <div>
-                                    <span className="font-serif-title font-bold text-brand-cerulean block mb-1">Kết quả đánh giá chung Lớp {selectedPrimaryGrade}:</span>
-                                    <select
-                                        value={currentPrimaryGradeData.result || 'Hoàn thành Xuất sắc'}
-                                        onChange={e => setTranscripts(prev => ({
-                                            ...prev,
-                                            primarySchool: {
-                                                ...prev.primarySchool,
-                                                [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, result: e.target.value }
-                                            }
-                                        }))}
-                                        className="w-full bg-white border border-brand-cerulean/30 px-2.5 py-1.5 text-xs font-serif font-bold text-brand-cerulean rounded-xs"
-                                    >
-                                        <option value="Hoàn thành Xuất sắc">Hoàn thành Xuất sắc</option>
-                                        <option value="Hoàn thành Tốt">Hoàn thành Tốt</option>
-                                        <option value="Hoàn thành">Hoàn thành</option>
-                                    </select>
+                        {/* Footer Primary Grade Settings & Semester Awards */}
+                        <div className="p-5 bg-brand-cream border border-brand-cerulean/20 rounded-xs space-y-4">
+                            <div>
+                                <EditorialSelect
+                                    label={`Kết quả đánh giá chung Lớp ${selectedPrimaryGrade}:`}
+                                    value={currentPrimaryGradeData.result || 'Hoàn thành Xuất sắc'}
+                                    onChange={val => setTranscripts(prev => ({
+                                        ...prev,
+                                        primarySchool: {
+                                            ...prev.primarySchool,
+                                            [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, result: val }
+                                        }
+                                    }))}
+                                    options={PRIMARY_EVAL_RESULT_OPTIONS}
+                                    size="sm"
+                                />
+                            </div>
+
+                            {/* Semester Awards (Giấy khen từng học kỳ) */}
+                            <div className="pt-3 border-t border-brand-cerulean/15 space-y-2.5">
+                                <div className="flex items-center gap-1.5">
+                                    <Award size={15} className="text-amber-600" />
+                                    <span className="font-serif-title font-bold text-xs text-brand-cerulean uppercase tracking-wider">
+                                        Giấy khen & Danh hiệu Khen thưởng Lớp {selectedPrimaryGrade} (Từng học kỳ):
+                                    </span>
                                 </div>
-                                <div>
-                                    <span className="font-serif-title font-bold text-brand-cerulean block mb-1">Danh hiệu Khen thưởng / Kỷ niệm Lớp {selectedPrimaryGrade}:</span>
-                                    <input
-                                        type="text"
-                                        value={currentPrimaryGradeData.awards || ''}
-                                        onChange={e => setTranscripts(prev => ({
-                                            ...prev,
-                                            primarySchool: {
-                                                ...prev.primarySchool,
-                                                [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awards: e.target.value }
-                                            }
-                                        }))}
-                                        placeholder="Vd: Khen thưởng Học sinh Xuất sắc, Vở sạch chữ đẹp..."
-                                        className="w-full bg-white border border-brand-cerulean/30 px-2.5 py-1.5 text-xs font-body rounded-xs"
-                                    />
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
+                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
+                                            <Award size={12} className="text-amber-600" />
+                                            Giấy khen Học kỳ 1 (HK1):
+                                        </span>
+                                        <input
+                                            type="text"
+                                            value={currentPrimaryGradeData.awardHk1 || ''}
+                                            onChange={e => setTranscripts(prev => ({
+                                                ...prev,
+                                                primarySchool: {
+                                                    ...prev.primarySchool,
+                                                    [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awardHk1: e.target.value }
+                                                }
+                                            }))}
+                                            placeholder="Vd: Khen thưởng Học sinh Tiêu biểu HK1..."
+                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-amber-600 focus:bg-white"
+                                        />
+                                    </div>
+                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
+                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
+                                            <Award size={12} className="text-amber-600" />
+                                            Giấy khen Học kỳ 2 (HK2):
+                                        </span>
+                                        <input
+                                            type="text"
+                                            value={currentPrimaryGradeData.awardHk2 || ''}
+                                            onChange={e => setTranscripts(prev => ({
+                                                ...prev,
+                                                primarySchool: {
+                                                    ...prev.primarySchool,
+                                                    [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awardHk2: e.target.value }
+                                                }
+                                            }))}
+                                            placeholder="Vd: Khen thưởng Học sinh Xuất sắc HK2..."
+                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-amber-600 focus:bg-white"
+                                        />
+                                    </div>
+                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
+                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
+                                            <Award size={12} className="text-amber-700" />
+                                            Giấy khen Cả năm:
+                                        </span>
+                                        <input
+                                            type="text"
+                                            value={currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards || ''}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                setTranscripts(prev => ({
+                                                    ...prev,
+                                                    primarySchool: {
+                                                        ...prev.primarySchool,
+                                                        [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awardYear: val, awards: val }
+                                                    }
+                                                }));
+                                            }}
+                                            placeholder="Vd: Khen thưởng Học sinh Xuất sắc, Vở sạch chữ đẹp..."
+                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-amber-600 focus:bg-white"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -1248,134 +1447,11 @@ export const AcademicTranscriptsView = ({
                                 <button
                                     type="button"
                                     onClick={() => handleSaveAll(transcripts)}
-                                    className="px-4 py-2 bg-amber-600 text-white font-serif-title text-xs font-bold shadow-xs hover:bg-amber-700 transition-all flex items-center gap-1"
+                                    className="px-5 py-2 bg-amber-600 text-white font-serif-title text-xs font-bold shadow-xs hover:bg-amber-700 transition-all flex items-center gap-1.5"
                                 >
-                                    <Save size={13} /> Lưu điểm Lớp {selectedPrimaryGrade}
+                                    <Save size={14} /> Lưu điểm Lớp {selectedPrimaryGrade}
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* TAB 4: ⚡ BỘ TÍNH ĐIỂM XÉT TUYỂN HỌC BẠ ĐẠI HỌC */}
-            {activeTab === 'simulator' && (
-                <div className="space-y-6 animate-fade-in">
-                    <div className="bg-white p-6 sm:p-8 border border-brand-cerulean/20 shadow-editorial space-y-6">
-                        <div className="pb-3 border-b border-brand-cerulean/15">
-                            <h3 className="font-serif-title font-bold text-2xl text-brand-cerulean flex items-center gap-2">
-                                <Calculator size={24} className="text-brand-jasper" />
-                                Bộ công cụ Tự động Tính Điểm Xét Tuyển Học Bạ Đại Học
-                            </h3>
-                            <p className="text-xs text-gray-500 font-body mt-1">
-                                Tự động tính tổng điểm xét tuyển học bạ theo 3 phương thức phổ biến nhất của các trường Đại học tại Việt Nam
-                            </p>
-                        </div>
-
-                        {/* 3 Main Admission Methods Breakdown */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            {/* Method 1: Cả năm Lớp 12 */}
-                            <div className="p-5 bg-brand-cream/50 border-2 border-brand-cerulean/30 rounded-xs space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-bold px-2 py-0.5 bg-brand-cerulean text-white rounded font-sans uppercase">
-                                        Phương thức 1
-                                    </span>
-                                    <span className="text-[11px] text-gray-500 font-serif font-bold">Lớp 12</span>
-                                </div>
-                                <h4 className="font-serif-title font-bold text-base text-brand-cerulean">
-                                    Tổng điểm 3 môn cả năm Lớp 12
-                                </h4>
-                                <p className="text-xs text-gray-600 font-body">
-                                    Tính tổng điểm trung bình cả năm của 3 môn theo tổ hợp xét tuyển.
-                                </p>
-
-                                <div className="space-y-2 pt-2 border-t border-brand-cerulean/15">
-                                    {['A00', 'A01', 'B00', 'D01', 'D07'].map(combo => {
-                                        const score = computeCombinationScore(combo, 'grade12_final');
-                                        const isUserCombo = profile?.combination === combo;
-                                        return (
-                                            <div key={combo} className={`p-2 rounded-xs flex items-center justify-between text-xs ${
-                                                isUserCombo ? 'bg-brand-cerulean text-white font-bold' : 'bg-white text-gray-700 border border-brand-cerulean/15'
-                                            }`}>
-                                                <span>Khối {combo}:</span>
-                                                <span className="text-sm font-bold">{score !== null ? `${score} đ` : 'Chưa đủ điểm'}</span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Method 2: Trung bình 3 năm (Lớp 10, 11, 12) */}
-                            <div className="p-5 bg-brand-cream/50 border-2 border-brand-jasper/30 rounded-xs space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-bold px-2 py-0.5 bg-brand-jasper text-white rounded font-sans uppercase">
-                                        Phương thức 2
-                                    </span>
-                                    <span className="text-[11px] text-gray-500 font-serif font-bold">3 Năm THPT</span>
-                                </div>
-                                <h4 className="font-serif-title font-bold text-base text-brand-cerulean">
-                                    Trung bình 3 năm theo Tổ hợp
-                                </h4>
-                                <p className="text-xs text-gray-600 font-body">
-                                    Tính điểm trung bình từng môn qua cả 3 năm Lớp 10 + 11 + 12.
-                                </p>
-
-                                <div className="space-y-2 pt-2 border-t border-brand-cerulean/15">
-                                    {['A00', 'A01', 'B00', 'D01', 'D07'].map(combo => {
-                                        const score = computeCombinationScore(combo, '3_years_avg');
-                                        const isUserCombo = profile?.combination === combo;
-                                        return (
-                                            <div key={combo} className={`p-2 rounded-xs flex items-center justify-between text-xs ${
-                                                isUserCombo ? 'bg-brand-jasper text-white font-bold' : 'bg-white text-gray-700 border border-brand-cerulean/15'
-                                            }`}>
-                                                <span>Khối {combo}:</span>
-                                                <span className="text-sm font-bold">{score !== null ? `${score} đ` : 'Chưa đủ điểm'}</span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Method 3: 5 Học kỳ (HK1, HK2 lớp 10; HK1, HK2 lớp 11; HK1 lớp 12) */}
-                            <div className="p-5 bg-brand-cream/50 border-2 border-emerald-600/30 rounded-xs space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-bold px-2 py-0.5 bg-emerald-700 text-white rounded font-sans uppercase">
-                                        Phương thức 3
-                                    </span>
-                                    <span className="text-[11px] text-gray-500 font-serif font-bold">5 Học kỳ</span>
-                                </div>
-                                <h4 className="font-serif-title font-bold text-base text-brand-cerulean">
-                                    Xét tuyển sớm 5 Học kỳ THPT
-                                </h4>
-                                <p className="text-xs text-gray-600 font-body">
-                                    HK1+HK2 Lớp 10, HK1+HK2 Lớp 11 và HK1 Lớp 12 (Dùng cho xét tuyển sớm đợt 1).
-                                </p>
-
-                                <div className="space-y-2 pt-2 border-t border-brand-cerulean/15">
-                                    {['A00', 'A01', 'B00', 'D01', 'D07'].map(combo => {
-                                        const score = computeCombinationScore(combo, '5_semesters');
-                                        const isUserCombo = profile?.combination === combo;
-                                        return (
-                                            <div key={combo} className={`p-2 rounded-xs flex items-center justify-between text-xs ${
-                                                isUserCombo ? 'bg-emerald-700 text-white font-bold' : 'bg-white text-gray-700 border border-brand-cerulean/15'
-                                            }`}>
-                                                <span>Khối {combo}:</span>
-                                                <span className="text-sm font-bold">{score !== null ? `${score} đ` : 'Chưa đủ điểm'}</span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Tips & Instructions */}
-                        <div className="p-4 bg-brand-cream border border-brand-cerulean/25 rounded-xs space-y-1">
-                            <span className="text-xs font-serif-title font-bold text-brand-cerulean block uppercase">
-                                💡 Lưu ý về Xét tuyển Học bạ Đại học:
-                            </span>
-                            <p className="text-xs text-gray-600 font-body">
-                                Các trường Đại học tại TP.HCM (như Bách Khoa, Sư phạm Kỹ thuật, Kinh tế UEH, Công nghệ Thông tin...) thường áp dụng kết hợp điểm học bạ với các chứng chỉ quốc tế (IELTS, SAT) hoặc điểm thi Đánh giá Năng lực (ĐGNL ĐHQG TP.HCM). Hãy đảm bảo bạn đã nhập đầy đủ điểm các môn ở Tab <strong>Cấp 3 - THPT</strong> để máy tính ra kết quả chuẩn xác nhất!
-                            </p>
                         </div>
                     </div>
                 </div>
