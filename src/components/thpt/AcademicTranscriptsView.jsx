@@ -16,7 +16,7 @@ export const THCS_SUBJECTS = [
     { id: 'literature', name: 'Ngữ văn', color: '#124874' },
     { id: 'english', name: 'Tiếng Anh (Ngoại ngữ 1)', color: '#124874' },
     { id: 'physics', name: 'Vật lí', color: '#124874' },
-    { id: 'chemistry', name: 'Hóa học', color: '#124874' },
+    { id: 'chemistry', name: 'Hóa học', color: '#124874', grades: ['8', '9'] },
     { id: 'biology', name: 'Sinh học', color: '#124874' },
     { id: 'history', name: 'Lịch sử', color: '#124874' },
     { id: 'geography', name: 'Địa lí', color: '#124874' },
@@ -24,8 +24,8 @@ export const THCS_SUBJECTS = [
     { id: 'informatics', name: 'Tin học', color: '#124874' },
     { id: 'technology', name: 'Công nghệ', color: '#124874' },
     { id: 'pe', name: 'Thể dục (Giáo dục thể chất)', color: '#124874', isEvaluation: true },
-    { id: 'music', name: 'Âm nhạc', color: '#124874' },
-    { id: 'art', name: 'Mĩ thuật', color: '#124874' },
+    { id: 'music', name: 'Âm nhạc', color: '#124874', isEvaluation: true },
+    { id: 'art', name: 'Mĩ thuật', color: '#124874', isEvaluation: true },
 ];
 
 /**
@@ -396,8 +396,10 @@ export const AcademicTranscriptsView = ({
                 [subjId]: updatedSubj
             };
 
-            // Exclude evaluation-only subjects from numerical GPA
-            const scoredSubjectIds = THCS_SUBJECTS.filter(s => !s.isEvaluation).map(s => s.id);
+            // Exclude evaluation-only subjects and subjects not in this grade from numerical GPA
+            const scoredSubjectIds = THCS_SUBJECTS
+                .filter(s => (!s.grades || s.grades.includes(String(gradeKey))) && !s.isEvaluation)
+                .map(s => s.id);
             const finals = Object.entries(updatedScores)
                 .filter(([sId]) => scoredSubjectIds.includes(sId))
                 .map(([, s]) => s.final)
@@ -1092,7 +1094,7 @@ export const AcademicTranscriptsView = ({
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-brand-cerulean/10 text-xs font-body">
-                                    {THCS_SUBJECTS.map(subj => {
+                                    {THCS_SUBJECTS.filter(subj => !subj.grades || subj.grades.includes(String(selectedThcsGrade))).map(subj => {
                                         const isEval = subj.isEvaluation;
                                         const subjScore = currentThcsGradeData.scores?.[subj.id] || { hk1: isEval ? 'Đ' : '', hk2: isEval ? 'Đ' : '', final: isEval ? 'Đ' : '' };
 
