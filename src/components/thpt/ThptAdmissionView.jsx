@@ -277,16 +277,7 @@ export const ThptAdmissionView = ({
             {/* Header Banner */}
             <header className="sticky -top-6 md:-top-12 z-20 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 border-b-2 border-brand-cerulean flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 bg-brand-jasper text-white font-serif-title font-bold text-xs rounded">
-                            THPT Suite
-                        </span>
-                        <span className="text-xs text-gray-500 font-serif">
-                            Khóa thi: {admissionForm.officialExamYear || '2022'}
-                        </span>
-                    </div>
                     <h2 className="text-3xl sm:text-4xl font-serif-title text-brand-cerulean mt-1 flex items-center gap-2">
-                        <GraduationCap size={32} className="text-brand-jasper" />
                         Trúng tuyển & Nguyện vọng
                     </h2>
                     <p className="text-sm text-gray-600 mt-1 font-body">

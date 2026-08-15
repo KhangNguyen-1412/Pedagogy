@@ -43,4 +43,40 @@ export const DEFAULT_THPT_PERSONAL_PROFILE = {
     mistakeNotes: []
 };
 
+export const DEFAULT_ACADEMIC_TRANSCRIPTS = {
+    highSchool: {
+        schoolName: '',
+        graduationYear: '',
+        grade10: { scores: {}, gpa: '', rank: '', conduct: 'Tốt' },
+        grade11: { scores: {}, gpa: '', rank: '', conduct: 'Tốt' },
+        grade12: { scores: {}, gpa: '', rank: '', conduct: 'Tốt' }
+    },
+    secondarySchool: {
+        schoolName: '',
+        graduationYear: '',
+        grade6: { gpa: '', rank: '', conduct: 'Tốt' },
+        grade7: { gpa: '', rank: '', conduct: 'Tốt' },
+        grade8: { gpa: '', rank: '', conduct: 'Tốt' },
+        grade9: { gpa: '', rank: '', conduct: 'Tốt' },
+        entranceExam10: {
+            schoolAdmitted: '',
+            mathScore: '',
+            literatureScore: '',
+            englishScore: '',
+            specializedScore: '',
+            totalScore: ''
+        }
+    },
+    primarySchool: {
+        schoolName: '',
+        graduationYear: '',
+        grade1: { result: 'Hoàn thành Xuất sắc', awards: '' },
+        grade2: { result: 'Hoàn thành Xuất sắc', awards: '' },
+        grade3: { result: 'Hoàn thành Xuất sắc', awards: '' },
+        grade4: { result: 'Hoàn thành Xuất sắc', awards: '' },
+        grade5: { result: 'Hoàn thành Xuất sắc', awards: '' }
+    }
+};
+
 export const DEFAULT_THPT_RESULTS = [];
+

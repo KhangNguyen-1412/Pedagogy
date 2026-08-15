@@ -73,6 +73,7 @@ import { ThptExamsView } from './components/thpt/ThptExamsView';
 import { ThptPersonalGoalView } from './components/thpt/ThptPersonalGoalView';
 import { ThptPersonalTrackingView } from './components/thpt/ThptPersonalTrackingView';
 import { ThptAdmissionView } from './components/thpt/ThptAdmissionView';
+import { AcademicTranscriptsView } from './components/thpt/AcademicTranscriptsView';
 import { ThptPersonalTestModal } from './components/thpt/ThptPersonalTestModal';
 
 // Helper for persistent User ID across page reloads
@@ -4248,7 +4249,7 @@ const ProfileView = ({ profile, programs, thptProfile, navigate, onUpdateProfile
         <div className="max-w-4xl mx-auto space-y-8">
             <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Hồ sơ Học viên</h2>
+                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Hồ sơ cá nhân</h2>
                     <p className="text-gray-500 font-body mt-1">Thông tin cá nhân, chương trình đào tạo & liên lạc cá nhân hóa.</p>
                 </div>
                 <div className="flex gap-3 items-center flex-wrap">
@@ -4777,7 +4778,7 @@ const getSEOAndPath = (currentView, activeProgramId, activeModuleId, programs, m
             };
         case 'profile':
             return {
-                title: 'Hồ Sơ Học Viên & Thông Tin Cá Nhân | Pedagogy',
+                title: 'Hồ Sơ & Thông Tin Cá Nhân | Pedagogy',
                 description: 'Quản lý thông tin mã học viên Nguyễn Huỳnh Phúc Khang, lớp khóa học 2026, khoa Sư phạm Kỹ thuật.',
                 path: '/ho-so-ca-nhan'
             };
@@ -4793,11 +4794,17 @@ const getSEOAndPath = (currentView, activeProgramId, activeModuleId, programs, m
                 description: 'Mục tiêu điểm số Đại học, lộ trình ôn thi 4 giai đoạn và sổ tay rút kinh nghiệm cá nhân.',
                 path: '/muc-tieu-thpt'
             };
-        case 'thpt_tracking':
+        case 'thpt_admission':
             return {
-                title: 'Nhật Ký & Tiến Độ Luyện Đề Cá Nhân | Pedagogy',
-                description: 'Ghi nhận bài giải đề, tự chấm bài trắc nghiệm và biểu đồ phân tích tiến bộ điểm thi của tôi.',
-                path: '/tien-do-thpt'
+                title: 'Trúng Tuyển Đại Học & Danh Sách Nguyện Vọng | Pedagogy',
+                description: 'Lưu trữ thông tin trường Đại học trúng tuyển, điểm thi chính thức và danh sách nguyện vọng.',
+                path: '/trung-tuyen-nguyen-vong'
+            };
+        case 'thpt_transcripts':
+            return {
+                title: 'Học Bạ 3 Cấp & Điểm Xét Tuyển Đại Học | Pedagogy',
+                description: 'Quản lý điểm học bạ Tiểu học, THCS, THPT và tính điểm xét tuyển học bạ vào các trường Đại học.',
+                path: '/hoc-ba-3-cap'
             };
         default:
             return {
@@ -5581,17 +5588,11 @@ if (!user) {
 
                 {/* Navigation Links */}
                 <nav className="flex-1 space-y-1.5 overflow-y-auto pr-0.5 custom-scrollbar">
-                    {/* General University Suite */}
-                    {[
-                        { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
-                        { id: 'programs', match: ['programs', 'program_detail'], label: 'Chương trình học', icon: BookOpen },
-                        { id: 'syllabus', label: 'Đề cương chi tiết', icon: FileText },
-                        { id: 'calendar', label: 'Lịch biểu & Điểm danh', icon: Calendar },
-                        { id: 'gradebook', label: 'Sổ điểm & GPA', icon: Award },
-                        { id: 'resources', label: 'Học liệu & Nhật ký', icon: FolderOpen },
-                    ].map(item => {
+                    {/* Dashboard (Tổng quan) */}
+                    {(() => {
+                        const item = { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard };
                         const Icon = item.icon;
-                        const isActive = item.match ? item.match.includes(currentView) : currentView === item.id;
+                        const isActive = currentView === item.id;
                         return (
                             <button
                                 key={item.id}
@@ -5611,7 +5612,50 @@ if (!user) {
                                 {!isSidebarCollapsed && <span className="text-base truncate">{item.label}</span>}
                             </button>
                         );
-                    })}
+                    })()}
+
+                    {/* Khóa đào tạo Suite */}
+                    <div className={`pt-2 border-t border-brand-cerulean/15 space-y-1.5 ${isSidebarCollapsed ? 'mt-2' : ''}`}>
+                        {!isSidebarCollapsed ? (
+                            <span className="px-1 text-[10px] font-serif-title uppercase tracking-widest text-brand-cerulean/70 font-bold block mb-1">
+                                Khóa đào tạo
+                            </span>
+                        ) : (
+                            <div className="w-full flex justify-center py-1" title="Khóa đào tạo">
+                                <div className="w-6 h-0.5 bg-brand-cerulean/20 rounded-full" />
+                            </div>
+                        )}
+
+                        {[
+                            { id: 'programs', match: ['programs', 'program_detail'], label: 'Chương trình học', icon: BookOpen },
+                            { id: 'syllabus', label: 'Đề cương chi tiết', icon: FileText },
+                            { id: 'calendar', label: 'Lịch biểu & Điểm danh', icon: Calendar },
+                            { id: 'gradebook', label: 'Sổ điểm & GPA', icon: Award },
+                            { id: 'resources', label: 'Học liệu & Nhật ký', icon: FolderOpen },
+                        ].map(item => {
+                            const Icon = item.icon;
+                            const isActive = item.match ? item.match.includes(currentView) : currentView === item.id;
+                            return (
+                                <button
+                                    key={item.id}
+                                    onClick={() => navigate(item.id)}
+                                    title={isSidebarCollapsed ? item.label : undefined}
+                                    className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-lg' : 'gap-3 py-2 px-1 text-left border-b'} transition-all ${
+                                        isActive
+                                            ? isSidebarCollapsed 
+                                                ? 'bg-brand-cerulean text-white font-bold shadow-xs' 
+                                                : 'text-brand-jasper font-bold border-brand-jasper'
+                                            : isSidebarCollapsed
+                                                ? 'text-brand-cerulean hover:bg-brand-cerulean/10'
+                                                : 'text-brand-cerulean border-transparent hover:border-brand-jasper hover:text-brand-jasper'
+                                    }`}
+                                >
+                                    <Icon size={isSidebarCollapsed ? 20 : 18} className="shrink-0" />
+                                    {!isSidebarCollapsed && <span className="text-base truncate">{item.label}</span>}
+                                </button>
+                            );
+                        })}
+                    </div>
 
                     {/* THPT Personal Examination Suite */}
                     <div className={`pt-2 border-t border-brand-cerulean/15 space-y-1.5 ${isSidebarCollapsed ? 'mt-2' : ''}`}>
@@ -5630,6 +5674,7 @@ if (!user) {
                             { id: 'thpt_goals', label: 'Mục tiêu & Kế hoạch', icon: Target },
                             { id: 'thpt_tracking', label: 'Nhật ký & Tiến độ', icon: TrendingUp },
                             { id: 'thpt_admission', label: 'Trúng tuyển & Nguyện vọng', icon: GraduationCap },
+                            { id: 'thpt_transcripts', label: 'Học bạ 3 cấp', icon: BookMarked },
                         ].map(item => {
                             const Icon = item.icon;
                             const isActive = currentView === item.id;
@@ -5728,6 +5773,12 @@ if (!user) {
                         className="px-2 py-1 bg-amber-600 text-white rounded text-xs font-bold"
                     >
                         Trúng tuyển
+                    </button>
+                    <button
+                        onClick={() => navigate('thpt_transcripts')}
+                        className="px-2 py-1 bg-teal-700 text-white rounded text-xs font-bold"
+                    >
+                        Học bạ
                     </button>
                 </div>
             </div>
@@ -5864,6 +5915,13 @@ if (!user) {
                     <ThptAdmissionView
                         profile={thptProfile}
                         subjects={thptSubjects}
+                        onUpdateProfile={handleUpdateThptProfile}
+                        showToast={showToast}
+                    />
+                )}
+                {currentView === 'thpt_transcripts' && (
+                    <AcademicTranscriptsView
+                        profile={thptProfile}
                         onUpdateProfile={handleUpdateThptProfile}
                         showToast={showToast}
                     />
