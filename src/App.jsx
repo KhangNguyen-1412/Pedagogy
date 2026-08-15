@@ -39,7 +39,8 @@ import {
     TrendingUp,
     CheckSquare,
     Sparkles,
-    AlertCircle
+    AlertCircle,
+    LogOut
 } from 'lucide-react';
 import {
     auth,
@@ -53,7 +54,7 @@ import {
     getCollectionRef,
     getDocRef,
     setPersistence,
-    browserSessionPersistence
+    browserLocalPersistence
 } from './firebase';
 import { signOut } from 'firebase/auth';
 import { writeBatch } from 'firebase/firestore';
@@ -71,6 +72,7 @@ import {
 import { ThptExamsView } from './components/thpt/ThptExamsView';
 import { ThptPersonalGoalView } from './components/thpt/ThptPersonalGoalView';
 import { ThptPersonalTrackingView } from './components/thpt/ThptPersonalTrackingView';
+import { ThptAdmissionView } from './components/thpt/ThptAdmissionView';
 import { ThptPersonalTestModal } from './components/thpt/ThptPersonalTestModal';
 
 // Helper for persistent User ID across page reloads
@@ -4134,7 +4136,7 @@ const ResourcesStudyLogView = ({ modules, studyLogs, resources, onAddStudyLog, o
 };
 
 // 7. PROFILE VIEW
-const ProfileView = ({ profile, programs, onUpdateProfile, onOpenCertificate }) => {
+const ProfileView = ({ profile, programs, thptProfile, navigate, onUpdateProfile, onOpenCertificate }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState(profile || {});
 
@@ -4635,6 +4637,61 @@ const ProfileView = ({ profile, programs, onUpdateProfile, onOpenCertificate }) 
                     )}
                 </div>
 
+                {/* GROUP 4: KẾT QUẢ KỲ THI THPT & TRÚNG TUYỂN ĐẠI HỌC */}
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center border-b border-brand-cerulean/20 pb-2">
+                        <h3 className="text-lg font-serif-title text-brand-cerulean font-bold flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-brand-jasper"></span>
+                            4. Kết quả Kỳ thi THPT & Trúng tuyển Đại học
+                        </h3>
+                        {navigate && (
+                            <button
+                                type="button"
+                                onClick={() => navigate('thpt_goals')}
+                                className="text-xs font-serif-title font-bold text-brand-jasper hover:text-brand-cerulean underline flex items-center gap-1"
+                            >
+                                Quản lý Nguyện vọng & Điểm thi THPT →
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-brand-cream/40 p-5 border border-brand-cerulean/20">
+                        <div>
+                            <span className="text-xs uppercase font-bold text-gray-400 block">Trường Đại học trúng tuyển</span>
+                            <span className="text-base font-serif-title text-brand-cerulean font-bold">
+                                {thptProfile?.admittedUniversity || profile?.admittedUniversity || 'Chưa cập nhật'}
+                            </span>
+                            {(thptProfile?.admittedWishNumber || profile?.admittedWishNumber) && (
+                                <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-serif-title border border-emerald-300">
+                                    {thptProfile?.admittedWishNumber || profile?.admittedWishNumber}
+                                </span>
+                            )}
+                        </div>
+
+                        <div>
+                            <span className="text-xs uppercase font-bold text-gray-400 block">Ngành & Khối xét tuyển</span>
+                            <span className="text-base font-serif-title text-brand-jasper font-bold">
+                                {thptProfile?.admittedMajor || profile?.admittedMajor || 'Chưa cập nhật'}
+                            </span>
+                            {(thptProfile?.admittedCombination || profile?.combination) && (
+                                <span className="text-xs text-gray-600 font-body block mt-0.5">
+                                    Khối: <strong>{thptProfile?.admittedCombination || profile?.combination}</strong>
+                                </span>
+                            )}
+                        </div>
+
+                        <div>
+                            <span className="text-xs uppercase font-bold text-gray-400 block">Điểm chuẩn & Nguyện vọng</span>
+                            <span className="text-base font-serif-title text-emerald-700 font-bold">
+                                {(thptProfile?.admittedScore || profile?.admittedScore) ? `${thptProfile?.admittedScore || profile?.admittedScore} đ` : 'Chưa cập nhật'}
+                            </span>
+                            <span className="text-xs text-gray-500 font-body block mt-0.5">
+                                Đã lưu {(thptProfile?.aspirations || []).length} nguyện vọng đăng ký
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 {isEditing && (
                     <div className="pt-6 border-t border-brand-cerulean/20 flex justify-end gap-4">
                         <button type="button" onClick={() => { setFormData(profile); setIsEditing(false); }} className="px-6 py-2 text-gray-500 font-serif-title">Hủy</button>
@@ -4754,7 +4811,7 @@ const getSEOAndPath = (currentView, activeProgramId, activeModuleId, programs, m
 // ─── MAIN APP COMPONENT ───────────────────────────────────────────────────
 export default function App() {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const [toast, setToast] = useState(null);
@@ -4788,7 +4845,7 @@ export default function App() {
     const handleGoogleLogin = async () => {
         setAuthLoadingState('logging_in');
         try {
-            await setPersistence(auth, browserSessionPersistence);
+            await setPersistence(auth, browserLocalPersistence);
             const result = await signInWithPopup(auth, googleProvider);
             const user = result.user;
             
@@ -4856,6 +4913,36 @@ export default function App() {
     const [activeModuleId, setActiveModuleId] = useState(null);
     const [isCertModalOpen, setIsCertModalOpen] = useState(false);
     const [selectedProgramFilter, setSelectedProgramFilter] = useState('all');
+
+    // Collapsible Sidebar State (persisted to localStorage)
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('pedagogy_sidebar_collapsed') === 'true';
+        }
+        return false;
+    });
+
+    const toggleSidebar = () => {
+        setIsSidebarCollapsed(prev => {
+            const next = !prev;
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('pedagogy_sidebar_collapsed', String(next));
+            }
+            return next;
+        });
+    };
+
+    // Keyboard shortcut (Ctrl+B / Cmd+B) to toggle sidebar
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+                e.preventDefault();
+                toggleSidebar();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     // Initial Data State (strictly driven by Firestore Realtime Sync)
     const [profile, setProfile] = useState(() => DEFAULT_PROFILE);
@@ -5462,68 +5549,157 @@ if (!user) {
 
     return (
         <div className="flex h-screen overflow-hidden bg-brand-cream">
-            {/* Sidebar (Stationary / Fixed) */}
-            <aside className="w-64 h-full border-r border-brand-cerulean/20 flex flex-col p-6 shrink-0 hidden md:flex">
-                <div className="mb-8 flex items-center gap-3">
-                    <img src={logoImg} alt="Pedagogy Logo" className="w-12 h-12 rounded-full shadow-sm" />
-                    <div>
-                        <h1 className="font-serif-title text-4xl text-brand-cerulean tracking-tight">Pedagogy.</h1>
-                        <p className="text-sm italic text-gray-500 mt-1 font-body">Personal Learning Management</p>
-                    </div>
+            {/* Sidebar (Stationary / Fixed with Collapsible Support) */}
+            <aside className={`${isSidebarCollapsed ? 'w-20 px-3 py-5' : 'w-64 p-6'} h-full border-r border-brand-cerulean/20 flex flex-col shrink-0 hidden md:flex transition-all duration-300 ease-in-out bg-brand-cream relative select-none z-30`}>
+                
+                {/* Collapse / Expand Toggle Button on Border */}
+                <button
+                    type="button"
+                    onClick={toggleSidebar}
+                    className="absolute -right-3 top-7 w-6 h-6 rounded-full bg-white border border-brand-cerulean/30 shadow-sm flex items-center justify-center text-brand-cerulean hover:text-brand-jasper hover:border-brand-jasper transition-all z-20"
+                    title={isSidebarCollapsed ? "Mở rộng thanh điều hướng (Ctrl+B)" : "Thu nhỏ thanh điều hướng (Ctrl+B)"}
+                >
+                    {isSidebarCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+                </button>
+
+                {/* Header / Logo */}
+                <div className={`mb-6 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
+                    <img 
+                        src={logoImg} 
+                        alt="Pedagogy Logo" 
+                        className={`${isSidebarCollapsed ? 'w-10 h-10' : 'w-12 h-12'} rounded-full shadow-sm transition-all cursor-pointer hover:scale-105 shrink-0`}
+                        onClick={() => { if (isSidebarCollapsed) toggleSidebar(); }}
+                        title={isSidebarCollapsed ? "Bấm để mở rộng thanh điều hướng" : "Pedagogy"}
+                    />
+                    {!isSidebarCollapsed && (
+                        <div className="min-w-0">
+                            <h1 className="font-serif-title text-3xl text-brand-cerulean tracking-tight truncate">Pedagogy.</h1>
+                            <p className="text-xs italic text-gray-500 mt-0.5 font-body truncate">Personal Learning Management</p>
+                        </div>
+                    )}
                 </div>
 
-                <nav className="flex-1 space-y-2 overflow-y-auto pr-1">
-                    <button onClick={() => navigate('dashboard')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'dashboard' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
-                        <LayoutDashboard size={18} /> Tổng quan
-                    </button>
-                    <button onClick={() => navigate('programs')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'programs' || currentView === 'program_detail' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
-                        <BookOpen size={18} /> Chương trình học
-                    </button>
-                    <button onClick={() => navigate('syllabus')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'syllabus' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
-                        <FileText size={18} /> Đề cương chi tiết
-                    </button>
-                    <button onClick={() => navigate('calendar')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'calendar' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
-                        <Calendar size={18} /> Lịch biểu & Điểm danh
-                    </button>
-                    <button onClick={() => navigate('gradebook')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'gradebook' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
-                        <Award size={18} /> Sổ điểm & GPA
-                    </button>
-                    <button onClick={() => navigate('resources')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'resources' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
-                        <FolderOpen size={18} /> Học liệu & Nhật ký
-                    </button>
+                {/* Navigation Links */}
+                <nav className="flex-1 space-y-1.5 overflow-y-auto pr-0.5 custom-scrollbar">
+                    {/* General University Suite */}
+                    {[
+                        { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
+                        { id: 'programs', match: ['programs', 'program_detail'], label: 'Chương trình học', icon: BookOpen },
+                        { id: 'syllabus', label: 'Đề cương chi tiết', icon: FileText },
+                        { id: 'calendar', label: 'Lịch biểu & Điểm danh', icon: Calendar },
+                        { id: 'gradebook', label: 'Sổ điểm & GPA', icon: Award },
+                        { id: 'resources', label: 'Học liệu & Nhật ký', icon: FolderOpen },
+                    ].map(item => {
+                        const Icon = item.icon;
+                        const isActive = item.match ? item.match.includes(currentView) : currentView === item.id;
+                        return (
+                            <button
+                                key={item.id}
+                                onClick={() => navigate(item.id)}
+                                title={isSidebarCollapsed ? item.label : undefined}
+                                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-lg' : 'gap-3 py-2 px-1 text-left border-b'} transition-all ${
+                                    isActive
+                                        ? isSidebarCollapsed 
+                                            ? 'bg-brand-cerulean text-white font-bold shadow-xs' 
+                                            : 'text-brand-jasper font-bold border-brand-jasper'
+                                        : isSidebarCollapsed
+                                            ? 'text-brand-cerulean hover:bg-brand-cerulean/10'
+                                            : 'text-brand-cerulean border-transparent hover:border-brand-jasper hover:text-brand-jasper'
+                                }`}
+                            >
+                                <Icon size={isSidebarCollapsed ? 20 : 18} className="shrink-0" />
+                                {!isSidebarCollapsed && <span className="text-base truncate">{item.label}</span>}
+                            </button>
+                        );
+                    })}
 
                     {/* THPT Personal Examination Suite */}
-                    <div className="pt-2 border-t border-brand-cerulean/15 space-y-2">
-                        <span className="px-1 text-[10px] font-serif-title uppercase tracking-widest text-brand-cerulean/70 font-bold block">
-                            Luyện Thi THPT Cá Nhân
-                        </span>
-                        <button onClick={() => navigate('thpt_exams')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'thpt_exams' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
-                            <FileText size={18} /> Đề thi & Đáp án
-                        </button>
-                        <button onClick={() => navigate('thpt_goals')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'thpt_goals' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
-                            <Target size={18} /> Mục tiêu & Kế hoạch
-                        </button>
-                        <button onClick={() => navigate('thpt_tracking')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'thpt_tracking' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
-                            <TrendingUp size={18} /> Nhật ký & Tiến độ
-                        </button>
+                    <div className={`pt-2 border-t border-brand-cerulean/15 space-y-1.5 ${isSidebarCollapsed ? 'mt-2' : ''}`}>
+                        {!isSidebarCollapsed ? (
+                            <span className="px-1 text-[10px] font-serif-title uppercase tracking-widest text-brand-cerulean/70 font-bold block mb-1">
+                                Luyện Thi THPT
+                            </span>
+                        ) : (
+                            <div className="w-full flex justify-center py-1" title="Khối Luyện Thi THPT">
+                                <div className="w-6 h-0.5 bg-brand-cerulean/20 rounded-full" />
+                            </div>
+                        )}
+
+                        {[
+                            { id: 'thpt_exams', label: 'Đề thi & Đáp án', icon: FileText },
+                            { id: 'thpt_goals', label: 'Mục tiêu & Kế hoạch', icon: Target },
+                            { id: 'thpt_tracking', label: 'Nhật ký & Tiến độ', icon: TrendingUp },
+                            { id: 'thpt_admission', label: 'Trúng tuyển & Nguyện vọng', icon: GraduationCap },
+                        ].map(item => {
+                            const Icon = item.icon;
+                            const isActive = currentView === item.id;
+                            return (
+                                <button
+                                    key={item.id}
+                                    onClick={() => navigate(item.id)}
+                                    title={isSidebarCollapsed ? item.label : undefined}
+                                    className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-lg' : 'gap-3 py-2 px-1 text-left border-b'} transition-all ${
+                                        isActive
+                                            ? isSidebarCollapsed 
+                                                ? 'bg-brand-jasper text-white font-bold shadow-xs' 
+                                                : 'text-brand-jasper font-bold border-brand-jasper'
+                                            : isSidebarCollapsed
+                                                ? 'text-brand-cerulean hover:bg-brand-cerulean/10'
+                                                : 'text-brand-cerulean border-transparent hover:border-brand-jasper hover:text-brand-jasper'
+                                    }`}
+                                >
+                                    <Icon size={isSidebarCollapsed ? 20 : 18} className="shrink-0" />
+                                    {!isSidebarCollapsed && <span className="text-base truncate">{item.label}</span>}
+                                </button>
+                            );
+                        })}
                     </div>
 
-                    <button onClick={() => navigate('profile')} className={`w-full flex items-center gap-3 py-2 text-base text-left border-b border-transparent hover:border-brand-jasper transition-colors ${currentView === 'profile' ? 'text-brand-jasper font-bold' : 'text-brand-cerulean'}`}>
-                        <User size={18} /> Hồ sơ cá nhân
-                    </button>
+                    {/* Profile Link */}
+                    <div className="pt-2 border-t border-brand-cerulean/15">
+                        <button
+                            onClick={() => navigate('profile')}
+                            title={isSidebarCollapsed ? 'Hồ sơ cá nhân' : undefined}
+                            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-lg' : 'gap-3 py-2 px-1 text-left border-b'} transition-all ${
+                                currentView === 'profile'
+                                    ? isSidebarCollapsed 
+                                        ? 'bg-brand-cerulean text-white font-bold shadow-xs' 
+                                        : 'text-brand-jasper font-bold border-brand-jasper'
+                                    : isSidebarCollapsed
+                                        ? 'text-brand-cerulean hover:bg-brand-cerulean/10'
+                                        : 'text-brand-cerulean border-transparent hover:border-brand-jasper hover:text-brand-jasper'
+                            }`}
+                        >
+                            <User size={isSidebarCollapsed ? 20 : 18} className="shrink-0" />
+                            {!isSidebarCollapsed && <span className="text-base truncate">Hồ sơ cá nhân</span>}
+                        </button>
+                    </div>
                 </nav>
 
+                {/* Footer User Info */}
                 {profile && (
-                    <div className="mt-auto pt-4 border-t border-brand-cerulean/20">
-                        <p className="font-serif-title text-brand-cerulean truncate font-bold">{profile.fullName}</p>
-                        <p className="text-xs font-sans text-gray-500 truncate mb-3">{profile.email}</p>
-                        
-                        <button 
-                            onClick={handleSignOut} 
-                            className="text-xs font-bold text-brand-jasper hover:underline"
-                        >
-                            Đăng xuất
-                        </button>
+                    <div className={`mt-auto pt-3 border-t border-brand-cerulean/20 ${isSidebarCollapsed ? 'flex flex-col items-center gap-2' : ''}`}>
+                        {!isSidebarCollapsed ? (
+                            <>
+                                <p className="font-serif-title text-brand-cerulean truncate font-bold text-sm">{profile.fullName}</p>
+                                <p className="text-xs font-sans text-gray-500 truncate mb-2">{profile.email}</p>
+                                
+                                <button 
+                                    onClick={handleSignOut} 
+                                    className="text-xs font-bold text-brand-jasper hover:underline flex items-center gap-1.5"
+                                >
+                                    <LogOut size={13} /> Đăng xuất
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={handleSignOut}
+                                className="w-10 h-10 rounded-lg flex items-center justify-center text-brand-jasper hover:bg-red-50 hover:text-red-700 transition-colors"
+                                title={`Đăng xuất (${profile.fullName})`}
+                            >
+                                <LogOut size={18} />
+                            </button>
+                        )}
                     </div>
                 )}
             </aside>
@@ -5546,6 +5722,12 @@ if (!user) {
                         className="px-2 py-1 bg-brand-jasper text-white rounded text-xs font-bold"
                     >
                         Tiến độ
+                    </button>
+                    <button
+                        onClick={() => navigate('thpt_admission')}
+                        className="px-2 py-1 bg-amber-600 text-white rounded text-xs font-bold"
+                    >
+                        Trúng tuyển
                     </button>
                 </div>
             </div>
@@ -5661,6 +5843,7 @@ if (!user) {
                         subjects={thptSubjects}
                         results={thptResults}
                         onUpdateProfile={handleUpdateThptProfile}
+                        navigate={navigate}
                         showToast={showToast}
                     />
                 )}
@@ -5672,6 +5855,16 @@ if (!user) {
                         subjects={thptSubjects}
                         onSaveResult={handleSaveThptResult}
                         onDeleteResult={handleDeleteThptResult}
+                        onUpdateProfile={handleUpdateThptProfile}
+                        navigate={navigate}
+                        showToast={showToast}
+                    />
+                )}
+                {currentView === 'thpt_admission' && (
+                    <ThptAdmissionView
+                        profile={thptProfile}
+                        subjects={thptSubjects}
+                        onUpdateProfile={handleUpdateThptProfile}
                         showToast={showToast}
                     />
                 )}
@@ -5679,6 +5872,8 @@ if (!user) {
                     <ProfileView
                         profile={profile}
                         programs={programs}
+                        thptProfile={thptProfile}
+                        navigate={navigate}
                         onUpdateProfile={handleUpdateProfile}
                         onOpenCertificate={() => setIsCertModalOpen(true)}
                     />

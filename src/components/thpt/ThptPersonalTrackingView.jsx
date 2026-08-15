@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import {
     TrendingUp, Award, Plus, BookOpen, Calendar,
-    CheckCircle2, Clock, Trash2, ArrowUpRight, Target, Sparkles, BarChart2, FileText, Check
+    CheckCircle2, Clock, Trash2, ArrowUpRight, Target, Sparkles, BarChart2, FileText, Check, Compass
 } from 'lucide-react';
 import { ThptPersonalTestModal } from './ThptPersonalTestModal';
 import { EditorialSelect } from './EditorialSelect';
+import { getPhaseTimeStatus, getPhaseLabel, getCleanPhaseTitle } from './ThptPersonalGoalView';
 
 export const ThptPersonalTrackingView = ({
     profile,
@@ -13,6 +14,8 @@ export const ThptPersonalTrackingView = ({
     subjects = [],
     onSaveResult,
     onDeleteResult,
+    onUpdateProfile,
+    navigate,
     showToast
 }) => {
     const [selectedSubjectFilter, setSelectedSubjectFilter] = useState('all');
@@ -62,6 +65,27 @@ export const ThptPersonalTrackingView = ({
         }
         return 9.0;
     }, [selectedSubjectFilter, profile]);
+
+    // Study Phases Roadmap Computations
+    const studyPhases = profile?.studyPhases || [];
+    const totalPhasesCount = studyPhases.length;
+    const completedPhasesCount = studyPhases.filter(p => p.status === 'completed').length;
+    const roadmapProgressPercent = totalPhasesCount > 0
+        ? Math.round((completedPhasesCount / totalPhasesCount) * 100)
+        : 0;
+
+    const handleTogglePhaseInTracking = (phaseId) => {
+        if (!onUpdateProfile) return;
+        const updatedPhases = studyPhases.map(p => {
+            if (p.id === phaseId) {
+                const nextStatus = p.status === 'completed' ? 'pending' : 'completed';
+                return { ...p, status: nextStatus };
+            }
+            return p;
+        });
+        onUpdateProfile({ ...profile, studyPhases: updatedPhases });
+        showToast?.('Đã cập nhật tiến độ giai đoạn');
+    };
 
     // SVG Chart Dimensions
     const chartWidth = 700;
@@ -200,6 +224,132 @@ export const ThptPersonalTrackingView = ({
                     <span className="text-xs text-gray-400 font-body">So với đề đầu tiên</span>
                 </div>
             </div>
+
+            {/* Study Roadmap & Phases Progress Card */}
+            {studyPhases.length > 0 && (
+                <div className="bg-white p-6 border-editorial shadow-editorial space-y-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-3 border-b border-brand-cerulean/15 gap-2">
+                        <div>
+                            <h3 className="font-serif-title font-bold text-lg text-brand-cerulean flex items-center gap-2">
+                                <Compass size={18} className="text-brand-jasper" />
+                                Lộ trình & Tiến độ Giai đoạn Ôn tập THPT
+                            </h3>
+                            <p className="text-xs text-gray-500 font-body mt-0.5">
+                                Tiến trình các giai đoạn ôn thi tự động cập nhật theo mốc thời gian và xác nhận hoàn thành
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <span className="text-xs font-serif font-bold text-emerald-800 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded flex items-center gap-1.5">
+                                <CheckCircle2 size={14} className="text-emerald-600" />
+                                Đã xong {completedPhasesCount}/{totalPhasesCount} giai đoạn ({roadmapProgressPercent}%)
+                            </span>
+                            {navigate && (
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('thpt_goals')}
+                                    className="text-xs font-serif-title font-bold text-brand-cerulean hover:text-brand-jasper underline flex items-center gap-1"
+                                >
+                                    Quản lý lộ trình →
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-gradient-to-r from-brand-cerulean via-brand-jasper to-emerald-600 rounded-full transition-all duration-500"
+                            style={{ width: `${roadmapProgressPercent}%` }}
+                        />
+                    </div>
+
+                    {/* Phase Milestones Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+                        {studyPhases.map((phase, idx) => {
+                            const phaseLabel = getPhaseLabel(idx, totalPhasesCount);
+                            const cleanTitle = getCleanPhaseTitle(phase.title) || phase.title;
+                            const statusInfo = getPhaseTimeStatus(phase);
+                            const isFinalPhase = phaseLabel === 'Giai đoạn cuối';
+
+                            return (
+                                <div
+                                    key={phase.id}
+                                    className={`p-4 border rounded-xs transition-all space-y-2.5 flex flex-col justify-between ${statusInfo.bgCardClass}`}
+                                >
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded font-serif-title ${
+                                                isFinalPhase
+                                                    ? 'bg-brand-jasper text-white'
+                                                    : 'bg-brand-cerulean/15 text-brand-cerulean'
+                                            }`}>
+                                                {phaseLabel}
+                                            </span>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${statusInfo.bgBadgeClass}`}>
+                                                {statusInfo.label}
+                                            </span>
+                                        </div>
+
+                                        <h4 className={`font-serif-title text-sm font-bold leading-tight ${
+                                            statusInfo.isDone ? 'line-through text-gray-500' : 'text-brand-cerulean'
+                                        }`}>
+                                            {cleanTitle}
+                                        </h4>
+
+                                        <div className="text-[11px] text-gray-600 font-body flex items-center gap-1">
+                                            <Clock size={12} className="text-gray-400 shrink-0" />
+                                            <span>{phase.timeline}</span>
+                                        </div>
+
+                                        {statusInfo.timeDetail && (
+                                            <p className="text-[10px] text-gray-500 italic font-body">
+                                                ⏱ {statusInfo.timeDetail}
+                                            </p>
+                                        )}
+
+                                        {phase.target && (
+                                            <div className="text-xs text-gray-700 font-body line-clamp-2 bg-white/70 p-2 rounded-xs border border-brand-cerulean/10">
+                                                <span className="font-bold text-brand-cerulean font-serif-title mr-1">Mục tiêu:</span>
+                                                {phase.target}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {onUpdateProfile && (
+                                        <div className="pt-2 border-t border-brand-cerulean/10 flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleTogglePhaseInTracking(phase.id)}
+                                                className={`px-3 py-1 text-xs font-bold rounded transition-all flex items-center gap-1 ${
+                                                    statusInfo.isDone
+                                                        ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                                        : statusInfo.isOverdue
+                                                            ? 'bg-amber-500 text-white hover:bg-amber-600'
+                                                            : statusInfo.isInProgress
+                                                                ? 'bg-brand-jasper text-white hover:bg-red-700'
+                                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                }`}
+                                                title={statusInfo.isDone ? "Bấm để bỏ hoàn thành" : "Bấm để đánh dấu đã xong"}
+                                            >
+                                                {statusInfo.isDone ? (
+                                                    <>
+                                                        <CheckCircle2 size={12} /> Đã xong
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Check size={12} /> {statusInfo.isOverdue ? 'Đánh dấu xong' : 'Xác nhận xong'}
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Performance Progress Chart Box */}
             <div className="bg-white p-6 border-editorial shadow-editorial space-y-4">

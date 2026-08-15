@@ -3,10 +3,10 @@ import {
     getAuth, 
     GoogleAuthProvider, 
     signInWithPopup, 
-    onAuthStateChanged,
-    signOut,
-    setPersistence,
-    browserSessionPersistence
+    onAuthStateChanged, 
+    signOut, 
+    setPersistence, 
+    browserLocalPersistence 
 } from 'firebase/auth';
 import {
     getFirestore,
@@ -38,7 +38,7 @@ export const auth = getAuth(app);
 
 export const getCollectionRef = (userId, colName) => collection(db, colName);
 export const getDocRef = (userId, colName, docId) => doc(db, colName, docId === 'main' ? userId : docId);
-export { onAuthStateChanged, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, collection, doc, signInWithPopup, signOut, setPersistence, browserSessionPersistence };
+export { onAuthStateChanged, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, collection, doc, signInWithPopup, signOut, setPersistence, browserLocalPersistence };
 
 // ─── Collection names ───────────────────────────────────────────────────────
 export const COLLECTIONS = {

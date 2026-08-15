@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Calendar, ChevronLeft, ChevronRight, X, Sparkles } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, X, Sparkles, ChevronDown } from 'lucide-react';
 
 /**
  * EditorialDatePicker - Custom Calendar Date & Range Picker
@@ -27,13 +27,28 @@ export const EditorialDatePicker = ({
     // Parse initial value
     useEffect(() => {
         if (value) {
+            let firstDateStr = value;
             if (value.includes(' - ')) {
                 const [s, e] = value.split(' - ').map(x => x.trim());
                 setRangeStart(s);
                 setRangeEnd(e || '');
+                firstDateStr = s;
+            } else if (value.toLowerCase().startsWith('từ ') && value.toLowerCase().includes(' đến ')) {
+                const parts = value.substring(3).split(/\s+đến\s+/i);
+                setRangeStart(parts[0]?.trim() || '');
+                setRangeEnd(parts[1]?.trim() || '');
+                firstDateStr = parts[0]?.trim() || '';
             } else {
                 setRangeStart(value);
                 setRangeEnd('');
+            }
+
+            // Sync viewDate with the date
+            if (firstDateStr && firstDateStr.includes('/')) {
+                const parts = firstDateStr.split('/').map(Number);
+                if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+                    setViewDate(new Date(parts[2], parts[1] - 1, parts[0]));
+                }
             }
         }
     }, [value]);
@@ -93,6 +108,13 @@ export const EditorialDatePicker = ({
 
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
+
+    const currentYear = new Date().getFullYear();
+    const yearOptions = Array.from({ length: 25 }, (_, i) => currentYear - 10 + i);
+    if (!yearOptions.includes(year)) {
+        yearOptions.push(year);
+        yearOptions.sort((a, b) => a - b);
+    }
 
     const monthNames = [
         "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
@@ -225,21 +247,63 @@ export const EditorialDatePicker = ({
                     className="editorial-portal-datepicker bg-brand-cream border-2 border-brand-cerulean shadow-2xl p-4 animate-fade-in-down select-none"
                 >
                     {/* Header Month / Year Navigation */}
-                    <div className="flex justify-between items-center pb-2 mb-2 border-b border-brand-cerulean/20">
+                    <div className="flex justify-between items-center pb-2.5 mb-2.5 border-b border-brand-cerulean/20 gap-1.5">
                         <button
                             type="button"
                             onClick={prevMonth}
-                            className="p-1 hover:bg-brand-cerulean/10 text-brand-cerulean rounded transition-colors"
+                            className="p-1.5 hover:bg-brand-cerulean/10 text-brand-cerulean rounded-xs transition-colors shrink-0"
+                            title="Tháng trước"
                         >
                             <ChevronLeft size={16} />
                         </button>
-                        <span className="font-serif-title font-bold text-sm text-brand-cerulean">
-                            {monthNames[month]} - {year}
-                        </span>
+
+                        <div className="flex items-center gap-2 flex-1 justify-center">
+                            {/* Month Dropdown */}
+                            <div className="relative">
+                                <select
+                                    value={month}
+                                    onChange={(e) => {
+                                        e.stopPropagation();
+                                        const newMonth = Number(e.target.value);
+                                        setViewDate(new Date(year, newMonth, 1));
+                                    }}
+                                    className="appearance-none bg-white border border-brand-cerulean/30 hover:border-brand-cerulean focus:border-brand-jasper text-brand-cerulean font-serif-title font-bold text-xs py-1 pl-2.5 pr-6 rounded-xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-jasper shadow-xs transition-all"
+                                >
+                                    {monthNames.map((mName, idx) => (
+                                        <option key={idx} value={idx} className="font-serif-title text-xs py-1 text-brand-ink">
+                                            {mName}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={12} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-brand-cerulean pointer-events-none" />
+                            </div>
+
+                            {/* Year Dropdown */}
+                            <div className="relative">
+                                <select
+                                    value={year}
+                                    onChange={(e) => {
+                                        e.stopPropagation();
+                                        const newYear = Number(e.target.value);
+                                        setViewDate(new Date(newYear, month, 1));
+                                    }}
+                                    className="appearance-none bg-white border border-brand-cerulean/30 hover:border-brand-cerulean focus:border-brand-jasper text-brand-cerulean font-serif-title font-bold text-xs py-1 pl-2.5 pr-6 rounded-xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-jasper shadow-xs transition-all"
+                                >
+                                    {yearOptions.map((y) => (
+                                        <option key={y} value={y} className="font-serif-title text-xs py-1 text-brand-ink">
+                                            Năm {y}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={12} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-brand-cerulean pointer-events-none" />
+                            </div>
+                        </div>
+
                         <button
                             type="button"
                             onClick={nextMonth}
-                            className="p-1 hover:bg-brand-cerulean/10 text-brand-cerulean rounded transition-colors"
+                            className="p-1.5 hover:bg-brand-cerulean/10 text-brand-cerulean rounded-xs transition-colors shrink-0"
+                            title="Tháng sau"
                         >
                             <ChevronRight size={16} />
                         </button>
