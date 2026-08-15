@@ -44,7 +44,7 @@ export const OFFICIAL_THPT_SUBJECTS = [
     { id: 'civicEducation', name: 'GDCD / KTPL', color: '#124874' },
     { id: 'informatics', name: 'Tin học', color: '#124874' },
     { id: 'technology', name: 'Công nghệ', color: '#124874' },
-    { id: 'pe', name: 'Thể dục (Giáo dục thể chất)', color: '#124874' },
+    { id: 'pe', name: 'Thể dục (Giáo dục thể chất)', color: '#124874', isEvaluation: true },
     { id: 'defense', name: 'GD Quốc phòng & An ninh', color: '#124874' },
 ];
 

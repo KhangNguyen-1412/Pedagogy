@@ -22,7 +22,7 @@ export const THCS_SUBJECTS = [
     { id: 'civics', name: 'Giáo dục công dân (GDCD)', color: '#124874' },
     { id: 'informatics', name: 'Tin học', color: '#124874' },
     { id: 'technology', name: 'Công nghệ', color: '#124874' },
-    { id: 'pe', name: 'Thể dục (Giáo dục thể chất)', color: '#124874' },
+    { id: 'pe', name: 'Thể dục (Giáo dục thể chất)', color: '#124874', isEvaluation: true },
     { id: 'music', name: 'Âm nhạc', color: '#124874' },
     { id: 'art', name: 'Mĩ thuật', color: '#124874' },
 ];
@@ -41,6 +41,11 @@ export const PRIMARY_SUBJECTS = [
     { id: 'pe', name: 'Giáo dục thể chất', color: '#124874', hasScore: false },
     { id: 'music_art', name: 'Âm nhạc & Mĩ thuật', color: '#124874', hasScore: false },
     { id: 'activities', name: 'Hoạt động trải nghiệm', color: '#124874', hasScore: false }
+];
+
+export const EVAL_PASS_FAIL_OPTIONS = [
+    { value: 'Đ', label: 'Đạt (Đ)' },
+    { value: 'CĐ', label: 'Chưa đạt (CĐ)' },
 ];
 
 export const TRANSCRIPT_RANK_OPTIONS = [
@@ -183,21 +188,32 @@ export const AcademicTranscriptsView = ({
 
     // 1. Helper: Update THPT Subject Score (Grades 10, 11, 12)
     const handleUpdateThptScore = (gradeKey, subjId, field, value) => {
-        const numVal = value === '' ? '' : Math.min(10, Math.max(0, Number(value)));
+        const isEvalSubj = OFFICIAL_THPT_SUBJECTS.find(s => s.id === subjId)?.isEvaluation;
+        const processedVal = isEvalSubj
+            ? value
+            : (value === '' ? '' : Math.min(10, Math.max(0, Number(value))));
+
         setTranscripts(prev => {
             const currentGrade = prev.highSchool[`grade${gradeKey}`] || { scores: {} };
-            const currentSubj = currentGrade.scores?.[subjId] || { hk1: '', hk2: '', final: '' };
+            const currentSubj = currentGrade.scores?.[subjId] || { hk1: isEvalSubj ? 'Đ' : '', hk2: isEvalSubj ? 'Đ' : '', final: isEvalSubj ? 'Đ' : '' };
             
             const updatedSubj = {
                 ...currentSubj,
-                [field]: numVal
+                [field]: processedVal
             };
 
-            if (field === 'hk1' || field === 'hk2') {
-                const hk1Val = field === 'hk1' ? numVal : currentSubj.hk1;
-                const hk2Val = field === 'hk2' ? numVal : currentSubj.hk2;
-                if (hk1Val !== '' && hk2Val !== '' && !isNaN(Number(hk1Val)) && !isNaN(Number(hk2Val))) {
-                    updatedSubj.final = Number(((Number(hk1Val) + Number(hk2Val) * 2) / 3).toFixed(2));
+            if (!isEvalSubj) {
+                if (field === 'hk1' || field === 'hk2') {
+                    const hk1Val = field === 'hk1' ? processedVal : currentSubj.hk1;
+                    const hk2Val = field === 'hk2' ? processedVal : currentSubj.hk2;
+                    if (hk1Val !== '' && hk2Val !== '' && !isNaN(Number(hk1Val)) && !isNaN(Number(hk2Val))) {
+                        updatedSubj.final = Number(((Number(hk1Val) + Number(hk2Val) * 2) / 3).toFixed(2));
+                    }
+                }
+            } else {
+                if (field === 'hk1' || field === 'hk2') {
+                    const hk2Val = field === 'hk2' ? processedVal : currentSubj.hk2;
+                    updatedSubj.final = hk2Val || processedVal || 'Đ';
                 }
             }
 
@@ -206,7 +222,13 @@ export const AcademicTranscriptsView = ({
                 [subjId]: updatedSubj
             };
 
-            const finals = Object.values(updatedScores).map(s => s.final).filter(f => f !== '' && f !== undefined && !isNaN(f));
+            // Exclude evaluation-only subjects from numerical GPA
+            const scoredSubjectIds = OFFICIAL_THPT_SUBJECTS.filter(s => !s.isEvaluation).map(s => s.id);
+            const finals = Object.entries(updatedScores)
+                .filter(([sId]) => scoredSubjectIds.includes(sId))
+                .map(([, s]) => s.final)
+                .filter(f => f !== '' && f !== undefined && !isNaN(Number(f)));
+
             let computedGpa = currentGrade.gpa;
             if (finals.length > 0) {
                 computedGpa = Number((finals.reduce((a, b) => a + Number(b), 0) / finals.length).toFixed(2));
@@ -228,21 +250,32 @@ export const AcademicTranscriptsView = ({
 
     // 2. Helper: Update THCS Subject Score (Grades 6, 7, 8, 9)
     const handleUpdateThcsScore = (gradeKey, subjId, field, value) => {
-        const numVal = value === '' ? '' : Math.min(10, Math.max(0, Number(value)));
+        const isEvalSubj = THCS_SUBJECTS.find(s => s.id === subjId)?.isEvaluation;
+        const processedVal = isEvalSubj
+            ? value
+            : (value === '' ? '' : Math.min(10, Math.max(0, Number(value))));
+
         setTranscripts(prev => {
             const currentGrade = prev.secondarySchool[`grade${gradeKey}`] || { scores: {} };
-            const currentSubj = currentGrade.scores?.[subjId] || { hk1: '', hk2: '', final: '' };
+            const currentSubj = currentGrade.scores?.[subjId] || { hk1: isEvalSubj ? 'Đ' : '', hk2: isEvalSubj ? 'Đ' : '', final: isEvalSubj ? 'Đ' : '' };
             
             const updatedSubj = {
                 ...currentSubj,
-                [field]: numVal
+                [field]: processedVal
             };
 
-            if (field === 'hk1' || field === 'hk2') {
-                const hk1Val = field === 'hk1' ? numVal : currentSubj.hk1;
-                const hk2Val = field === 'hk2' ? numVal : currentSubj.hk2;
-                if (hk1Val !== '' && hk2Val !== '' && !isNaN(Number(hk1Val)) && !isNaN(Number(hk2Val))) {
-                    updatedSubj.final = Number(((Number(hk1Val) + Number(hk2Val) * 2) / 3).toFixed(2));
+            if (!isEvalSubj) {
+                if (field === 'hk1' || field === 'hk2') {
+                    const hk1Val = field === 'hk1' ? processedVal : currentSubj.hk1;
+                    const hk2Val = field === 'hk2' ? processedVal : currentSubj.hk2;
+                    if (hk1Val !== '' && hk2Val !== '' && !isNaN(Number(hk1Val)) && !isNaN(Number(hk2Val))) {
+                        updatedSubj.final = Number(((Number(hk1Val) + Number(hk2Val) * 2) / 3).toFixed(2));
+                    }
+                }
+            } else {
+                if (field === 'hk1' || field === 'hk2') {
+                    const hk2Val = field === 'hk2' ? processedVal : currentSubj.hk2;
+                    updatedSubj.final = hk2Val || processedVal || 'Đ';
                 }
             }
 
@@ -251,7 +284,13 @@ export const AcademicTranscriptsView = ({
                 [subjId]: updatedSubj
             };
 
-            const finals = Object.values(updatedScores).map(s => s.final).filter(f => f !== '' && f !== undefined && !isNaN(f));
+            // Exclude evaluation-only subjects from numerical GPA
+            const scoredSubjectIds = THCS_SUBJECTS.filter(s => !s.isEvaluation).map(s => s.id);
+            const finals = Object.entries(updatedScores)
+                .filter(([sId]) => scoredSubjectIds.includes(sId))
+                .map(([, s]) => s.final)
+                .filter(f => f !== '' && f !== undefined && !isNaN(Number(f)));
+
             let computedGpa = currentGrade.gpa;
             if (finals.length > 0) {
                 computedGpa = Number((finals.reduce((a, b) => a + Number(b), 0) / finals.length).toFixed(2));
@@ -546,7 +585,57 @@ export const AcademicTranscriptsView = ({
                                 </thead>
                                 <tbody className="divide-y divide-brand-cerulean/10 text-xs font-body">
                                     {OFFICIAL_THPT_SUBJECTS.map(subj => {
-                                        const subjScore = currentThptGradeData.scores?.[subj.id] || { hk1: '', hk2: '', final: '' };
+                                        const isEval = subj.isEvaluation;
+                                        const subjScore = currentThptGradeData.scores?.[subj.id] || { hk1: isEval ? 'Đ' : '', hk2: isEval ? 'Đ' : '', final: isEval ? 'Đ' : '' };
+
+                                        if (isEval) {
+                                            const finalEval = subjScore.final || subjScore.hk2 || subjScore.hk1 || 'Đ';
+                                            const isPass = finalEval === 'Đ';
+                                            return (
+                                                <tr key={subj.id} className="hover:bg-brand-cream/30 transition-colors">
+                                                    <td className="py-2.5 px-3 font-serif font-bold text-brand-cerulean flex items-center gap-2">
+                                                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: subj.color }} />
+                                                        {subj.name}
+                                                        <span className="text-[10px] text-gray-500 font-sans font-normal italic">(Đánh giá Đ/CĐ)</span>
+                                                    </td>
+                                                    <td className="py-2 px-3 text-center">
+                                                        <EditorialSelect
+                                                            value={subjScore.hk1 || 'Đ'}
+                                                            onChange={val => handleUpdateThptScore(selectedThptGrade, subj.id, 'hk1', val)}
+                                                            options={EVAL_PASS_FAIL_OPTIONS}
+                                                            size="sm"
+                                                            className="w-24 mx-auto"
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 px-3 text-center">
+                                                        <EditorialSelect
+                                                            value={subjScore.hk2 || 'Đ'}
+                                                            onChange={val => handleUpdateThptScore(selectedThptGrade, subj.id, 'hk2', val)}
+                                                            options={EVAL_PASS_FAIL_OPTIONS}
+                                                            size="sm"
+                                                            className="w-24 mx-auto"
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 px-3 text-center bg-brand-cerulean/5">
+                                                        <EditorialSelect
+                                                            value={finalEval}
+                                                            onChange={val => handleUpdateThptScore(selectedThptGrade, subj.id, 'final', val)}
+                                                            options={EVAL_PASS_FAIL_OPTIONS}
+                                                            size="sm"
+                                                            className="w-24 mx-auto font-bold"
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 px-3 text-center">
+                                                        <span className={`inline-block px-2.5 py-0.5 rounded text-[11px] font-bold ${
+                                                            isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                                                        }`}>
+                                                            {isPass ? 'Đạt' : 'Chưa đạt'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        }
+
                                         return (
                                             <tr key={subj.id} className="hover:bg-brand-cream/30 transition-colors">
                                                 <td className="py-2.5 px-3 font-serif font-bold text-brand-cerulean flex items-center gap-2">
@@ -590,7 +679,7 @@ export const AcademicTranscriptsView = ({
                                                     />
                                                 </td>
                                                 <td className="py-2 px-3 text-gray-500 italic text-[11px] text-center">
-                                                    {subjScore.final >= 9.0 ? 'Xuất sắc' : subjScore.final >= 8.0 ? 'Giỏi' : subjScore.final >= 6.5 ? 'Khá' : '--'}
+                                                    {subjScore.final >= 9.0 ? 'Xuất sắc' : subjScore.final >= 8.0 ? 'Giỏi' : subjScore.final >= 6.5 ? 'Khá' : subjScore.final !== '' ? 'Đạt' : '--'}
                                                 </td>
                                             </tr>
                                         );
@@ -842,7 +931,57 @@ export const AcademicTranscriptsView = ({
                                 </thead>
                                 <tbody className="divide-y divide-brand-cerulean/10 text-xs font-body">
                                     {THCS_SUBJECTS.map(subj => {
-                                        const subjScore = currentThcsGradeData.scores?.[subj.id] || { hk1: '', hk2: '', final: '' };
+                                        const isEval = subj.isEvaluation;
+                                        const subjScore = currentThcsGradeData.scores?.[subj.id] || { hk1: isEval ? 'Đ' : '', hk2: isEval ? 'Đ' : '', final: isEval ? 'Đ' : '' };
+
+                                        if (isEval) {
+                                            const finalEval = subjScore.final || subjScore.hk2 || subjScore.hk1 || 'Đ';
+                                            const isPass = finalEval === 'Đ';
+                                            return (
+                                                <tr key={subj.id} className="hover:bg-brand-cream/30 transition-colors">
+                                                    <td className="py-2.5 px-3 font-serif font-bold text-brand-cerulean flex items-center gap-2">
+                                                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: subj.color }} />
+                                                        {subj.name}
+                                                        <span className="text-[10px] text-gray-500 font-sans font-normal italic">(Đánh giá Đ/CĐ)</span>
+                                                    </td>
+                                                    <td className="py-2 px-3 text-center">
+                                                        <EditorialSelect
+                                                            value={subjScore.hk1 || 'Đ'}
+                                                            onChange={val => handleUpdateThcsScore(selectedThcsGrade, subj.id, 'hk1', val)}
+                                                            options={EVAL_PASS_FAIL_OPTIONS}
+                                                            size="sm"
+                                                            className="w-24 mx-auto"
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 px-3 text-center">
+                                                        <EditorialSelect
+                                                            value={subjScore.hk2 || 'Đ'}
+                                                            onChange={val => handleUpdateThcsScore(selectedThcsGrade, subj.id, 'hk2', val)}
+                                                            options={EVAL_PASS_FAIL_OPTIONS}
+                                                            size="sm"
+                                                            className="w-24 mx-auto"
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 px-3 text-center bg-emerald-50">
+                                                        <EditorialSelect
+                                                            value={finalEval}
+                                                            onChange={val => handleUpdateThcsScore(selectedThcsGrade, subj.id, 'final', val)}
+                                                            options={EVAL_PASS_FAIL_OPTIONS}
+                                                            size="sm"
+                                                            className="w-24 mx-auto font-bold"
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 px-3 text-center">
+                                                        <span className={`inline-block px-2.5 py-0.5 rounded text-[11px] font-bold ${
+                                                            isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                                                        }`}>
+                                                            {isPass ? 'Đạt' : 'Chưa đạt'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        }
+
                                         return (
                                             <tr key={subj.id} className="hover:bg-brand-cream/30 transition-colors">
                                                 <td className="py-2.5 px-3 font-serif font-bold text-brand-cerulean flex items-center gap-2">
@@ -886,7 +1025,7 @@ export const AcademicTranscriptsView = ({
                                                     />
                                                 </td>
                                                 <td className="py-2 px-3 text-gray-500 italic text-[11px] text-center">
-                                                    {subjScore.final >= 9.0 ? 'Xuất sắc' : subjScore.final >= 8.0 ? 'Giỏi' : subjScore.final >= 6.5 ? 'Khá' : '--'}
+                                                    {subjScore.final >= 9.0 ? 'Xuất sắc' : subjScore.final >= 8.0 ? 'Giỏi' : subjScore.final >= 6.5 ? 'Khá' : subjScore.final !== '' ? 'Đạt' : '--'}
                                                 </td>
                                             </tr>
                                         );
