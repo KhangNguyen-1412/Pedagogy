@@ -556,13 +556,13 @@ export const AcademicTranscriptsView = ({
                 >
                     <div className="flex items-center justify-between">
                         <span className="text-[11px] font-serif-title font-bold text-brand-cerulean uppercase tracking-wider">Cấp 2 • THCS</span>
-                        <School size={20} className="text-emerald-700" />
+                        <School size={20} className="text-brand-jasper" />
                     </div>
                     <h4 className="font-serif-title font-bold text-lg text-brand-cerulean mt-2 truncate">
                         {transcripts.secondarySchool.schoolName || 'Chưa nhập trường THCS'}
                     </h4>
                     <div className="mt-3 flex items-center justify-between text-xs font-body text-gray-600 pt-2 border-t border-brand-cerulean/10">
-                        <span>Đỗ Tuyển sinh 10: <strong className="text-emerald-700">{transcripts.secondarySchool.entranceExam10?.schoolAdmitted || 'Chưa cập nhật'}</strong></span>
+                        <span>Đỗ Tuyển sinh 10: <strong className="text-brand-cerulean">{transcripts.secondarySchool.entranceExam10?.schoolAdmitted || 'Chưa cập nhật'}</strong></span>
                         <span>ĐTB Lớp 9: <strong className="text-brand-cerulean">{transcripts.secondarySchool.grade9?.gpa || '--'}</strong></span>
                     </div>
                 </div>
@@ -576,14 +576,14 @@ export const AcademicTranscriptsView = ({
                 >
                     <div className="flex items-center justify-between">
                         <span className="text-[11px] font-serif-title font-bold text-brand-cerulean uppercase tracking-wider">Cấp 1 • Tiểu học</span>
-                        <Award size={20} className="text-amber-600" />
+                        <Award size={20} className="text-brand-jasper" />
                     </div>
                     <h4 className="font-serif-title font-bold text-lg text-brand-cerulean mt-2 truncate">
                         {transcripts.primarySchool.schoolName || 'Chưa nhập trường Tiểu học'}
                     </h4>
                     <div className="mt-3 flex items-center justify-between text-xs font-body text-gray-600 pt-2 border-t border-brand-cerulean/10">
                         <span>ĐTB Lớp 5: <strong className="text-brand-cerulean">{transcripts.primarySchool.grade5?.gpa || '--'} đ</strong></span>
-                        <span className="text-amber-800 font-bold">5 Năm Hoàn thành Xuất sắc</span>
+                        <span className="text-brand-jasper font-bold">5 Năm Hoàn thành Xuất sắc</span>
                     </div>
                 </div>
             </div>
@@ -970,7 +970,7 @@ export const AcademicTranscriptsView = ({
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-brand-cerulean/15">
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-700 text-white rounded font-sans uppercase">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 bg-brand-cerulean text-white rounded font-sans uppercase">
                                         Trường THCS
                                     </span>
                                     <span className="text-xs font-serif text-gray-500">Khóa tốt nghiệp: {transcripts.secondarySchool.graduationYear || '2023'}</span>
@@ -1036,7 +1036,7 @@ export const AcademicTranscriptsView = ({
                                         onClick={() => setSelectedThcsGrade(gr)}
                                         className={`px-4 py-1.5 text-xs font-serif-title font-bold rounded-xs transition-all ${
                                             selectedThcsGrade === gr
-                                                ? 'bg-emerald-700 text-white shadow-xs'
+                                                ? 'bg-brand-cerulean text-white shadow-xs'
                                                 : 'bg-brand-cream border border-brand-cerulean/25 text-brand-cerulean hover:bg-brand-cerulean/10'
                                         }`}
                                     >
@@ -1046,7 +1046,7 @@ export const AcademicTranscriptsView = ({
                             </div>
 
                             <div className="flex items-center gap-3 text-xs flex-wrap">
-                                <span>ĐTB Năm Lớp {selectedThcsGrade}: <strong className="text-emerald-700 text-sm">{currentThcsGradeData.gpa || '--'} đ</strong></span>
+                                <span>ĐTB Năm Lớp {selectedThcsGrade}: <strong className="text-brand-jasper text-sm">{currentThcsGradeData.gpa || '--'} đ</strong></span>
                                 <span>•</span>
                                 <span>Xếp loại: <strong className="text-brand-cerulean">{currentThcsGradeData.rank || 'Học sinh Giỏi'}</strong></span>
                                 {(currentThcsGradeData.awardHk1 || currentThcsGradeData.awardHk2 || currentThcsGradeData.awardYear || currentThcsGradeData.awards || currentThcsGradeData.awardHk1Img || currentThcsGradeData.awardHk2Img || currentThcsGradeData.awardYearImg) && (
@@ -1080,13 +1080,13 @@ export const AcademicTranscriptsView = ({
                                             {(currentThcsGradeData.awardYear || currentThcsGradeData.awards || currentThcsGradeData.awardYearImg) && (
                                                 <span 
                                                     onClick={() => currentThcsGradeData.awardYearImg && setPreviewModal({ isOpen: true, imageUrl: currentThcsGradeData.awardYearImg, title: `Giấy khen Cả năm Lớp ${selectedThcsGrade}: ${currentThcsGradeData.awardYear || currentThcsGradeData.awards || ''}` })}
-                                                    className={`inline-flex items-center gap-1 bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded-xs text-[11px] font-bold ${
-                                                        currentThcsGradeData.awardYearImg ? 'cursor-pointer hover:bg-emerald-200 hover:border-emerald-400' : ''
+                                                    className={`inline-flex items-center gap-1 bg-brand-jasper/10 text-brand-jasper border border-brand-jasper/30 px-2 py-0.5 rounded-xs text-[11px] font-bold ${
+                                                        currentThcsGradeData.awardYearImg ? 'cursor-pointer hover:bg-brand-jasper/20 hover:border-brand-jasper/50' : ''
                                                     }`} 
                                                     title={currentThcsGradeData.awardYearImg ? 'Click để xem ảnh Giấy khen' : 'Giấy khen Cả năm'}
                                                 >
-                                                    <Award size={11} className="text-emerald-700" /> Cả năm: {currentThcsGradeData.awardYear || currentThcsGradeData.awards || 'Đã đính kèm ảnh'}
-                                                    {currentThcsGradeData.awardYearImg && <ImageIcon size={11} className="text-emerald-800 ml-0.5" />}
+                                                    <Award size={11} className="text-brand-jasper" /> Cả năm: {currentThcsGradeData.awardYear || currentThcsGradeData.awards || 'Đã đính kèm ảnh'}
+                                                    {currentThcsGradeData.awardYearImg && <ImageIcon size={11} className="text-brand-jasper ml-0.5" />}
                                                 </span>
                                             )}
                                         </div>
@@ -1103,7 +1103,7 @@ export const AcademicTranscriptsView = ({
                                         <th className="py-2.5 px-3 font-bold">Môn học THCS</th>
                                         <th className="py-2.5 px-3 font-bold text-center w-28">Học kỳ 1 (HK1)</th>
                                         <th className="py-2.5 px-3 font-bold text-center w-28">Học kỳ 2 (HK2)</th>
-                                        <th className="py-2.5 px-3 font-bold text-center w-28 bg-emerald-50">Cả năm</th>
+                                        <th className="py-2.5 px-3 font-bold text-center w-28 bg-brand-cerulean/5">Cả năm</th>
                                         <th className="py-2.5 px-3 font-bold text-center">Đánh giá</th>
                                     </tr>
                                 </thead>
@@ -1140,7 +1140,7 @@ export const AcademicTranscriptsView = ({
                                                             className="w-24 mx-auto"
                                                         />
                                                     </td>
-                                                    <td className="py-2 px-3 text-center bg-emerald-50">
+                                                    <td className="py-2 px-3 text-center bg-brand-cerulean/5">
                                                         <EditorialSelect
                                                             value={finalEval}
                                                             onChange={val => handleUpdateThcsScore(selectedThcsGrade, subj.id, 'final', val)}
@@ -1175,7 +1175,7 @@ export const AcademicTranscriptsView = ({
                                                         value={subjScore.hk1 ?? ''}
                                                         onChange={e => handleUpdateThcsScore(selectedThcsGrade, subj.id, 'hk1', e.target.value)}
                                                         placeholder="--.-"
-                                                        className="w-16 text-center bg-white border border-brand-cerulean/25 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 font-bold text-xs py-1 rounded-xs shadow-xs"
+                                                        className="w-16 text-center bg-white border border-brand-cerulean/25 focus:border-brand-jasper focus:ring-1 focus:ring-brand-jasper font-bold text-xs py-1 rounded-xs shadow-xs"
                                                     />
                                                 </td>
                                                 <td className="py-2 px-3 text-center">
@@ -1187,10 +1187,10 @@ export const AcademicTranscriptsView = ({
                                                         value={subjScore.hk2 ?? ''}
                                                         onChange={e => handleUpdateThcsScore(selectedThcsGrade, subj.id, 'hk2', e.target.value)}
                                                         placeholder="--.-"
-                                                        className="w-16 text-center bg-white border border-brand-cerulean/25 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 font-bold text-xs py-1 rounded-xs shadow-xs"
+                                                        className="w-16 text-center bg-white border border-brand-cerulean/25 focus:border-brand-jasper focus:ring-1 focus:ring-brand-jasper font-bold text-xs py-1 rounded-xs shadow-xs"
                                                     />
                                                 </td>
-                                                <td className="py-2 px-3 text-center bg-emerald-50">
+                                                <td className="py-2 px-3 text-center bg-brand-cerulean/5">
                                                     <input
                                                         type="number"
                                                         step="0.1"
@@ -1199,7 +1199,7 @@ export const AcademicTranscriptsView = ({
                                                         value={subjScore.final ?? ''}
                                                         onChange={e => handleUpdateThcsScore(selectedThcsGrade, subj.id, 'final', e.target.value)}
                                                         placeholder="--.-"
-                                                        className="w-16 text-center bg-white border-2 border-emerald-600/50 focus:border-emerald-700 font-bold text-xs py-1 text-emerald-800 rounded-xs shadow-xs"
+                                                        className="w-16 text-center bg-white border-2 border-brand-cerulean/40 focus:border-brand-jasper font-bold text-xs py-1 text-brand-jasper rounded-xs shadow-xs"
                                                     />
                                                 </td>
                                                 <td className="py-2 px-3 text-gray-500 italic text-[11px] text-center">
@@ -1246,7 +1246,7 @@ export const AcademicTranscriptsView = ({
                             {/* Semester Awards (Giấy khen từng học kỳ có upload hình) */}
                             <div className="pt-3 border-t border-brand-cerulean/15 space-y-2.5">
                                 <div className="flex items-center gap-1.5">
-                                    <Award size={15} className="text-emerald-700" />
+                                    <Award size={15} className="text-brand-jasper" />
                                     <span className="font-serif-title font-bold text-xs text-brand-cerulean uppercase tracking-wider">
                                         Giấy khen & Danh hiệu Khen thưởng Lớp {selectedThcsGrade} (Từng học kỳ):
                                     </span>
@@ -1300,7 +1300,7 @@ export const AcademicTranscriptsView = ({
 
                                     <CertificateUploadCard
                                         label="Giấy khen Cả năm"
-                                        iconColor="text-emerald-700"
+                                        iconColor="text-brand-jasper"
                                         titleValue={currentThcsGradeData.awardYear || currentThcsGradeData.awards}
                                         imageValue={currentThcsGradeData.awardYearImg}
                                         placeholder="Vd: Giấy khen Học sinh Giỏi cả năm, Cháu ngoan Bác Hồ..."
@@ -1327,7 +1327,7 @@ export const AcademicTranscriptsView = ({
                                 <button
                                     type="button"
                                     onClick={() => handleSaveAll(transcripts)}
-                                    className="px-5 py-2 bg-emerald-700 text-white font-serif-title text-xs font-bold shadow-xs hover:bg-emerald-800 transition-all flex items-center gap-1.5"
+                                    className="px-5 py-2 bg-brand-cerulean text-white font-serif-title text-xs font-bold shadow-xs hover:bg-brand-jasper transition-all flex items-center gap-1.5"
                                 >
                                     <Save size={14} /> Lưu điểm Lớp {selectedThcsGrade}
                                 </button>
@@ -1484,7 +1484,7 @@ export const AcademicTranscriptsView = ({
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-brand-cerulean/15">
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-600 text-white rounded font-sans uppercase">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 bg-brand-cerulean text-white rounded font-sans uppercase">
                                         Trường Tiểu học
                                     </span>
                                     <span className="text-xs font-serif text-gray-500">Khóa hoàn thành: {transcripts.primarySchool.graduationYear || '2019'}</span>
@@ -1550,7 +1550,7 @@ export const AcademicTranscriptsView = ({
                                         onClick={() => setSelectedPrimaryGrade(gr)}
                                         className={`px-4 py-1.5 text-xs font-serif-title font-bold rounded-xs transition-all ${
                                             selectedPrimaryGrade === gr
-                                                ? 'bg-amber-600 text-white shadow-xs'
+                                                ? 'bg-brand-cerulean text-white shadow-xs'
                                                 : 'bg-brand-cream border border-brand-cerulean/25 text-brand-cerulean hover:bg-brand-cerulean/10'
                                         }`}
                                     >
@@ -1560,7 +1560,7 @@ export const AcademicTranscriptsView = ({
                             </div>
 
                             <div className="flex items-center gap-3 text-xs flex-wrap">
-                                <span>ĐTB Văn Hóa Lớp {selectedPrimaryGrade}: <strong className="text-amber-800 text-sm">{currentPrimaryGradeData.gpa || '--'} đ</strong></span>
+                                <span>ĐTB Văn Hóa Lớp {selectedPrimaryGrade}: <strong className="text-brand-jasper text-sm">{currentPrimaryGradeData.gpa || '--'} đ</strong></span>
                                 <span>•</span>
                                 <span>Đánh giá: <strong className="text-brand-cerulean">{currentPrimaryGradeData.result || 'Hoàn thành Xuất sắc'}</strong></span>
                                 {(currentPrimaryGradeData.awardHk1 || currentPrimaryGradeData.awardHk2 || currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards || currentPrimaryGradeData.awardHk1Img || currentPrimaryGradeData.awardHk2Img || currentPrimaryGradeData.awardYearImg) && (
@@ -1594,13 +1594,13 @@ export const AcademicTranscriptsView = ({
                                             {(currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards || currentPrimaryGradeData.awardYearImg) && (
                                                 <span 
                                                     onClick={() => currentPrimaryGradeData.awardYearImg && setPreviewModal({ isOpen: true, imageUrl: currentPrimaryGradeData.awardYearImg, title: `Giấy khen Cả năm Lớp ${selectedPrimaryGrade}: ${currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards || ''}` })}
-                                                    className={`inline-flex items-center gap-1 bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-xs text-[11px] font-bold ${
-                                                        currentPrimaryGradeData.awardYearImg ? 'cursor-pointer hover:bg-amber-200 hover:border-amber-400' : ''
+                                                    className={`inline-flex items-center gap-1 bg-brand-jasper/10 text-brand-jasper border border-brand-jasper/30 px-2 py-0.5 rounded-xs text-[11px] font-bold ${
+                                                        currentPrimaryGradeData.awardYearImg ? 'cursor-pointer hover:bg-brand-jasper/20 hover:border-brand-jasper/50' : ''
                                                     }`} 
                                                     title={currentPrimaryGradeData.awardYearImg ? 'Click để xem ảnh Giấy khen' : 'Giấy khen Cả năm'}
                                                 >
-                                                    <Award size={11} className="text-amber-700" /> Cả năm: {currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards || 'Đã đính kèm ảnh'}
-                                                    {currentPrimaryGradeData.awardYearImg && <ImageIcon size={11} className="text-amber-800 ml-0.5" />}
+                                                    <Award size={11} className="text-brand-jasper" /> Cả năm: {currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards || 'Đã đính kèm ảnh'}
+                                                    {currentPrimaryGradeData.awardYearImg && <ImageIcon size={11} className="text-brand-jasper ml-0.5" />}
                                                 </span>
                                             )}
                                         </div>
@@ -1617,7 +1617,7 @@ export const AcademicTranscriptsView = ({
                                         <th className="py-2.5 px-3 font-bold">Môn học Tiểu học</th>
                                         <th className="py-2.5 px-3 font-bold text-center w-28">Điểm Giữa kỳ / HK1</th>
                                         <th className="py-2.5 px-3 font-bold text-center w-28">Điểm Cuối kỳ / HK2</th>
-                                        <th className="py-2.5 px-3 font-bold text-center w-28 bg-amber-50">Cả năm</th>
+                                        <th className="py-2.5 px-3 font-bold text-center w-28 bg-brand-cerulean/5">Cả năm</th>
                                         <th className="py-2.5 px-3 font-bold text-center w-36">Mức đạt chuẩn</th>
                                         <th className="py-2.5 px-3 font-bold">Nhận xét của giáo viên</th>
                                     </tr>
@@ -1632,7 +1632,7 @@ export const AcademicTranscriptsView = ({
                                                     <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: subj.color }} />
                                                     {subj.name}
                                                     {isSplit5 && (
-                                                        <span className="text-[10px] text-amber-700 font-sans font-normal italic">(5đ / HK)</span>
+                                                        <span className="text-[10px] text-gray-500 font-sans font-normal italic">(5đ / HK)</span>
                                                     )}
                                                 </td>
 
@@ -1647,7 +1647,7 @@ export const AcademicTranscriptsView = ({
                                                                 value={subjScore.hk1 ?? ''}
                                                                 onChange={e => handleUpdatePrimaryScore(selectedPrimaryGrade, subj.id, 'hk1', e.target.value)}
                                                                 placeholder={isSplit5 ? "/5" : "--.-"}
-                                                                className="w-16 text-center bg-white border border-brand-cerulean/25 focus:border-amber-600 focus:ring-1 focus:ring-amber-600 font-bold text-xs py-1 rounded-xs shadow-xs"
+                                                                className="w-16 text-center bg-white border border-brand-cerulean/25 focus:border-brand-jasper focus:ring-1 focus:ring-brand-jasper font-bold text-xs py-1 rounded-xs shadow-xs"
                                                             />
                                                         </td>
                                                         <td className="py-2 px-3 text-center">
@@ -1659,10 +1659,10 @@ export const AcademicTranscriptsView = ({
                                                                 value={subjScore.hk2 ?? ''}
                                                                 onChange={e => handleUpdatePrimaryScore(selectedPrimaryGrade, subj.id, 'hk2', e.target.value)}
                                                                 placeholder={isSplit5 ? "/5" : "--.-"}
-                                                                className="w-16 text-center bg-white border border-brand-cerulean/25 focus:border-amber-600 focus:ring-1 focus:ring-amber-600 font-bold text-xs py-1 rounded-xs shadow-xs"
+                                                                className="w-16 text-center bg-white border border-brand-cerulean/25 focus:border-brand-jasper focus:ring-1 focus:ring-brand-jasper font-bold text-xs py-1 rounded-xs shadow-xs"
                                                             />
                                                         </td>
-                                                        <td className="py-2 px-3 text-center bg-amber-50">
+                                                        <td className="py-2 px-3 text-center bg-brand-cerulean/5">
                                                             <input
                                                                 type="number"
                                                                 step="0.5"
@@ -1671,7 +1671,7 @@ export const AcademicTranscriptsView = ({
                                                                 value={subjScore.final ?? ''}
                                                                 onChange={e => handleUpdatePrimaryScore(selectedPrimaryGrade, subj.id, 'final', e.target.value)}
                                                                 placeholder="--.-"
-                                                                className="w-16 text-center bg-white border-2 border-amber-600/50 focus:border-amber-700 font-bold text-xs py-1 text-amber-900 rounded-xs shadow-xs"
+                                                                className="w-16 text-center bg-white border-2 border-brand-cerulean/40 focus:border-brand-jasper font-bold text-xs py-1 text-brand-jasper rounded-xs shadow-xs"
                                                             />
                                                         </td>
                                                     </>
@@ -1728,7 +1728,7 @@ export const AcademicTranscriptsView = ({
                             {/* Semester Awards (Giấy khen từng học kỳ có upload hình) */}
                             <div className="pt-3 border-t border-brand-cerulean/15 space-y-2.5">
                                 <div className="flex items-center gap-1.5">
-                                    <Award size={15} className="text-amber-600" />
+                                    <Award size={15} className="text-brand-jasper" />
                                     <span className="font-serif-title font-bold text-xs text-brand-cerulean uppercase tracking-wider">
                                         Giấy khen & Danh hiệu Khen thưởng Lớp {selectedPrimaryGrade} (Từng học kỳ):
                                     </span>
@@ -1782,7 +1782,7 @@ export const AcademicTranscriptsView = ({
 
                                     <CertificateUploadCard
                                         label="Giấy khen Cả năm"
-                                        iconColor="text-amber-700"
+                                        iconColor="text-brand-jasper"
                                         titleValue={currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards}
                                         imageValue={currentPrimaryGradeData.awardYearImg}
                                         placeholder="Vd: Khen thưởng Học sinh Xuất sắc, Vở sạch chữ đẹp..."
@@ -1809,7 +1809,7 @@ export const AcademicTranscriptsView = ({
                                 <button
                                     type="button"
                                     onClick={() => handleSaveAll(transcripts)}
-                                    className="px-5 py-2 bg-amber-600 text-white font-serif-title text-xs font-bold shadow-xs hover:bg-amber-700 transition-all flex items-center gap-1.5"
+                                    className="px-5 py-2 bg-brand-cerulean text-white font-serif-title text-xs font-bold shadow-xs hover:bg-brand-jasper transition-all flex items-center gap-1.5"
                                 >
                                     <Save size={14} /> Lưu điểm Lớp {selectedPrimaryGrade}
                                 </button>
