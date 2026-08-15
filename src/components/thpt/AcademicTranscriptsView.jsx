@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     BookMarked, Award, GraduationCap, School,
     Save, Edit2, CheckCircle2, ChevronRight, Sparkles, Building2,
-    Calendar, TrendingUp, HelpCircle, Check, Plus
+    Calendar, TrendingUp, HelpCircle, Check, Plus,
+    Image as ImageIcon, Upload, Eye, Trash2, X, Maximize2
 } from 'lucide-react';
 import { EditorialSelect } from './EditorialSelect';
 import { OFFICIAL_THPT_SUBJECTS } from './ThptPersonalGoalView';
@@ -77,6 +78,116 @@ export const PRIMARY_SUBJECT_STATUS_OPTIONS = [
 ];
 
 /**
+ * Component Tải lên & Xem trước Giấy khen từng học kỳ
+ */
+const CertificateUploadCard = ({
+    label,
+    iconColor = "text-amber-600",
+    titleValue,
+    imageValue,
+    onTitleChange,
+    onImageChange,
+    onPreviewImage,
+    placeholder = "Nhập tên giấy khen..."
+}) => {
+    const handleFileSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            alert('Vui lòng chọn file hình ảnh (PNG, JPG, JPEG, WEBP)');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            onImageChange(event.target.result);
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    };
+
+    return (
+        <div className="p-3.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-2.5 shadow-xs transition-all hover:border-brand-cerulean/40 flex flex-col justify-between">
+            <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                    <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1.5 text-xs">
+                        <Award size={13} className={iconColor} />
+                        {label}
+                    </span>
+                    {imageValue && (
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded font-sans flex items-center gap-1">
+                            <ImageIcon size={10} /> Đã có ảnh
+                        </span>
+                    )}
+                </div>
+
+                <input
+                    type="text"
+                    value={titleValue || ''}
+                    onChange={e => onTitleChange(e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-brand-jasper focus:bg-white"
+                />
+            </div>
+
+            {/* Certificate Image Area */}
+            {imageValue ? (
+                <div className="relative group rounded-xs border border-brand-cerulean/25 overflow-hidden bg-stone-900/5 h-28 flex items-center justify-center">
+                    <img 
+                        src={imageValue} 
+                        alt={titleValue || label} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                        onClick={() => onPreviewImage(imageValue, `${label}: ${titleValue || 'Giấy khen'}`)}
+                    />
+                    <div className="absolute inset-0 bg-brand-cerulean/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
+                        <button
+                            type="button"
+                            onClick={() => onPreviewImage(imageValue, `${label}: ${titleValue || 'Giấy khen'}`)}
+                            className="p-1.5 bg-white text-brand-cerulean rounded-xs hover:bg-brand-jasper hover:text-white transition-colors shadow-xs"
+                            title="Xem phóng to ảnh"
+                        >
+                            <Eye size={14} />
+                        </button>
+                        <label className="p-1.5 bg-white text-brand-cerulean rounded-xs hover:bg-brand-jasper hover:text-white transition-colors cursor-pointer shadow-xs" title="Đổi ảnh khác">
+                            <Upload size={14} />
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={handleFileSelect} 
+                                className="hidden" 
+                            />
+                        </label>
+                        <button
+                            type="button"
+                            onClick={() => onImageChange('')}
+                            className="p-1.5 bg-white text-rose-600 rounded-xs hover:bg-rose-600 hover:text-white transition-colors shadow-xs"
+                            title="Xóa ảnh"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <label className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-brand-cerulean/25 rounded-xs hover:border-brand-jasper hover:bg-brand-cream/50 transition-all cursor-pointer group text-center h-28 bg-brand-cream/20">
+                    <Upload size={18} className="text-brand-cerulean/60 group-hover:text-brand-jasper transition-colors mb-1" />
+                    <span className="text-xs font-serif-title font-bold text-brand-cerulean group-hover:text-brand-jasper transition-colors">
+                        Tải ảnh Giấy khen
+                    </span>
+                    <span className="text-[10px] text-gray-500 font-sans mt-0.5">
+                        Click để chọn file ảnh
+                    </span>
+                    <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleFileSelect} 
+                        className="hidden" 
+                    />
+                </label>
+            )}
+        </div>
+    );
+};
+
+/**
  * AcademicTranscriptsView - Quản lý Học bạ 3 Cấp (Tiểu học - THCS - THPT)
  * Đầy đủ bảng điểm chi tiết từng môn, từng học kỳ cho tất cả các cấp học
  */
@@ -132,18 +243,18 @@ export const AcademicTranscriptsView = ({
             highSchool: {
                 schoolName: profile?.school || '',
                 graduationYear: profile?.officialExamYear || '2026',
-                grade10: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-                grade11: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-                grade12: { scores: {}, gpa: '', rank: 'Học sinh Xuất sắc', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+                grade10: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+                grade11: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+                grade12: { scores: {}, gpa: '', rank: 'Học sinh Xuất sắc', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
                 ...(profile?.transcripts?.highSchool || {})
             },
             secondarySchool: {
                 schoolName: '',
                 graduationYear: '',
-                grade6: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-                grade7: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-                grade8: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-                grade9: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+                grade6: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+                grade7: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+                grade8: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+                grade9: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
                 entranceExam10: {
                     schoolAdmitted: profile?.school || '',
                     mathScore: '',
@@ -157,11 +268,11 @@ export const AcademicTranscriptsView = ({
             primarySchool: {
                 schoolName: '',
                 graduationYear: '',
-                grade1: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-                grade2: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-                grade3: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-                grade4: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-                grade5: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+                grade1: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+                grade2: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+                grade3: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+                grade4: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+                grade5: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
                 ...(profile?.transcripts?.primarySchool || {})
             }
         };
@@ -171,6 +282,7 @@ export const AcademicTranscriptsView = ({
     const [isEditingHighSchoolInfo, setIsEditingHighSchoolInfo] = useState(false);
     const [isEditingSecondary, setIsEditingSecondary] = useState(false);
     const [isEditingPrimary, setIsEditingPrimary] = useState(false);
+    const [previewModal, setPreviewModal] = useState({ isOpen: false, imageUrl: '', title: '' });
 
     useEffect(() => {
         setTranscripts(initialTranscripts);
@@ -364,9 +476,9 @@ export const AcademicTranscriptsView = ({
     };
 
     // Active Grade Data for each level
-    const currentThptGradeData = transcripts.highSchool[`grade${selectedThptGrade}`] || { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' };
-    const currentThcsGradeData = transcripts.secondarySchool[`grade${selectedThcsGrade}`] || { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' };
-    const currentPrimaryGradeData = transcripts.primarySchool[`grade${selectedPrimaryGrade}`] || { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' };
+    const currentThptGradeData = transcripts.highSchool[`grade${selectedThptGrade}`] || { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' };
+    const currentThcsGradeData = transcripts.secondarySchool[`grade${selectedThcsGrade}`] || { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' };
+    const currentPrimaryGradeData = transcripts.primarySchool[`grade${selectedPrimaryGrade}`] || { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' };
 
     return (
         <div className="max-w-5xl mx-auto space-y-8 animate-fade-in-up">
@@ -546,23 +658,44 @@ export const AcademicTranscriptsView = ({
                                 <span>ĐTB Năm Lớp {selectedThptGrade}: <strong className="text-brand-jasper text-sm">{currentThptGradeData.gpa || '--'} đ</strong></span>
                                 <span>•</span>
                                 <span>Xếp loại: <strong className="text-brand-cerulean">{currentThptGradeData.rank || 'Học sinh Giỏi'}</strong></span>
-                                {(currentThptGradeData.awardHk1 || currentThptGradeData.awardHk2 || currentThptGradeData.awardYear || currentThptGradeData.awards) && (
+                                {(currentThptGradeData.awardHk1 || currentThptGradeData.awardHk2 || currentThptGradeData.awardYear || currentThptGradeData.awards || currentThptGradeData.awardHk1Img || currentThptGradeData.awardHk2Img || currentThptGradeData.awardYearImg) && (
                                     <>
                                         <span>•</span>
                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                            {currentThptGradeData.awardHk1 && (
-                                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium" title="Giấy khen HK1">
-                                                    <Award size={11} className="text-amber-600" /> HK1: {currentThptGradeData.awardHk1}
+                                            {(currentThptGradeData.awardHk1 || currentThptGradeData.awardHk1Img) && (
+                                                <span 
+                                                    onClick={() => currentThptGradeData.awardHk1Img && setPreviewModal({ isOpen: true, imageUrl: currentThptGradeData.awardHk1Img, title: `Giấy khen HK1 Lớp ${selectedThptGrade}: ${currentThptGradeData.awardHk1 || ''}` })}
+                                                    className={`inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium ${
+                                                        currentThptGradeData.awardHk1Img ? 'cursor-pointer hover:bg-amber-100 hover:border-amber-400' : ''
+                                                    }`} 
+                                                    title={currentThptGradeData.awardHk1Img ? 'Click để xem ảnh Giấy khen' : 'Giấy khen HK1'}
+                                                >
+                                                    <Award size={11} className="text-amber-600" /> HK1: {currentThptGradeData.awardHk1 || 'Đã đính kèm ảnh'}
+                                                    {currentThptGradeData.awardHk1Img && <ImageIcon size={11} className="text-amber-700 ml-0.5" />}
                                                 </span>
                                             )}
-                                            {currentThptGradeData.awardHk2 && (
-                                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium" title="Giấy khen HK2">
-                                                    <Award size={11} className="text-amber-600" /> HK2: {currentThptGradeData.awardHk2}
+                                            {(currentThptGradeData.awardHk2 || currentThptGradeData.awardHk2Img) && (
+                                                <span 
+                                                    onClick={() => currentThptGradeData.awardHk2Img && setPreviewModal({ isOpen: true, imageUrl: currentThptGradeData.awardHk2Img, title: `Giấy khen HK2 Lớp ${selectedThptGrade}: ${currentThptGradeData.awardHk2 || ''}` })}
+                                                    className={`inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium ${
+                                                        currentThptGradeData.awardHk2Img ? 'cursor-pointer hover:bg-amber-100 hover:border-amber-400' : ''
+                                                    }`} 
+                                                    title={currentThptGradeData.awardHk2Img ? 'Click để xem ảnh Giấy khen' : 'Giấy khen HK2'}
+                                                >
+                                                    <Award size={11} className="text-amber-600" /> HK2: {currentThptGradeData.awardHk2 || 'Đã đính kèm ảnh'}
+                                                    {currentThptGradeData.awardHk2Img && <ImageIcon size={11} className="text-amber-700 ml-0.5" />}
                                                 </span>
                                             )}
-                                            {(currentThptGradeData.awardYear || currentThptGradeData.awards) && (
-                                                <span className="inline-flex items-center gap-1 bg-brand-jasper/10 text-brand-jasper border border-brand-jasper/30 px-2 py-0.5 rounded-xs text-[11px] font-bold" title="Giấy khen Cả năm">
-                                                    <Award size={11} className="text-brand-jasper" /> Cả năm: {currentThptGradeData.awardYear || currentThptGradeData.awards}
+                                            {(currentThptGradeData.awardYear || currentThptGradeData.awards || currentThptGradeData.awardYearImg) && (
+                                                <span 
+                                                    onClick={() => currentThptGradeData.awardYearImg && setPreviewModal({ isOpen: true, imageUrl: currentThptGradeData.awardYearImg, title: `Giấy khen Cả năm Lớp ${selectedThptGrade}: ${currentThptGradeData.awardYear || currentThptGradeData.awards || ''}` })}
+                                                    className={`inline-flex items-center gap-1 bg-brand-jasper/10 text-brand-jasper border border-brand-jasper/30 px-2 py-0.5 rounded-xs text-[11px] font-bold ${
+                                                        currentThptGradeData.awardYearImg ? 'cursor-pointer hover:bg-brand-jasper/20 hover:border-brand-jasper/50' : ''
+                                                    }`} 
+                                                    title={currentThptGradeData.awardYearImg ? 'Click để xem ảnh Giấy khen' : 'Giấy khen Cả năm'}
+                                                >
+                                                    <Award size={11} className="text-brand-jasper" /> Cả năm: {currentThptGradeData.awardYear || currentThptGradeData.awards || 'Đã đính kèm ảnh'}
+                                                    {currentThptGradeData.awardYearImg && <ImageIcon size={11} className="text-brand-jasper ml-0.5" />}
                                                 </span>
                                             )}
                                         </div>
@@ -695,11 +828,11 @@ export const AcademicTranscriptsView = ({
                                     label="Xếp loại Học lực:"
                                     value={currentThptGradeData.rank || 'Học sinh Giỏi'}
                                     onChange={val => setTranscripts(prev => ({
-                                        ...prev,
-                                        highSchool: {
-                                            ...prev.highSchool,
-                                            [`grade${selectedThptGrade}`]: { ...currentThptGradeData, rank: val }
-                                        }
+                                         ...prev,
+                                         highSchool: {
+                                             ...prev.highSchool,
+                                             [`grade${selectedThptGrade}`]: { ...currentThptGradeData, rank: val }
+                                         }
                                     }))}
                                     options={TRANSCRIPT_RANK_OPTIONS}
                                     size="sm"
@@ -708,18 +841,18 @@ export const AcademicTranscriptsView = ({
                                     label="Hạnh kiểm / Rèn luyện:"
                                     value={currentThptGradeData.conduct || 'Tốt'}
                                     onChange={val => setTranscripts(prev => ({
-                                        ...prev,
-                                        highSchool: {
-                                            ...prev.highSchool,
-                                            [`grade${selectedThptGrade}`]: { ...currentThptGradeData, conduct: val }
-                                        }
+                                         ...prev,
+                                         highSchool: {
+                                             ...prev.highSchool,
+                                             [`grade${selectedThptGrade}`]: { ...currentThptGradeData, conduct: val }
+                                         }
                                     }))}
                                     options={TRANSCRIPT_CONDUCT_OPTIONS}
                                     size="sm"
                                 />
                             </div>
 
-                            {/* Semester Awards (Giấy khen từng học kỳ) */}
+                            {/* Semester Awards (Giấy khen từng học kỳ có upload hình) */}
                             <div className="pt-3 border-t border-brand-cerulean/15 space-y-2.5">
                                 <div className="flex items-center gap-1.5">
                                     <Award size={15} className="text-brand-jasper" />
@@ -727,67 +860,75 @@ export const AcademicTranscriptsView = ({
                                         Giấy khen & Danh hiệu Khen thưởng Lớp {selectedThptGrade} (Từng học kỳ):
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
-                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
-                                            <Award size={12} className="text-amber-600" />
-                                            Giấy khen Học kỳ 1 (HK1):
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={currentThptGradeData.awardHk1 || ''}
-                                            onChange={e => setTranscripts(prev => ({
-                                                ...prev,
-                                                highSchool: {
-                                                    ...prev.highSchool,
-                                                    [`grade${selectedThptGrade}`]: { ...currentThptGradeData, awardHk1: e.target.value }
-                                                }
-                                            }))}
-                                            placeholder="Vd: Giấy khen Học sinh Giỏi HK1..."
-                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-brand-jasper focus:bg-white"
-                                        />
-                                    </div>
-                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
-                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
-                                            <Award size={12} className="text-amber-600" />
-                                            Giấy khen Học kỳ 2 (HK2):
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={currentThptGradeData.awardHk2 || ''}
-                                            onChange={e => setTranscripts(prev => ({
-                                                ...prev,
-                                                highSchool: {
-                                                    ...prev.highSchool,
-                                                    [`grade${selectedThptGrade}`]: { ...currentThptGradeData, awardHk2: e.target.value }
-                                                }
-                                            }))}
-                                            placeholder="Vd: Giấy khen Học sinh Giỏi HK2..."
-                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-brand-jasper focus:bg-white"
-                                        />
-                                    </div>
-                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
-                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
-                                            <Award size={12} className="text-brand-jasper" />
-                                            Giấy khen Cả năm:
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={currentThptGradeData.awardYear || currentThptGradeData.awards || ''}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setTranscripts(prev => ({
-                                                    ...prev,
-                                                    highSchool: {
-                                                        ...prev.highSchool,
-                                                        [`grade${selectedThptGrade}`]: { ...currentThptGradeData, awardYear: val, awards: val }
-                                                    }
-                                                }));
-                                            }}
-                                            placeholder="Vd: Học sinh Xuất sắc cả năm..."
-                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-brand-jasper focus:bg-white"
-                                        />
-                                    </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <CertificateUploadCard
+                                        label="Giấy khen Học kỳ 1 (HK1)"
+                                        iconColor="text-amber-600"
+                                        titleValue={currentThptGradeData.awardHk1}
+                                        imageValue={currentThptGradeData.awardHk1Img}
+                                        placeholder="Vd: Giấy khen Học sinh Giỏi HK1..."
+                                        onTitleChange={val => setTranscripts(prev => ({
+                                            ...prev,
+                                            highSchool: {
+                                                ...prev.highSchool,
+                                                [`grade${selectedThptGrade}`]: { ...currentThptGradeData, awardHk1: val }
+                                            }
+                                        }))}
+                                        onImageChange={img => setTranscripts(prev => ({
+                                            ...prev,
+                                            highSchool: {
+                                                ...prev.highSchool,
+                                                [`grade${selectedThptGrade}`]: { ...currentThptGradeData, awardHk1Img: img }
+                                            }
+                                        }))}
+                                        onPreviewImage={(img, title) => setPreviewModal({ isOpen: true, imageUrl: img, title })}
+                                    />
+
+                                    <CertificateUploadCard
+                                        label="Giấy khen Học kỳ 2 (HK2)"
+                                        iconColor="text-amber-600"
+                                        titleValue={currentThptGradeData.awardHk2}
+                                        imageValue={currentThptGradeData.awardHk2Img}
+                                        placeholder="Vd: Giấy khen Học sinh Giỏi HK2..."
+                                        onTitleChange={val => setTranscripts(prev => ({
+                                            ...prev,
+                                            highSchool: {
+                                                ...prev.highSchool,
+                                                [`grade${selectedThptGrade}`]: { ...currentThptGradeData, awardHk2: val }
+                                            }
+                                        }))}
+                                        onImageChange={img => setTranscripts(prev => ({
+                                            ...prev,
+                                            highSchool: {
+                                                ...prev.highSchool,
+                                                [`grade${selectedThptGrade}`]: { ...currentThptGradeData, awardHk2Img: img }
+                                            }
+                                        }))}
+                                        onPreviewImage={(img, title) => setPreviewModal({ isOpen: true, imageUrl: img, title })}
+                                    />
+
+                                    <CertificateUploadCard
+                                        label="Giấy khen Cả năm"
+                                        iconColor="text-brand-jasper"
+                                        titleValue={currentThptGradeData.awardYear || currentThptGradeData.awards}
+                                        imageValue={currentThptGradeData.awardYearImg}
+                                        placeholder="Vd: Học sinh Xuất sắc cả năm..."
+                                        onTitleChange={val => setTranscripts(prev => ({
+                                            ...prev,
+                                            highSchool: {
+                                                ...prev.highSchool,
+                                                [`grade${selectedThptGrade}`]: { ...currentThptGradeData, awardYear: val, awards: val }
+                                            }
+                                        }))}
+                                        onImageChange={img => setTranscripts(prev => ({
+                                            ...prev,
+                                            highSchool: {
+                                                ...prev.highSchool,
+                                                [`grade${selectedThptGrade}`]: { ...currentThptGradeData, awardYearImg: img }
+                                            }
+                                        }))}
+                                        onPreviewImage={(img, title) => setPreviewModal({ isOpen: true, imageUrl: img, title })}
+                                    />
                                 </div>
                             </div>
 
@@ -892,23 +1033,44 @@ export const AcademicTranscriptsView = ({
                                 <span>ĐTB Năm Lớp {selectedThcsGrade}: <strong className="text-emerald-700 text-sm">{currentThcsGradeData.gpa || '--'} đ</strong></span>
                                 <span>•</span>
                                 <span>Xếp loại: <strong className="text-brand-cerulean">{currentThcsGradeData.rank || 'Học sinh Giỏi'}</strong></span>
-                                {(currentThcsGradeData.awardHk1 || currentThcsGradeData.awardHk2 || currentThcsGradeData.awardYear || currentThcsGradeData.awards) && (
+                                {(currentThcsGradeData.awardHk1 || currentThcsGradeData.awardHk2 || currentThcsGradeData.awardYear || currentThcsGradeData.awards || currentThcsGradeData.awardHk1Img || currentThcsGradeData.awardHk2Img || currentThcsGradeData.awardYearImg) && (
                                     <>
                                         <span>•</span>
                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                            {currentThcsGradeData.awardHk1 && (
-                                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium" title="Giấy khen HK1">
-                                                    <Award size={11} className="text-amber-600" /> HK1: {currentThcsGradeData.awardHk1}
+                                            {(currentThcsGradeData.awardHk1 || currentThcsGradeData.awardHk1Img) && (
+                                                <span 
+                                                    onClick={() => currentThcsGradeData.awardHk1Img && setPreviewModal({ isOpen: true, imageUrl: currentThcsGradeData.awardHk1Img, title: `Giấy khen HK1 Lớp ${selectedThcsGrade}: ${currentThcsGradeData.awardHk1 || ''}` })}
+                                                    className={`inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium ${
+                                                        currentThcsGradeData.awardHk1Img ? 'cursor-pointer hover:bg-amber-100 hover:border-amber-400' : ''
+                                                    }`} 
+                                                    title={currentThcsGradeData.awardHk1Img ? 'Click để xem ảnh Giấy khen' : 'Giấy khen HK1'}
+                                                >
+                                                    <Award size={11} className="text-amber-600" /> HK1: {currentThcsGradeData.awardHk1 || 'Đã đính kèm ảnh'}
+                                                    {currentThcsGradeData.awardHk1Img && <ImageIcon size={11} className="text-amber-700 ml-0.5" />}
                                                 </span>
                                             )}
-                                            {currentThcsGradeData.awardHk2 && (
-                                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium" title="Giấy khen HK2">
-                                                    <Award size={11} className="text-amber-600" /> HK2: {currentThcsGradeData.awardHk2}
+                                            {(currentThcsGradeData.awardHk2 || currentThcsGradeData.awardHk2Img) && (
+                                                <span 
+                                                    onClick={() => currentThcsGradeData.awardHk2Img && setPreviewModal({ isOpen: true, imageUrl: currentThcsGradeData.awardHk2Img, title: `Giấy khen HK2 Lớp ${selectedThcsGrade}: ${currentThcsGradeData.awardHk2 || ''}` })}
+                                                    className={`inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium ${
+                                                        currentThcsGradeData.awardHk2Img ? 'cursor-pointer hover:bg-amber-100 hover:border-amber-400' : ''
+                                                    }`} 
+                                                    title={currentThcsGradeData.awardHk2Img ? 'Click để xem ảnh Giấy khen' : 'Giấy khen HK2'}
+                                                >
+                                                    <Award size={11} className="text-amber-600" /> HK2: {currentThcsGradeData.awardHk2 || 'Đã đính kèm ảnh'}
+                                                    {currentThcsGradeData.awardHk2Img && <ImageIcon size={11} className="text-amber-700 ml-0.5" />}
                                                 </span>
                                             )}
-                                            {(currentThcsGradeData.awardYear || currentThcsGradeData.awards) && (
-                                                <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded-xs text-[11px] font-bold" title="Giấy khen Cả năm">
-                                                    <Award size={11} className="text-emerald-700" /> Cả năm: {currentThcsGradeData.awardYear || currentThcsGradeData.awards}
+                                            {(currentThcsGradeData.awardYear || currentThcsGradeData.awards || currentThcsGradeData.awardYearImg) && (
+                                                <span 
+                                                    onClick={() => currentThcsGradeData.awardYearImg && setPreviewModal({ isOpen: true, imageUrl: currentThcsGradeData.awardYearImg, title: `Giấy khen Cả năm Lớp ${selectedThcsGrade}: ${currentThcsGradeData.awardYear || currentThcsGradeData.awards || ''}` })}
+                                                    className={`inline-flex items-center gap-1 bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded-xs text-[11px] font-bold ${
+                                                        currentThcsGradeData.awardYearImg ? 'cursor-pointer hover:bg-emerald-200 hover:border-emerald-400' : ''
+                                                    }`} 
+                                                    title={currentThcsGradeData.awardYearImg ? 'Click để xem ảnh Giấy khen' : 'Giấy khen Cả năm'}
+                                                >
+                                                    <Award size={11} className="text-emerald-700" /> Cả năm: {currentThcsGradeData.awardYear || currentThcsGradeData.awards || 'Đã đính kèm ảnh'}
+                                                    {currentThcsGradeData.awardYearImg && <ImageIcon size={11} className="text-emerald-800 ml-0.5" />}
                                                 </span>
                                             )}
                                         </div>
@@ -1065,7 +1227,7 @@ export const AcademicTranscriptsView = ({
                                 />
                             </div>
 
-                            {/* Semester Awards (Giấy khen từng học kỳ) */}
+                            {/* Semester Awards (Giấy khen từng học kỳ có upload hình) */}
                             <div className="pt-3 border-t border-brand-cerulean/15 space-y-2.5">
                                 <div className="flex items-center gap-1.5">
                                     <Award size={15} className="text-emerald-700" />
@@ -1073,67 +1235,75 @@ export const AcademicTranscriptsView = ({
                                         Giấy khen & Danh hiệu Khen thưởng Lớp {selectedThcsGrade} (Từng học kỳ):
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
-                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
-                                            <Award size={12} className="text-amber-600" />
-                                            Giấy khen Học kỳ 1 (HK1):
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={currentThcsGradeData.awardHk1 || ''}
-                                            onChange={e => setTranscripts(prev => ({
-                                                ...prev,
-                                                secondarySchool: {
-                                                    ...prev.secondarySchool,
-                                                    [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, awardHk1: e.target.value }
-                                                }
-                                            }))}
-                                            placeholder="Vd: Giấy khen Học sinh Giỏi HK1..."
-                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-emerald-600 focus:bg-white"
-                                        />
-                                    </div>
-                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
-                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
-                                            <Award size={12} className="text-amber-600" />
-                                            Giấy khen Học kỳ 2 (HK2):
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={currentThcsGradeData.awardHk2 || ''}
-                                            onChange={e => setTranscripts(prev => ({
-                                                ...prev,
-                                                secondarySchool: {
-                                                    ...prev.secondarySchool,
-                                                    [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, awardHk2: e.target.value }
-                                                }
-                                            }))}
-                                            placeholder="Vd: Giấy khen Học sinh Giỏi HK2..."
-                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-emerald-600 focus:bg-white"
-                                        />
-                                    </div>
-                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
-                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
-                                            <Award size={12} className="text-emerald-700" />
-                                            Giấy khen Cả năm:
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={currentThcsGradeData.awardYear || currentThcsGradeData.awards || ''}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setTranscripts(prev => ({
-                                                    ...prev,
-                                                    secondarySchool: {
-                                                        ...prev.secondarySchool,
-                                                        [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, awardYear: val, awards: val }
-                                                    }
-                                                }));
-                                            }}
-                                            placeholder="Vd: Giấy khen Học sinh Giỏi cả năm, Cháu ngoan Bác Hồ..."
-                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-emerald-600 focus:bg-white"
-                                        />
-                                    </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <CertificateUploadCard
+                                        label="Giấy khen Học kỳ 1 (HK1)"
+                                        iconColor="text-amber-600"
+                                        titleValue={currentThcsGradeData.awardHk1}
+                                        imageValue={currentThcsGradeData.awardHk1Img}
+                                        placeholder="Vd: Giấy khen Học sinh Giỏi HK1..."
+                                        onTitleChange={val => setTranscripts(prev => ({
+                                            ...prev,
+                                            secondarySchool: {
+                                                ...prev.secondarySchool,
+                                                [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, awardHk1: val }
+                                            }
+                                        }))}
+                                        onImageChange={img => setTranscripts(prev => ({
+                                            ...prev,
+                                            secondarySchool: {
+                                                ...prev.secondarySchool,
+                                                [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, awardHk1Img: img }
+                                            }
+                                        }))}
+                                        onPreviewImage={(img, title) => setPreviewModal({ isOpen: true, imageUrl: img, title })}
+                                    />
+
+                                    <CertificateUploadCard
+                                        label="Giấy khen Học kỳ 2 (HK2)"
+                                        iconColor="text-amber-600"
+                                        titleValue={currentThcsGradeData.awardHk2}
+                                        imageValue={currentThcsGradeData.awardHk2Img}
+                                        placeholder="Vd: Giấy khen Học sinh Giỏi HK2..."
+                                        onTitleChange={val => setTranscripts(prev => ({
+                                            ...prev,
+                                            secondarySchool: {
+                                                ...prev.secondarySchool,
+                                                [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, awardHk2: val }
+                                            }
+                                        }))}
+                                        onImageChange={img => setTranscripts(prev => ({
+                                            ...prev,
+                                            secondarySchool: {
+                                                ...prev.secondarySchool,
+                                                [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, awardHk2Img: img }
+                                            }
+                                        }))}
+                                        onPreviewImage={(img, title) => setPreviewModal({ isOpen: true, imageUrl: img, title })}
+                                    />
+
+                                    <CertificateUploadCard
+                                        label="Giấy khen Cả năm"
+                                        iconColor="text-emerald-700"
+                                        titleValue={currentThcsGradeData.awardYear || currentThcsGradeData.awards}
+                                        imageValue={currentThcsGradeData.awardYearImg}
+                                        placeholder="Vd: Giấy khen Học sinh Giỏi cả năm, Cháu ngoan Bác Hồ..."
+                                        onTitleChange={val => setTranscripts(prev => ({
+                                            ...prev,
+                                            secondarySchool: {
+                                                ...prev.secondarySchool,
+                                                [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, awardYear: val, awards: val }
+                                            }
+                                        }))}
+                                        onImageChange={img => setTranscripts(prev => ({
+                                            ...prev,
+                                            secondarySchool: {
+                                                ...prev.secondarySchool,
+                                                [`grade${selectedThcsGrade}`]: { ...currentThcsGradeData, awardYearImg: img }
+                                            }
+                                        }))}
+                                        onPreviewImage={(img, title) => setPreviewModal({ isOpen: true, imageUrl: img, title })}
+                                    />
                                 </div>
                             </div>
 
@@ -1377,23 +1547,44 @@ export const AcademicTranscriptsView = ({
                                 <span>ĐTB Văn Hóa Lớp {selectedPrimaryGrade}: <strong className="text-amber-800 text-sm">{currentPrimaryGradeData.gpa || '--'} đ</strong></span>
                                 <span>•</span>
                                 <span>Đánh giá: <strong className="text-brand-cerulean">{currentPrimaryGradeData.result || 'Hoàn thành Xuất sắc'}</strong></span>
-                                {(currentPrimaryGradeData.awardHk1 || currentPrimaryGradeData.awardHk2 || currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards) && (
+                                {(currentPrimaryGradeData.awardHk1 || currentPrimaryGradeData.awardHk2 || currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards || currentPrimaryGradeData.awardHk1Img || currentPrimaryGradeData.awardHk2Img || currentPrimaryGradeData.awardYearImg) && (
                                     <>
                                         <span>•</span>
                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                            {currentPrimaryGradeData.awardHk1 && (
-                                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium" title="Giấy khen HK1">
-                                                    <Award size={11} className="text-amber-600" /> HK1: {currentPrimaryGradeData.awardHk1}
+                                            {(currentPrimaryGradeData.awardHk1 || currentPrimaryGradeData.awardHk1Img) && (
+                                                <span 
+                                                    onClick={() => currentPrimaryGradeData.awardHk1Img && setPreviewModal({ isOpen: true, imageUrl: currentPrimaryGradeData.awardHk1Img, title: `Giấy khen HK1 Lớp ${selectedPrimaryGrade}: ${currentPrimaryGradeData.awardHk1 || ''}` })}
+                                                    className={`inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium ${
+                                                        currentPrimaryGradeData.awardHk1Img ? 'cursor-pointer hover:bg-amber-100 hover:border-amber-400' : ''
+                                                    }`} 
+                                                    title={currentPrimaryGradeData.awardHk1Img ? 'Click để xem ảnh Giấy khen' : 'Giấy khen HK1'}
+                                                >
+                                                    <Award size={11} className="text-amber-600" /> HK1: {currentPrimaryGradeData.awardHk1 || 'Đã đính kèm ảnh'}
+                                                    {currentPrimaryGradeData.awardHk1Img && <ImageIcon size={11} className="text-amber-700 ml-0.5" />}
                                                 </span>
                                             )}
-                                            {currentPrimaryGradeData.awardHk2 && (
-                                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium" title="Giấy khen HK2">
-                                                    <Award size={11} className="text-amber-600" /> HK2: {currentPrimaryGradeData.awardHk2}
+                                            {(currentPrimaryGradeData.awardHk2 || currentPrimaryGradeData.awardHk2Img) && (
+                                                <span 
+                                                    onClick={() => currentPrimaryGradeData.awardHk2Img && setPreviewModal({ isOpen: true, imageUrl: currentPrimaryGradeData.awardHk2Img, title: `Giấy khen HK2 Lớp ${selectedPrimaryGrade}: ${currentPrimaryGradeData.awardHk2 || ''}` })}
+                                                    className={`inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/60 px-2 py-0.5 rounded-xs text-[11px] font-medium ${
+                                                        currentPrimaryGradeData.awardHk2Img ? 'cursor-pointer hover:bg-amber-100 hover:border-amber-400' : ''
+                                                    }`} 
+                                                    title={currentPrimaryGradeData.awardHk2Img ? 'Click để xem ảnh Giấy khen' : 'Giấy khen HK2'}
+                                                >
+                                                    <Award size={11} className="text-amber-600" /> HK2: {currentPrimaryGradeData.awardHk2 || 'Đã đính kèm ảnh'}
+                                                    {currentPrimaryGradeData.awardHk2Img && <ImageIcon size={11} className="text-amber-700 ml-0.5" />}
                                                 </span>
                                             )}
-                                            {(currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards) && (
-                                                <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-xs text-[11px] font-bold" title="Giấy khen Cả năm">
-                                                    <Award size={11} className="text-amber-700" /> Cả năm: {currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards}
+                                            {(currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards || currentPrimaryGradeData.awardYearImg) && (
+                                                <span 
+                                                    onClick={() => currentPrimaryGradeData.awardYearImg && setPreviewModal({ isOpen: true, imageUrl: currentPrimaryGradeData.awardYearImg, title: `Giấy khen Cả năm Lớp ${selectedPrimaryGrade}: ${currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards || ''}` })}
+                                                    className={`inline-flex items-center gap-1 bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-xs text-[11px] font-bold ${
+                                                        currentPrimaryGradeData.awardYearImg ? 'cursor-pointer hover:bg-amber-200 hover:border-amber-400' : ''
+                                                    }`} 
+                                                    title={currentPrimaryGradeData.awardYearImg ? 'Click để xem ảnh Giấy khen' : 'Giấy khen Cả năm'}
+                                                >
+                                                    <Award size={11} className="text-amber-700" /> Cả năm: {currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards || 'Đã đính kèm ảnh'}
+                                                    {currentPrimaryGradeData.awardYearImg && <ImageIcon size={11} className="text-amber-800 ml-0.5" />}
                                                 </span>
                                             )}
                                         </div>
@@ -1465,8 +1656,8 @@ export const AcademicTranscriptsView = ({
                                                         </td>
                                                     </>
                                                 ) : (
-                                                    <td colSpan={3} className="py-2 px-3 text-center text-gray-400 italic text-[11px] bg-gray-50/50">
-                                                        (Môn đánh giá bằng nhận xét theo quy định)
+                                                    <td colSpan={3} className="py-2 px-3 text-center text-gray-500 italic text-[11px] bg-brand-cream/30">
+                                                        Đánh giá định kỳ bằng nhận xét
                                                     </td>
                                                 )}
 
@@ -1514,7 +1705,7 @@ export const AcademicTranscriptsView = ({
                                 />
                             </div>
 
-                            {/* Semester Awards (Giấy khen từng học kỳ) */}
+                            {/* Semester Awards (Giấy khen từng học kỳ có upload hình) */}
                             <div className="pt-3 border-t border-brand-cerulean/15 space-y-2.5">
                                 <div className="flex items-center gap-1.5">
                                     <Award size={15} className="text-amber-600" />
@@ -1522,66 +1713,6 @@ export const AcademicTranscriptsView = ({
                                         Giấy khen & Danh hiệu Khen thưởng Lớp {selectedPrimaryGrade} (Từng học kỳ):
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
-                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
-                                            <Award size={12} className="text-amber-600" />
-                                            Giấy khen Học kỳ 1 (HK1):
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={currentPrimaryGradeData.awardHk1 || ''}
-                                            onChange={e => setTranscripts(prev => ({
-                                                ...prev,
-                                                primarySchool: {
-                                                    ...prev.primarySchool,
-                                                    [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awardHk1: e.target.value }
-                                                }
-                                            }))}
-                                            placeholder="Vd: Khen thưởng Học sinh Tiêu biểu HK1..."
-                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-amber-600 focus:bg-white"
-                                        />
-                                    </div>
-                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
-                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
-                                            <Award size={12} className="text-amber-600" />
-                                            Giấy khen Học kỳ 2 (HK2):
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={currentPrimaryGradeData.awardHk2 || ''}
-                                            onChange={e => setTranscripts(prev => ({
-                                                ...prev,
-                                                primarySchool: {
-                                                    ...prev.primarySchool,
-                                                    [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awardHk2: e.target.value }
-                                                }
-                                            }))}
-                                            placeholder="Vd: Khen thưởng Học sinh Xuất sắc HK2..."
-                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-amber-600 focus:bg-white"
-                                        />
-                                    </div>
-                                    <div className="p-2.5 bg-white border border-brand-cerulean/20 rounded-xs space-y-1 shadow-xs">
-                                        <span className="font-serif-title font-bold text-brand-cerulean flex items-center gap-1 text-[11px]">
-                                            <Award size={12} className="text-amber-700" />
-                                            Giấy khen Cả năm:
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={currentPrimaryGradeData.awardYear || currentPrimaryGradeData.awards || ''}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setTranscripts(prev => ({
-                                                    ...prev,
-                                                    primarySchool: {
-                                                        ...prev.primarySchool,
-                                                        [`grade${selectedPrimaryGrade}`]: { ...currentPrimaryGradeData, awardYear: val, awards: val }
-                                                    }
-                                                }));
-                                            }}
-                                            placeholder="Vd: Khen thưởng Học sinh Xuất sắc, Vở sạch chữ đẹp..."
-                                            className="w-full bg-brand-cream/40 border border-brand-cerulean/25 px-2.5 py-1.5 text-xs font-body rounded-xs focus:border-amber-600 focus:bg-white"
-                                        />
                                     </div>
                                 </div>
                             </div>

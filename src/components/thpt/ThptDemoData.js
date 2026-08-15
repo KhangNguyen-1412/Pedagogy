@@ -48,17 +48,17 @@ export const DEFAULT_ACADEMIC_TRANSCRIPTS = {
     highSchool: {
         schoolName: '',
         graduationYear: '',
-        grade10: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-        grade11: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-        grade12: { scores: {}, gpa: '', rank: 'Học sinh Xuất sắc', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' }
+        grade10: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+        grade11: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+        grade12: { scores: {}, gpa: '', rank: 'Học sinh Xuất sắc', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' }
     },
     secondarySchool: {
         schoolName: '',
         graduationYear: '',
-        grade6: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-        grade7: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-        grade8: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-        grade9: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
+        grade6: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+        grade7: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+        grade8: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+        grade9: { scores: {}, gpa: '', rank: 'Học sinh Giỏi', conduct: 'Tốt', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
         entranceExam10: {
             schoolAdmitted: '',
             mathScore: '',
@@ -71,11 +71,11 @@ export const DEFAULT_ACADEMIC_TRANSCRIPTS = {
     primarySchool: {
         schoolName: '',
         graduationYear: '',
-        grade1: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-        grade2: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-        grade3: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-        grade4: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' },
-        grade5: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk2: '', awardYear: '', awards: '' }
+        grade1: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+        grade2: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+        grade3: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+        grade4: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' },
+        grade5: { scores: {}, gpa: '', result: 'Hoàn thành Xuất sắc', awardHk1: '', awardHk1Img: '', awardHk2: '', awardHk2Img: '', awardYear: '', awardYearImg: '', awards: '' }
     }
 };
 
