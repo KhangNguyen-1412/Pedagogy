@@ -39,9 +39,10 @@ export const PRIMARY_SUBJECTS = [
     { id: 'history_geography', name: 'Lịch sử & Địa lí', color: '#124874', hasScore: true, grades: ['4', '5'] },
     { id: 'informatics_tech', name: 'Tin học & Công nghệ', color: '#124874', hasScore: true, grades: ['3', '4', '5'] },
     { id: 'ethics', name: 'Đạo đức', color: '#124874', hasScore: false },
-    { id: 'pe', name: 'Giáo dục thể chất (Thể dục)', color: '#124874', hasScore: false },
-    { id: 'music', name: 'Âm nhạc', color: '#124874', hasScore: false },
-    { id: 'art', name: 'Mĩ thuật', color: '#124874', hasScore: false },
+    { id: 'pe', name: 'Thể dục (Giáo dục thể chất)', color: '#124874', hasScore: true, isSplit5: true },
+    { id: 'music', name: 'Âm nhạc', color: '#124874', hasScore: true, isSplit5: true },
+    { id: 'art', name: 'Mĩ thuật', color: '#124874', hasScore: true, isSplit5: true },
+    { id: 'technique', name: 'Kĩ thuật', color: '#124874', hasScore: true, isSplit5: true, grades: ['4', '5'] },
     { id: 'activities', name: 'Hoạt động trải nghiệm', color: '#124874', hasScore: false, grades: ['4', '5'] }
 ];
 
@@ -427,8 +428,12 @@ export const AcademicTranscriptsView = ({
 
     // 3. Helper: Update Primary Subject Score (Grades 1, 2, 3, 4, 5)
     const handleUpdatePrimaryScore = (gradeKey, subjId, field, value) => {
+        const subjDef = PRIMARY_SUBJECTS.find(s => s.id === subjId);
+        const isSplit5 = subjDef?.isSplit5;
+        const maxVal = (field === 'hk1' || field === 'hk2') && isSplit5 ? 5 : 10;
+
         const numVal = (field === 'hk1' || field === 'hk2' || field === 'final')
-            ? (value === '' ? '' : Math.min(10, Math.max(0, Number(value))))
+            ? (value === '' ? '' : Math.min(maxVal, Math.max(0, Number(value))))
             : value;
 
         setTranscripts(prev => {
@@ -444,7 +449,13 @@ export const AcademicTranscriptsView = ({
                 const hk1Val = field === 'hk1' ? numVal : currentSubj.hk1;
                 const hk2Val = field === 'hk2' ? numVal : currentSubj.hk2;
                 if (hk1Val !== '' && hk2Val !== '' && !isNaN(Number(hk1Val)) && !isNaN(Number(hk2Val))) {
-                    updatedSubj.final = Number(((Number(hk1Val) + Number(hk2Val)) / 2).toFixed(1));
+                    if (isSplit5) {
+                        // Chia đều theo 2 học kỳ: HK1 (tối đa 5) + HK2 (tối đa 5) = Cả năm (tối đa 10)
+                        updatedSubj.final = Number((Number(hk1Val) + Number(hk2Val)).toFixed(1));
+                    } else {
+                        // Môn tính điểm chuẩn: trung bình 2 học kỳ
+                        updatedSubj.final = Number(((Number(hk1Val) + Number(hk2Val)) / 2).toFixed(1));
+                    }
                 }
             }
 
@@ -1614,11 +1625,15 @@ export const AcademicTranscriptsView = ({
                                 <tbody className="divide-y divide-brand-cerulean/10 text-xs font-body">
                                     {PRIMARY_SUBJECTS.filter(subj => !subj.grades || subj.grades.includes(String(selectedPrimaryGrade))).map(subj => {
                                         const subjScore = currentPrimaryGradeData.scores?.[subj.id] || { hk1: '', hk2: '', final: '', status: 'T', comment: '' };
+                                        const isSplit5 = subj.isSplit5;
                                         return (
                                             <tr key={subj.id} className="hover:bg-brand-cream/30 transition-colors">
                                                 <td className="py-2.5 px-3 font-serif font-bold text-brand-cerulean flex items-center gap-2">
                                                     <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: subj.color }} />
                                                     {subj.name}
+                                                    {isSplit5 && (
+                                                        <span className="text-[10px] text-amber-700 font-sans font-normal italic">(5đ / HK)</span>
+                                                    )}
                                                 </td>
 
                                                 {subj.hasScore ? (
@@ -1628,10 +1643,10 @@ export const AcademicTranscriptsView = ({
                                                                 type="number"
                                                                 step="0.5"
                                                                 min="0"
-                                                                max="10"
+                                                                max={isSplit5 ? "5" : "10"}
                                                                 value={subjScore.hk1 ?? ''}
                                                                 onChange={e => handleUpdatePrimaryScore(selectedPrimaryGrade, subj.id, 'hk1', e.target.value)}
-                                                                placeholder="--.-"
+                                                                placeholder={isSplit5 ? "/5" : "--.-"}
                                                                 className="w-16 text-center bg-white border border-brand-cerulean/25 focus:border-amber-600 focus:ring-1 focus:ring-amber-600 font-bold text-xs py-1 rounded-xs shadow-xs"
                                                             />
                                                         </td>
@@ -1640,10 +1655,10 @@ export const AcademicTranscriptsView = ({
                                                                 type="number"
                                                                 step="0.5"
                                                                 min="0"
-                                                                max="10"
+                                                                max={isSplit5 ? "5" : "10"}
                                                                 value={subjScore.hk2 ?? ''}
                                                                 onChange={e => handleUpdatePrimaryScore(selectedPrimaryGrade, subj.id, 'hk2', e.target.value)}
-                                                                placeholder="--.-"
+                                                                placeholder={isSplit5 ? "/5" : "--.-"}
                                                                 className="w-16 text-center bg-white border border-brand-cerulean/25 focus:border-amber-600 focus:ring-1 focus:ring-amber-600 font-bold text-xs py-1 rounded-xs shadow-xs"
                                                             />
                                                         </td>
