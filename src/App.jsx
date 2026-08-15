@@ -40,6 +40,7 @@ import {
     CheckSquare,
     Sparkles,
     AlertCircle,
+    AlertTriangle,
     LogOut
 } from 'lucide-react';
 import {
