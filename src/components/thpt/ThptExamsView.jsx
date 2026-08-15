@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
     Plus, Search, Filter, BookOpen, Calendar, Tag, FileText,
     Clock, Eye, Edit2, Trash2, Copy, Printer, Award, Sparkles, SlidersHorizontal
@@ -23,10 +23,26 @@ export const ThptExamsView = ({
     showToast
 }) => {
     // View state
-    const [selectedExamId, setSelectedExamId] = useState(null);
+    const [selectedExamId, setSelectedExamId] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = sessionStorage.getItem('pedagogy_thpt_selected_exam_id');
+            if (saved) return saved;
+        }
+        return null;
+    });
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [isMetadataOpen, setIsMetadataOpen] = useState(false);
     const [examToEdit, setExamToEdit] = useState(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            if (selectedExamId) {
+                sessionStorage.setItem('pedagogy_thpt_selected_exam_id', selectedExamId);
+            } else {
+                sessionStorage.removeItem('pedagogy_thpt_selected_exam_id');
+            }
+        }
+    }, [selectedExamId]);
 
     // Filter states
     const [searchTerm, setSearchTerm] = useState('');

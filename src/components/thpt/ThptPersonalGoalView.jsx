@@ -231,7 +231,19 @@ export const ThptPersonalGoalView = ({
     showToast
 }) => {
     const [isEditingTargets, setIsEditingTargets] = useState(false);
-    const [activeTab, setActiveTab] = useState('targets'); // 'targets' | 'mistakes' | 'phases'
+    const [activeTab, setActiveTab] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = sessionStorage.getItem('pedagogy_thpt_goals_tab');
+            if (saved) return saved;
+        }
+        return 'targets';
+    }); // 'targets' | 'mistakes' | 'phases'
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('pedagogy_thpt_goals_tab', activeTab);
+        }
+    }, [activeTab]);
     
     // Target Form State (Empty defaults, purely user-driven)
     const [targetForm, setTargetForm] = useState({

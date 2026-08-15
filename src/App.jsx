@@ -3981,7 +3981,19 @@ const GradebookView = ({ modules, programs = [], onUpdateModule }) => {
 
 // 6. RESOURCES & STUDY LOG VIEW
 const ResourcesStudyLogView = ({ modules, studyLogs, resources, onAddStudyLog, onDeleteStudyLog, onAddResource, onDeleteResource }) => {
-    const [activeTab, setActiveTab] = useState('resources');
+    const [activeTab, setActiveTab] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = sessionStorage.getItem('pedagogy_resources_tab');
+            if (saved) return saved;
+        }
+        return 'resources';
+    });
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('pedagogy_resources_tab', activeTab);
+        }
+    }, [activeTab]);
     const [logForm, setLogForm] = useState({ moduleId: modules[0]?.id || '', title: '', content: '' });
     const [resForm, setResForm] = useState({ moduleId: modules[0]?.id || '', title: '', type: 'Drive / PDF', url: '' });
 
@@ -4794,6 +4806,12 @@ const getSEOAndPath = (currentView, activeProgramId, activeModuleId, programs, m
                 description: 'Mục tiêu điểm số Đại học, lộ trình ôn thi 4 giai đoạn và sổ tay rút kinh nghiệm cá nhân.',
                 path: '/muc-tieu-thpt'
             };
+        case 'thpt_tracking':
+            return {
+                title: 'Nhật Ký & Tiến Độ Ôn Luyện THPT | Pedagogy',
+                description: 'Theo dõi tiến trình làm đề, điểm số và nhật ký ôn tập cá nhân.',
+                path: '/tien-do-thpt'
+            };
         case 'thpt_admission':
             return {
                 title: 'Trúng Tuyển Đại Học & Danh Sách Nguyện Vọng | Pedagogy',
@@ -4815,6 +4833,26 @@ const getSEOAndPath = (currentView, activeProgramId, activeModuleId, programs, m
     }
 };
 
+export const getViewFromPath = (path) => {
+    if (!path || typeof path !== 'string') return null;
+    const p = path.toLowerCase().trim();
+    if (p.startsWith('/de-thi-thpt')) return 'thpt_exams';
+    if (p.startsWith('/muc-tieu-thpt')) return 'thpt_goals';
+    if (p.startsWith('/tien-do-thpt') || p.startsWith('/theo-doi-thpt')) return 'thpt_tracking';
+    if (p.startsWith('/trung-tuyen') || p.startsWith('/nguyen-vong')) return 'thpt_admission';
+    if (p.startsWith('/hoc-ba')) return 'thpt_transcripts';
+    if (p.startsWith('/chuong-trinh-dao-tao/')) return 'program_detail';
+    if (p.startsWith('/chuong-trinh-dao-tao')) return 'programs';
+    if (p.startsWith('/hoc-phan')) return 'module_detail';
+    if (p.startsWith('/de-cuong')) return 'syllabus';
+    if (p.startsWith('/lich-bieu')) return 'calendar';
+    if (p.startsWith('/bang-diem')) return 'gradebook';
+    if (p.startsWith('/tai-lieu')) return 'resources';
+    if (p.startsWith('/ho-so')) return 'profile';
+    if (p === '/' || p === '/tong-quan' || p === '/dashboard') return 'dashboard';
+    return null;
+};
+
 // ─── MAIN APP COMPONENT ───────────────────────────────────────────────────
 export default function App() {
     const [user, setUser] = useState(null);
@@ -4832,18 +4870,10 @@ export default function App() {
     };
     const [currentView, setCurrentView] = useState(() => {
         if (typeof window === 'undefined') return 'dashboard';
-        const path = window.location.pathname.toLowerCase();
-        if (path.startsWith('/de-thi-thpt')) return 'thpt_exams';
-        if (path.startsWith('/muc-tieu-thpt')) return 'thpt_goals';
-        if (path.startsWith('/tien-do-thpt')) return 'thpt_tracking';
-        if (path.startsWith('/chuong-trinh-dao-tao/')) return 'program_detail';
-        if (path.startsWith('/chuong-trinh-dao-tao')) return 'programs';
-        if (path.startsWith('/hoc-phan')) return 'module_detail';
-        if (path.startsWith('/de-cuong')) return 'syllabus';
-        if (path.startsWith('/lich-bieu')) return 'calendar';
-        if (path.startsWith('/bang-diem')) return 'gradebook';
-        if (path.startsWith('/tai-lieu')) return 'resources';
-        if (path.startsWith('/ho-so')) return 'profile';
+        const fromPath = getViewFromPath(window.location.pathname);
+        if (fromPath) return fromPath;
+        const saved = localStorage.getItem('pedagogy_current_view');
+        if (saved) return saved;
         return 'dashboard';
     });
 
@@ -4916,8 +4946,18 @@ export default function App() {
         }
     };
 
-    const [activeProgramId, setActiveProgramId] = useState(null);
-    const [activeModuleId, setActiveModuleId] = useState(null);
+    const [activeProgramId, setActiveProgramId] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('pedagogy_active_program_id') || null;
+        }
+        return null;
+    });
+    const [activeModuleId, setActiveModuleId] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('pedagogy_active_module_id') || null;
+        }
+        return null;
+    });
     const [isCertModalOpen, setIsCertModalOpen] = useState(false);
     const [selectedProgramFilter, setSelectedProgramFilter] = useState('all');
 
@@ -5431,6 +5471,13 @@ export default function App() {
         if (typeof window !== 'undefined' && window.location.pathname !== seo.path) {
             window.history.pushState({ currentView, activeProgramId, activeModuleId }, '', seo.path);
         }
+
+        // Persist view and selection state to localStorage for reliable reload restoration
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('pedagogy_current_view', currentView);
+            if (activeProgramId) localStorage.setItem('pedagogy_active_program_id', activeProgramId);
+            if (activeModuleId) localStorage.setItem('pedagogy_active_module_id', activeModuleId);
+        }
     }, [currentView, activeProgramId, activeModuleId, programs, modules]);
 
     // Browser History PopState Listener (Back/Forward Buttons)
@@ -5441,19 +5488,13 @@ export default function App() {
                 if (e.state.activeProgramId) setActiveProgramId(e.state.activeProgramId);
                 if (e.state.activeModuleId) setActiveModuleId(e.state.activeModuleId);
             } else {
-                const path = window.location.pathname.toLowerCase();
-                if (path.startsWith('/de-thi-thpt')) setCurrentView('thpt_exams');
-                else if (path.startsWith('/muc-tieu-thpt')) setCurrentView('thpt_goals');
-                else if (path.startsWith('/tien-do-thpt')) setCurrentView('thpt_tracking');
-                else if (path.startsWith('/chuong-trinh-dao-tao/')) setCurrentView('program_detail');
-                else if (path.startsWith('/chuong-trinh-dao-tao')) setCurrentView('programs');
-                else if (path.startsWith('/hoc-phan')) setCurrentView('module_detail');
-                else if (path.startsWith('/de-cuong')) setCurrentView('syllabus');
-                else if (path.startsWith('/lich-bieu')) setCurrentView('calendar');
-                else if (path.startsWith('/bang-diem')) setCurrentView('gradebook');
-                else if (path.startsWith('/tai-lieu')) setCurrentView('resources');
-                else if (path.startsWith('/ho-so')) setCurrentView('profile');
-                else setCurrentView('dashboard');
+                const fromPath = getViewFromPath(window.location.pathname);
+                if (fromPath) {
+                    setCurrentView(fromPath);
+                } else {
+                    const saved = localStorage.getItem('pedagogy_current_view');
+                    setCurrentView(saved || 'dashboard');
+                }
             }
         };
         window.addEventListener('popstate', handlePopState);

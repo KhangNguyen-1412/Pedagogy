@@ -48,10 +48,46 @@ export const AcademicTranscriptsView = ({
     onUpdateProfile,
     showToast
 }) => {
-    const [activeTab, setActiveTab] = useState('high_school'); // 'high_school' | 'secondary' | 'primary' | 'simulator'
-    const [selectedThptGrade, setSelectedThptGrade] = useState('12'); // '10' | '11' | '12'
-    const [selectedThcsGrade, setSelectedThcsGrade] = useState('9'); // '6' | '7' | '8' | '9'
-    const [selectedPrimaryGrade, setSelectedPrimaryGrade] = useState('5'); // '1' | '2' | '3' | '4' | '5'
+    const [activeTab, setActiveTab] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = sessionStorage.getItem('pedagogy_transcript_tab');
+            if (saved) return saved;
+        }
+        return 'high_school';
+    }); // 'high_school' | 'secondary' | 'primary' | 'simulator'
+
+    const [selectedThptGrade, setSelectedThptGrade] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = sessionStorage.getItem('pedagogy_transcript_thpt_grade');
+            if (saved) return saved;
+        }
+        return '12';
+    }); // '10' | '11' | '12'
+
+    const [selectedThcsGrade, setSelectedThcsGrade] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = sessionStorage.getItem('pedagogy_transcript_thcs_grade');
+            if (saved) return saved;
+        }
+        return '9';
+    }); // '6' | '7' | '8' | '9'
+
+    const [selectedPrimaryGrade, setSelectedPrimaryGrade] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = sessionStorage.getItem('pedagogy_transcript_primary_grade');
+            if (saved) return saved;
+        }
+        return '5';
+    }); // '1' | '2' | '3' | '4' | '5'
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('pedagogy_transcript_tab', activeTab);
+            sessionStorage.setItem('pedagogy_transcript_thpt_grade', selectedThptGrade);
+            sessionStorage.setItem('pedagogy_transcript_thcs_grade', selectedThcsGrade);
+            sessionStorage.setItem('pedagogy_transcript_primary_grade', selectedPrimaryGrade);
+        }
+    }, [activeTab, selectedThptGrade, selectedThcsGrade, selectedPrimaryGrade]);
 
     // Default structure fallback
     const initialTranscripts = useMemo(() => {
