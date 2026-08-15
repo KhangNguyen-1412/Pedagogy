@@ -12,31 +12,31 @@ import { THPT_COMBINATIONS, OFFICIAL_THPT_SUBJECTS } from './ThptPersonalGoalVie
  */
 export const THCS_SUBJECTS = [
     { id: 'math', name: 'Toán học', color: '#124874' },
-    { id: 'literature', name: 'Ngữ văn', color: '#CF373D' },
-    { id: 'english', name: 'Tiếng Anh (Ngoại ngữ 1)', color: '#0F766E' },
-    { id: 'science', name: 'Khoa học Tự nhiên (Lý - Hóa - Sinh)', color: '#4338CA' },
-    { id: 'history_geography', name: 'Lịch sử & Địa lí', color: '#B45309' },
-    { id: 'civics', name: 'Giáo dục công dân (GDCD)', color: '#6D28D9' },
-    { id: 'informatics', name: 'Tin học', color: '#0284C7' },
-    { id: 'technology', name: 'Công nghệ', color: '#4B5563' },
-    { id: 'pe', name: 'Giáo dục thể chất', color: '#15803D' },
-    { id: 'arts', name: 'Nghệ thuật (Âm nhạc, Mĩ thuật)', color: '#D97706' },
+    { id: 'literature', name: 'Ngữ văn', color: '#124874' },
+    { id: 'english', name: 'Tiếng Anh (Ngoại ngữ 1)', color: '#124874' },
+    { id: 'science', name: 'Khoa học Tự nhiên (Lý - Hóa - Sinh)', color: '#124874' },
+    { id: 'history_geography', name: 'Lịch sử & Địa lí', color: '#124874' },
+    { id: 'civics', name: 'Giáo dục công dân (GDCD)', color: '#124874' },
+    { id: 'informatics', name: 'Tin học', color: '#124874' },
+    { id: 'technology', name: 'Công nghệ', color: '#124874' },
+    { id: 'pe', name: 'Giáo dục thể chất', color: '#124874' },
+    { id: 'arts', name: 'Nghệ thuật (Âm nhạc, Mĩ thuật)', color: '#124874' },
 ];
 
 /**
  * Danh mục Môn học Tiểu học chuẩn GDPT
  */
 export const PRIMARY_SUBJECTS = [
-    { id: 'vietnamese', name: 'Tiếng Việt', color: '#CF373D', hasScore: true },
+    { id: 'vietnamese', name: 'Tiếng Việt', color: '#124874', hasScore: true },
     { id: 'math', name: 'Toán', color: '#124874', hasScore: true },
-    { id: 'english', name: 'Tiếng Anh', color: '#0F766E', hasScore: true },
-    { id: 'science', name: 'Khoa học (Tự nhiên & Xã hội)', color: '#15803D', hasScore: true },
-    { id: 'history_geography', name: 'Lịch sử & Địa lí', color: '#B45309', hasScore: true },
-    { id: 'informatics_tech', name: 'Tin học & Công nghệ', color: '#0284C7', hasScore: true },
-    { id: 'ethics', name: 'Đạo đức', color: '#6D28D9', hasScore: false },
-    { id: 'pe', name: 'Giáo dục thể chất', color: '#4338CA', hasScore: false },
-    { id: 'music_art', name: 'Âm nhạc & Mĩ thuật', color: '#D97706', hasScore: false },
-    { id: 'activities', name: 'Hoạt động trải nghiệm', color: '#475569', hasScore: false }
+    { id: 'english', name: 'Tiếng Anh', color: '#124874', hasScore: true },
+    { id: 'science', name: 'Khoa học (Tự nhiên & Xã hội)', color: '#124874', hasScore: true },
+    { id: 'history_geography', name: 'Lịch sử & Địa lí', color: '#124874', hasScore: true },
+    { id: 'informatics_tech', name: 'Tin học & Công nghệ', color: '#124874', hasScore: true },
+    { id: 'ethics', name: 'Đạo đức', color: '#124874', hasScore: false },
+    { id: 'pe', name: 'Giáo dục thể chất', color: '#124874', hasScore: false },
+    { id: 'music_art', name: 'Âm nhạc & Mĩ thuật', color: '#124874', hasScore: false },
+    { id: 'activities', name: 'Hoạt động trải nghiệm', color: '#124874', hasScore: false }
 ];
 
 /**

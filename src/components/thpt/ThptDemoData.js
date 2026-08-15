@@ -5,15 +5,15 @@
 
 export const DEFAULT_THPT_SUBJECTS = [
     { id: 'math', name: 'Toán học', code: 'TOAN', color: '#124874', icon: 'Calculator' },
-    { id: 'physics', name: 'Vật lí', code: 'VATLY', color: '#0D9488', icon: 'Activity' },
-    { id: 'chemistry', name: 'Hóa học', code: 'HOAHOC', color: '#CF373D', icon: 'FlaskConical' },
-    { id: 'biology', name: 'Sinh học', code: 'SINHHOC', color: '#16A34A', icon: 'Dna' },
-    { id: 'english', name: 'Tiếng Anh', code: 'TIENGANH', color: '#7C3AED', icon: 'Languages' },
-    { id: 'literature', name: 'Ngữ văn', code: 'NGUVAN', color: '#EA580C', icon: 'BookOpen' },
-    { id: 'history', name: 'Lịch sử', code: 'LICHSU', color: '#B45309', icon: 'Landmark' },
-    { id: 'geography', name: 'Địa lí', code: 'DIALY', color: '#0284C7', icon: 'Globe' },
-    { id: 'economic_law', name: 'Kinh tế & Pháp luật', code: 'GDKTPL', color: '#475569', icon: 'Scale' },
-    { id: 'informatics', name: 'Tin học', code: 'TINHOC', color: '#2563EB', icon: 'Binary' },
+    { id: 'physics', name: 'Vật lí', code: 'VATLY', color: '#124874', icon: 'Activity' },
+    { id: 'chemistry', name: 'Hóa học', code: 'HOAHOC', color: '#124874', icon: 'FlaskConical' },
+    { id: 'biology', name: 'Sinh học', code: 'SINHHOC', color: '#124874', icon: 'Dna' },
+    { id: 'english', name: 'Tiếng Anh', code: 'TIENGANH', color: '#124874', icon: 'Languages' },
+    { id: 'literature', name: 'Ngữ văn', code: 'NGUVAN', color: '#124874', icon: 'BookOpen' },
+    { id: 'history', name: 'Lịch sử', code: 'LICHSU', color: '#124874', icon: 'Landmark' },
+    { id: 'geography', name: 'Địa lí', code: 'DIALY', color: '#124874', icon: 'Globe' },
+    { id: 'economic_law', name: 'Kinh tế & Pháp luật', code: 'GDKTPL', color: '#124874', icon: 'Scale' },
+    { id: 'informatics', name: 'Tin học', code: 'TINHOC', color: '#124874', icon: 'Binary' },
 ];
 
 export const DEFAULT_THPT_YEARS = [

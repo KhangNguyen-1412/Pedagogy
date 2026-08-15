@@ -34,16 +34,16 @@ export const THPT_COMBINATIONS = [
 
 export const OFFICIAL_THPT_SUBJECTS = [
     { id: 'math', name: 'Toán', color: '#124874' },
-    { id: 'literature', name: 'Ngữ văn', color: '#CF373D' },
-    { id: 'english', name: 'Tiếng Anh', color: '#0F766E' },
-    { id: 'physics', name: 'Vật lí', color: '#4338CA' },
-    { id: 'chemistry', name: 'Hóa học', color: '#B45309' },
-    { id: 'biology', name: 'Sinh học', color: '#15803D' },
-    { id: 'history', name: 'Lịch sử', color: '#7C2D12' },
-    { id: 'geography', name: 'Địa lí', color: '#0369A1' },
-    { id: 'civicEducation', name: 'GDCD / KTPL', color: '#6D28D9' },
-    { id: 'informatics', name: 'Tin học', color: '#0284C7' },
-    { id: 'technology', name: 'Công nghệ', color: '#4B5563' },
+    { id: 'literature', name: 'Ngữ văn', color: '#124874' },
+    { id: 'english', name: 'Tiếng Anh', color: '#124874' },
+    { id: 'physics', name: 'Vật lí', color: '#124874' },
+    { id: 'chemistry', name: 'Hóa học', color: '#124874' },
+    { id: 'biology', name: 'Sinh học', color: '#124874' },
+    { id: 'history', name: 'Lịch sử', color: '#124874' },
+    { id: 'geography', name: 'Địa lí', color: '#124874' },
+    { id: 'civicEducation', name: 'GDCD / KTPL', color: '#124874' },
+    { id: 'informatics', name: 'Tin học', color: '#124874' },
+    { id: 'technology', name: 'Công nghệ', color: '#124874' },
 ];
 
 export const calculateOfficialComboScore = (comboCode, scores = {}) => {

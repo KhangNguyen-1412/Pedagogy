@@ -4963,7 +4963,14 @@ export default function App() {
     const [thptSubjects, setThptSubjects] = useState(() => {
         if (typeof window !== 'undefined') {
             const local = localStorage.getItem(STORAGE_KEYS.THPT_SUBJECTS);
-            if (local) try { return JSON.parse(local); } catch (e) {}
+            if (local) {
+                try {
+                    const parsed = JSON.parse(local);
+                    if (Array.isArray(parsed)) {
+                        return parsed.map(s => ({ ...s, color: '#124874' }));
+                    }
+                } catch (e) {}
+            }
         }
         return DEFAULT_THPT_SUBJECTS;
     });
