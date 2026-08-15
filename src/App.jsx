@@ -5601,7 +5601,7 @@ if (!user) {
                                 className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-lg' : 'gap-3 py-2 px-1 text-left border-b'} transition-all ${
                                     isActive
                                         ? isSidebarCollapsed 
-                                            ? 'bg-brand-cerulean text-white font-bold shadow-xs' 
+                                            ? 'bg-brand-jasper text-white font-bold shadow-xs' 
                                             : 'text-brand-jasper font-bold border-brand-jasper'
                                         : isSidebarCollapsed
                                             ? 'text-brand-cerulean hover:bg-brand-cerulean/10'
@@ -5643,7 +5643,7 @@ if (!user) {
                                     className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-lg' : 'gap-3 py-2 px-1 text-left border-b'} transition-all ${
                                         isActive
                                             ? isSidebarCollapsed 
-                                                ? 'bg-brand-cerulean text-white font-bold shadow-xs' 
+                                                ? 'bg-brand-jasper text-white font-bold shadow-xs' 
                                                 : 'text-brand-jasper font-bold border-brand-jasper'
                                             : isSidebarCollapsed
                                                 ? 'text-brand-cerulean hover:bg-brand-cerulean/10'
@@ -5708,7 +5708,7 @@ if (!user) {
                             className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-lg' : 'gap-3 py-2 px-1 text-left border-b'} transition-all ${
                                 currentView === 'profile'
                                     ? isSidebarCollapsed 
-                                        ? 'bg-brand-cerulean text-white font-bold shadow-xs' 
+                                        ? 'bg-brand-jasper text-white font-bold shadow-xs' 
                                         : 'text-brand-jasper font-bold border-brand-jasper'
                                     : isSidebarCollapsed
                                         ? 'text-brand-cerulean hover:bg-brand-cerulean/10'
