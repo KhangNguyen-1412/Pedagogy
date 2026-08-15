@@ -34,7 +34,7 @@ export const THCS_SUBJECTS = [
 export const PRIMARY_SUBJECTS = [
     { id: 'vietnamese', name: 'Tiếng Việt', color: '#124874', hasScore: true },
     { id: 'math', name: 'Toán', color: '#124874', hasScore: true },
-    { id: 'english', name: 'Tiếng Anh', color: '#124874', hasScore: true, grades: ['2', '3', '4', '5'] },
+    { id: 'english', name: 'Tiếng Anh', color: '#124874', hasScore: true, grades: ['4', '5'] },
     { id: 'science', name: 'Khoa học (Tự nhiên & Xã hội)', color: '#124874', hasScore: true },
     { id: 'history_geography', name: 'Lịch sử & Địa lí', color: '#124874', hasScore: true, grades: ['4', '5'] },
     { id: 'informatics_tech', name: 'Tin học & Công nghệ', color: '#124874', hasScore: true, grades: ['3', '4', '5'] },
@@ -42,7 +42,7 @@ export const PRIMARY_SUBJECTS = [
     { id: 'pe', name: 'Giáo dục thể chất (Thể dục)', color: '#124874', hasScore: false },
     { id: 'music', name: 'Âm nhạc', color: '#124874', hasScore: false },
     { id: 'art', name: 'Mĩ thuật', color: '#124874', hasScore: false },
-    { id: 'activities', name: 'Hoạt động trải nghiệm', color: '#124874', hasScore: false, grades: ['2', '3', '4', '5'] }
+    { id: 'activities', name: 'Hoạt động trải nghiệm', color: '#124874', hasScore: false, grades: ['4', '5'] }
 ];
 
 export const EVAL_PASS_FAIL_OPTIONS = [
