@@ -34,14 +34,15 @@ export const THCS_SUBJECTS = [
 export const PRIMARY_SUBJECTS = [
     { id: 'vietnamese', name: 'Tiếng Việt', color: '#124874', hasScore: true },
     { id: 'math', name: 'Toán', color: '#124874', hasScore: true },
-    { id: 'english', name: 'Tiếng Anh', color: '#124874', hasScore: true },
+    { id: 'english', name: 'Tiếng Anh', color: '#124874', hasScore: true, grades: ['2', '3', '4', '5'] },
     { id: 'science', name: 'Khoa học (Tự nhiên & Xã hội)', color: '#124874', hasScore: true },
-    { id: 'history_geography', name: 'Lịch sử & Địa lí', color: '#124874', hasScore: true },
-    { id: 'informatics_tech', name: 'Tin học & Công nghệ', color: '#124874', hasScore: true },
+    { id: 'history_geography', name: 'Lịch sử & Địa lí', color: '#124874', hasScore: true, grades: ['4', '5'] },
+    { id: 'informatics_tech', name: 'Tin học & Công nghệ', color: '#124874', hasScore: true, grades: ['3', '4', '5'] },
     { id: 'ethics', name: 'Đạo đức', color: '#124874', hasScore: false },
-    { id: 'pe', name: 'Giáo dục thể chất', color: '#124874', hasScore: false },
-    { id: 'music_art', name: 'Âm nhạc & Mĩ thuật', color: '#124874', hasScore: false },
-    { id: 'activities', name: 'Hoạt động trải nghiệm', color: '#124874', hasScore: false }
+    { id: 'pe', name: 'Giáo dục thể chất (Thể dục)', color: '#124874', hasScore: false },
+    { id: 'music', name: 'Âm nhạc', color: '#124874', hasScore: false },
+    { id: 'art', name: 'Mĩ thuật', color: '#124874', hasScore: false },
+    { id: 'activities', name: 'Hoạt động trải nghiệm', color: '#124874', hasScore: false, grades: ['2', '3', '4', '5'] }
 ];
 
 export const EVAL_PASS_FAIL_OPTIONS = [
@@ -452,11 +453,13 @@ export const AcademicTranscriptsView = ({
                 [subjId]: updatedSubj
             };
 
-            // Compute Primary GPA for core scored subjects
+            // Compute Primary GPA for core scored subjects available in this grade
+            const scoredSubjects = PRIMARY_SUBJECTS.filter(s => s.hasScore && (!s.grades || s.grades.includes(String(gradeKey))));
+            const scoredIds = scoredSubjects.map(s => s.id);
             const finals = Object.entries(updatedScores)
-                .filter(([sId]) => PRIMARY_SUBJECTS.find(s => s.id === sId)?.hasScore)
+                .filter(([sId]) => scoredIds.includes(sId))
                 .map(([, s]) => s.final)
-                .filter(f => f !== '' && f !== undefined && !isNaN(f));
+                .filter(f => f !== '' && f !== undefined && !isNaN(Number(f)));
             
             let computedGpa = currentGrade.gpa;
             if (finals.length > 0) {
@@ -1609,7 +1612,7 @@ export const AcademicTranscriptsView = ({
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-brand-cerulean/10 text-xs font-body">
-                                    {PRIMARY_SUBJECTS.map(subj => {
+                                    {PRIMARY_SUBJECTS.filter(subj => !subj.grades || subj.grades.includes(String(selectedPrimaryGrade))).map(subj => {
                                         const subjScore = currentPrimaryGradeData.scores?.[subj.id] || { hk1: '', hk2: '', final: '', status: 'T', comment: '' };
                                         return (
                                             <tr key={subj.id} className="hover:bg-brand-cream/30 transition-colors">
