@@ -56,14 +56,30 @@ export const COLLECTIONS = {
 
 export const googleProvider = new GoogleAuthProvider();
 
-function handleFirestoreError(context, err) {
+// Safe catch for IndexedDB background tab hidden / closing lifecycle events
+if (typeof window !== 'undefined') {
+    window.addEventListener('unhandledrejection', (event) => {
+        const msg = String(event?.reason?.message || event?.reason || '');
+        if (msg.includes('closing/hidden') || msg.includes('Database is closing') || msg.includes('indexedDB') || event?.reason?.code === 'failed-precondition') {
+            event.preventDefault();
+            event.stopImmediatePropagation?.();
+        }
+    });
+}
+
+export function handleFirestoreError(context, err) {
+    const msg = String(err?.message || err || '');
+    if (msg.includes('closing/hidden') || msg.includes('Database is closing') || err?.code === 'failed-precondition' || err?.code === 'unavailable' || err?.code === 'cancelled') {
+        // Tab hidden or IndexedDb shutting down gracefully
+        return;
+    }
     if (err?.code === 'permission-denied') {
         console.warn(
             `[Firestore Permission Warning] ${context}: Truy cập bị từ chối do Rules của Firebase chưa cho phép đọc/ghi. ` +
             `Vui lòng vào Firebase Console -> Firestore Database -> Rules và đổi thành: allow read, write: if true;`
         );
     } else {
-        console.error(`[Firestore Error] ${context}:`, err);
+        console.warn(`[Firestore Notice] ${context}:`, msg);
     }
 }
 

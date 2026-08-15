@@ -1797,8 +1797,8 @@ export const ThptExamDetailView = ({
                                 {testResultSummary.score} <span className="text-sm text-gray-500 font-sans">/ 10.0</span>
                             </div>
                             {testResultSummary.hasEssay && (
-                                <p className="text-[11px] text-amber-800 font-serif-title font-bold pt-1">
-                                    ⚠️ Bài thi có {testResultSummary.essayQuestions.length} câu tự luận. Bạn có thể đối chiếu lời giải chi tiết bên dưới để tự chấm phần tự luận!
+                                <p className="text-[11px] text-brand-jasper font-serif-title font-bold pt-1 flex items-center gap-1.5">
+                                    <AlertCircle size={13} className="shrink-0" /> Bài thi có {testResultSummary.essayQuestions.length} câu tự luận. Bạn có thể đối chiếu lời giải chi tiết bên dưới để tự chấm phần tự luận!
                                 </p>
                             )}
                         </div>

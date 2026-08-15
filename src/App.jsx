@@ -41,6 +41,7 @@ import {
     Sparkles,
     AlertCircle,
     AlertTriangle,
+    Info,
     LogOut
 } from 'lucide-react';
 import {
@@ -55,7 +56,8 @@ import {
     getCollectionRef,
     getDocRef,
     setPersistence,
-    browserLocalPersistence
+    browserLocalPersistence,
+    handleFirestoreError
 } from './firebase';
 import { signOut } from 'firebase/auth';
 import { writeBatch } from 'firebase/firestore';
@@ -662,31 +664,45 @@ const RuleValidationPanel = ({ program, modules }) => {
     const { evalType, blocks, totalEarned, totalTarget, unit, missingBlocks, isComplete } = breakdown;
 
     return (
-        <div className="bg-white border-editorial p-6 shadow-editorial space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-brand-cerulean/20 pb-3">
-                <div className="flex items-center gap-3">
-                    <div className={`p-2.5 rounded-full ${isComplete ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                        {isComplete ? <CheckCircle2 size={22} /> : <AlertTriangle size={22} />}
+        <div className="bg-white border-editorial p-6 shadow-editorial space-y-5">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-brand-cerulean/20 pb-4">
+                <div className="flex items-center gap-3.5">
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border transition-all ${
+                        isComplete 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 shadow-xs' 
+                            : 'bg-brand-cerulean/10 text-brand-cerulean border-brand-cerulean/25 shadow-xs'
+                    }`}>
+                        {isComplete ? <CheckCircle2 size={22} /> : <AlertCircle size={22} />}
                     </div>
                     <div>
                         <h4 className="text-xl font-serif-title text-brand-cerulean font-bold">
                             Quy tắc Phân bổ & Kiểm tra Định mức ({evalType === 'credits' ? 'Hệ Tín chỉ' : evalType === 'modules' ? 'Hệ Chuyên đề' : 'Hệ Tiết học'})
                         </h4>
-                        <p className="text-xs text-gray-500 font-sans mt-0.5">
-                            {isComplete 
-                                ? '✓ Tất cả các khối học phần đã đáp ứng đầy đủ định mức quy định!' 
-                                : `⚠️ Còn ${missingBlocks.map(b => `${b.label}: thiếu ${b.target - b.current} ${b.unit}`).join(', ')}`}
-                        </p>
+                        <div className="flex items-center gap-1.5 text-xs font-sans mt-0.5 flex-wrap">
+                            {isComplete ? (
+                                <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold">
+                                    <CheckCircle2 size={13} className="shrink-0" />
+                                    Tất cả các khối học phần đã đáp ứng đầy đủ định mức quy định!
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5 text-brand-jasper font-medium">
+                                    <AlertCircle size={13} className="shrink-0" />
+                                    Còn {missingBlocks.map(b => `${b.label}: thiếu ${b.target - b.current} ${b.unit}`).join(', ')}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
-                <div className={`px-4 py-2 font-serif-title font-bold text-sm border rounded shrink-0 ${
-                    isComplete ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-amber-50 text-amber-800 border-amber-300'
+                <div className={`px-4 py-2 font-serif-title text-sm border rounded-sm shrink-0 shadow-xs ${
+                    isComplete 
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold' 
+                        : 'bg-brand-cream text-brand-cerulean border-brand-cerulean/30'
                 }`}>
-                    Tổng tích lũy: {totalEarned} / {totalTarget} {unit}
+                    Tổng tích lũy: <span className="font-bold text-brand-jasper">{totalEarned}</span> / {totalTarget} {unit}
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
                 {blocks.map(b => {
                     const isOk = b.current >= b.target && b.target > 0;
                     const isShort = b.current < b.target && b.target > 0;
@@ -694,28 +710,35 @@ const RuleValidationPanel = ({ program, modules }) => {
                     const diff = b.target - b.current;
 
                     return (
-                        <div key={b.id || b.label} className={`p-3.5 border rounded-sm text-xs font-sans space-y-1.5 transition-all ${
+                        <div key={b.id || b.label} className={`p-4 border rounded-sm text-xs font-sans space-y-2 transition-all ${
                             isOk 
-                                ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950' 
+                                ? 'bg-emerald-50/70 border-emerald-300/80 text-emerald-950 shadow-xs' 
                                 : isShort 
-                                    ? 'bg-amber-50/80 border-amber-300 text-amber-950' 
+                                    ? 'bg-brand-cream/80 border-brand-cerulean/25 text-gray-800 shadow-xs hover:border-brand-cerulean/40' 
                                     : isOver
-                                        ? 'bg-blue-50/80 border-blue-300 text-blue-950'
-                                        : 'bg-gray-50 border-gray-200 text-gray-600'
+                                        ? 'bg-blue-50/70 border-brand-cerulean/30 text-brand-cerulean shadow-xs'
+                                        : 'bg-gray-50/80 border-gray-200 text-gray-600'
                         }`}>
-                            <div className="font-serif-title font-bold text-xs truncate">{b.label}</div>
-                            <div className="text-lg font-bold font-serif-title text-brand-cerulean">
-                                {b.current} <span className="text-xs text-gray-500 font-normal">/ {b.target} {b.unit}</span>
+                            <div className="font-serif-title font-bold text-xs truncate text-brand-cerulean">{b.label}</div>
+                            <div className="text-xl font-bold font-serif-title text-brand-cerulean">
+                                <span className={isShort ? 'text-brand-jasper' : isOk ? 'text-emerald-700' : 'text-brand-cerulean'}>{b.current}</span>
+                                <span className="text-xs text-gray-500 font-normal"> / {b.target} {b.unit}</span>
                             </div>
-                            <div className="font-bold text-[11px]">
+                            <div className="font-bold text-[11px] pt-0.5 border-t border-brand-cerulean/10">
                                 {b.target === 0 ? (
                                     <span className="text-gray-400 font-normal">Không quy định</span>
                                 ) : isOk && !isOver ? (
-                                    <span className="text-emerald-700">✓ Đã đủ định mức</span>
+                                    <span className="inline-flex items-center gap-1 text-emerald-700">
+                                        <CheckCircle2 size={12} className="shrink-0" /> Đã đủ định mức
+                                    </span>
                                 ) : isOver ? (
-                                    <span className="text-blue-700">ℹ️ Vượt {b.current - b.target} {b.unit}</span>
+                                    <span className="inline-flex items-center gap-1 text-brand-cerulean">
+                                        <Info size={12} className="shrink-0" /> Vượt {b.current - b.target} {b.unit}
+                                    </span>
                                 ) : (
-                                    <span className="text-amber-700">⚠️ Thiếu {diff} {b.unit}</span>
+                                    <span className="inline-flex items-center gap-1 text-brand-jasper">
+                                        <AlertCircle size={12} className="shrink-0" /> Thiếu {diff} {b.unit}
+                                    </span>
                                 )}
                             </div>
                         </div>
@@ -879,6 +902,17 @@ const ProgressBar = ({ current, total, label }) => {
 
 const DEFAULT_PROGRAMS = [
     {
+        id: "prog_daihoc_sp_toan_2027",
+        name: "Cử nhân Sư phạm Toán học 2023 - 2027",
+        description: "Chương trình đào tạo Cử nhân Sư phạm Toán học 4 năm (135 Tín chỉ), chuẩn kiểm định chất lượng giáo dục đại học.",
+        category: "dai_hoc",
+        evaluationType: "credits",
+        totalCreditsRequired: 135,
+        status: "active",
+        isEnrolled: true,
+        rules: { general: 28, fundamentalMandatory: 26, fundamentalElective: 8, specializedMandatory: 42, specializedElective: 16, internshipGraduation: 15 }
+    },
+    {
         id: "prog_nvsp_thcs_2026",
         name: "Nghiệp vụ sư phạm THCS 2026",
         description: "Khóa đào tạo bồi dưỡng nghiệp vụ sư phạm cấp THCS dành cho cử nhân các chuyên ngành phù hợp.",
@@ -902,7 +936,186 @@ const DEFAULT_PROGRAMS = [
     }
 ];
 
+const DEFAULT_MODULES = [
+    // Học kỳ 1 (Năm 1)
+    {
+        id: "mod_dh_triet_hoc",
+        programIds: ["prog_daihoc_sp_toan_2027"],
+        code: "PHI101",
+        name: "Triết học Mác - Lênin",
+        credits: 3,
+        category: "general",
+        knowledgeBlock: "general",
+        semester: "1",
+        type: "mandatory",
+        status: "completed",
+        syllabus: {
+            description: "Học phần trang bị thế giới quan duy vật biện chứng và phương pháp luận khoa học.",
+            clos: ["Hiểu các quy luật biện chứng duy vật", "Vận dụng tư duy logic vào khoa học Toán"],
+            weights: { attendance: 10, midterm: 30, final: 60 }
+        },
+        grades: { attendance: 9.0, midterm: 8.5, final: 8.5 }
+    },
+    {
+        id: "mod_dh_giai_tich_1",
+        programIds: ["prog_daihoc_sp_toan_2027"],
+        code: "MTH101",
+        name: "Giải tích 1",
+        credits: 3,
+        category: "general",
+        knowledgeBlock: "general",
+        semester: "1",
+        type: "mandatory",
+        status: "completed",
+        syllabus: {
+            description: "Phép tính vi tích phân hàm một biến số thực, chuỗi số và chuỗi hàm.",
+            clos: ["Thành thạo tính giới hạn, đạo hàm và tích phân", "Khảo sát và vẽ đường cong"],
+            weights: { attendance: 10, midterm: 30, final: 60 }
+        },
+        grades: { attendance: 9.5, midterm: 9.0, final: 9.0 }
+    },
+    {
+        id: "mod_dh_dai_so_tuyen_tinh",
+        programIds: ["prog_daihoc_sp_toan_2027"],
+        code: "MTH102",
+        name: "Đại số tuyến tính & Hình học giải tích",
+        credits: 3,
+        category: "general",
+        knowledgeBlock: "general",
+        semester: "1",
+        type: "mandatory",
+        status: "completed",
+        grades: { attendance: 9.0, midterm: 8.5, final: 8.8 }
+    },
+    {
+        id: "mod_dh_tin_hoc_dc",
+        programIds: ["prog_daihoc_sp_toan_2027"],
+        code: "INF101",
+        name: "Tin học đại cương & Lập trình Python cơ bản",
+        credits: 3,
+        category: "general",
+        knowledgeBlock: "general",
+        semester: "1",
+        type: "mandatory",
+        status: "completed",
+        grades: { attendance: 10, midterm: 9.5, final: 9.5 }
+    },
+    {
+        id: "mod_dh_tieng_anh_1",
+        programIds: ["prog_daihoc_sp_toan_2027"],
+        code: "ENG101",
+        name: "Tiếng Anh tổng quát 1",
+        credits: 3,
+        category: "general",
+        knowledgeBlock: "general",
+        semester: "1",
+        type: "mandatory",
+        status: "completed",
+        grades: { attendance: 9.0, midterm: 8.0, final: 8.5 }
+    },
+    // Học kỳ 2 (Năm 1)
+    {
+        id: "mod_dh_giai_tich_2",
+        programIds: ["prog_daihoc_sp_toan_2027"],
+        code: "MTH201",
+        name: "Giải tích 2 (Giải tích đa biến)",
+        credits: 3,
+        category: "fundamental",
+        knowledgeBlock: "fundamental",
+        semester: "2",
+        type: "mandatory",
+        prerequisites: "MTH101",
+        status: "in_progress",
+        grades: { attendance: 9.0, midterm: 8.5, final: 0 }
+    },
+    {
+        id: "mod_dh_cau_truc_dai_so",
+        programIds: ["prog_daihoc_sp_toan_2027"],
+        code: "MTH202",
+        name: "Cấu trúc đại số (Nhóm, Vành, Trường)",
+        credits: 3,
+        category: "fundamental",
+        knowledgeBlock: "fundamental",
+        semester: "2",
+        type: "mandatory",
+        prerequisites: "MTH102",
+        status: "in_progress",
+        grades: { attendance: 8.5, midterm: 8.0, final: 0 }
+    },
+    {
+        id: "mod_dh_giao_duc_hoc",
+        programIds: ["prog_daihoc_sp_toan_2027"],
+        code: "PED201",
+        name: "Giáo dục học & Tâm lý học lứa tuổi",
+        credits: 3,
+        category: "fundamental",
+        knowledgeBlock: "fundamental",
+        semester: "2",
+        type: "mandatory",
+        status: "in_progress",
+        grades: { attendance: 9.0, midterm: 9.0, final: 0 }
+    },
+    // Học kỳ 3 (Năm 2)
+    {
+        id: "mod_dh_ppdh_toan",
+        programIds: ["prog_daihoc_sp_toan_2027"],
+        code: "PED301",
+        name: "Lý luận và Phương pháp dạy học môn Toán",
+        credits: 4,
+        category: "specialized",
+        knowledgeBlock: "specialized",
+        semester: "3",
+        type: "mandatory",
+        status: "planned"
+    },
+    {
+        id: "mod_dh_hinh_hoc_vi_phan",
+        programIds: ["prog_daihoc_sp_toan_2027"],
+        code: "MTH305",
+        name: "Hình học vi phân & Tô pô đại cương",
+        credits: 3,
+        category: "specialized",
+        knowledgeBlock: "specialized",
+        semester: "3",
+        type: "elective",
+        isSelected: true,
+        status: "planned"
+    },
+    // Học kỳ 7 & 8 (Năm 4)
+    {
+        id: "mod_dh_thuc_tap_sp",
+        programIds: ["prog_daihoc_sp_toan_2027"],
+        code: "PED401",
+        name: "Thực tập sư phạm tại trường THPT",
+        credits: 7,
+        category: "internship",
+        knowledgeBlock: "internship",
+        semester: "7",
+        type: "practice",
+        status: "planned"
+    },
+    {
+        id: "mod_dh_khoa_luan",
+        programIds: ["prog_daihoc_sp_toan_2027"],
+        code: "THE499",
+        name: "Khóa luận tốt nghiệp Cử nhân Sư phạm",
+        credits: 8,
+        category: "internship",
+        knowledgeBlock: "internship",
+        semester: "8",
+        type: "mandatory",
+        status: "planned"
+    }
+];
+
 const getCategoryPresets = (category) => {
+    if (category === 'dai_hoc') {
+        return {
+            evaluationType: 'credits',
+            totalCreditsRequired: 135,
+            rules: { general: 28, fundamentalMandatory: 26, fundamentalElective: 8, specializedMandatory: 42, specializedElective: 16, internshipGraduation: 15 }
+        };
+    }
     if (category === 'nhanh_b') {
         return {
             evaluationType: 'modules',
@@ -927,7 +1140,7 @@ const getCategoryPresets = (category) => {
 
 const normalizeProgram = (prog) => {
     if (!prog) return prog;
-    const category = prog.category || (prog.rules ? 'nhanh_a' : 'nhanh_b');
+    const category = prog.category || (prog.rules?.general !== undefined ? 'dai_hoc' : prog.rules ? 'nhanh_a' : 'nhanh_b');
     let defaultEval = 'credits';
     if (category === 'nhanh_b') defaultEval = 'modules';
     else if (category === 'nhanh_c') defaultEval = 'hours';
@@ -942,7 +1155,54 @@ const calculateRuleBreakdown = (program, modules = []) => {
     if (!program) return null;
     const progModules = modules.filter(m => isModuleInProgram(m, program.id));
     const evalType = program.evaluationType || (program.category === 'nhanh_b' ? 'modules' : program.category === 'nhanh_c' ? 'hours' : 'credits');
-    const rules = program.rules || { mandatoryA: 15, electiveA: 2, mandatoryB: 9, practiceB: 6, electiveB: 2 };
+    const isDaiHoc = program.category === 'dai_hoc' || program.rules?.general !== undefined;
+    const rules = program.rules || (isDaiHoc
+        ? { general: 28, fundamentalMandatory: 26, fundamentalElective: 8, specializedMandatory: 42, specializedElective: 16, internshipGraduation: 15 }
+        : { mandatoryA: 15, electiveA: 2, mandatoryB: 9, practiceB: 6, electiveB: 2 }
+    );
+
+    if (isDaiHoc && evalType === 'credits') {
+        const activeMods = progModules.filter(m => m.type !== 'elective' || m.isSelected !== false);
+
+        const currentGeneral = activeMods.filter(m => m.knowledgeBlock === 'general' || m.category === 'general' || m.category === 'A' || (!m.knowledgeBlock && (!m.category || m.category === 'general'))).reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentFundamentalMandatory = activeMods.filter(m => (m.knowledgeBlock === 'fundamental' || m.category === 'fundamental' || m.category === 'B') && (m.type === 'mandatory' || !m.type)).reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentFundamentalElective = activeMods.filter(m => (m.knowledgeBlock === 'fundamental' || m.category === 'fundamental' || m.category === 'B') && m.type === 'elective').reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentSpecializedMandatory = activeMods.filter(m => (m.knowledgeBlock === 'specialized' || m.category === 'specialized' || m.category === 'C') && (m.type === 'mandatory' || !m.type)).reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentSpecializedElective = activeMods.filter(m => (m.knowledgeBlock === 'specialized' || m.category === 'specialized' || m.category === 'C') && m.type === 'elective').reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentInternship = activeMods.filter(m => m.knowledgeBlock === 'internship' || m.category === 'internship' || m.type === 'practice').reduce((s, m) => s + Number(m.credits || 0), 0);
+
+        const targetGeneral = rules.general ?? 28;
+        const targetFundamentalMandatory = rules.fundamentalMandatory ?? rules.fundamental ?? 26;
+        const targetFundamentalElective = rules.fundamentalElective ?? 8;
+        const targetSpecializedMandatory = rules.specializedMandatory ?? 42;
+        const targetSpecializedElective = rules.specializedElective ?? 16;
+        const targetInternship = rules.internshipGraduation ?? 15;
+
+        const totalEarned = currentGeneral + currentFundamentalMandatory + currentFundamentalElective + currentSpecializedMandatory + currentSpecializedElective + currentInternship;
+        const totalTarget = program.totalCreditsRequired || (targetGeneral + targetFundamentalMandatory + targetFundamentalElective + targetSpecializedMandatory + targetSpecializedElective + targetInternship);
+
+        const blocks = [
+            { id: 'general', label: 'GD Đại cương', current: currentGeneral, target: targetGeneral, unit: 'TC' },
+            { id: 'fundamentalMandatory', label: 'Cơ sở ngành (BB)', current: currentFundamentalMandatory, target: targetFundamentalMandatory, unit: 'TC' },
+            { id: 'fundamentalElective', label: 'Cơ sở ngành (TC)', current: currentFundamentalElective, target: targetFundamentalElective, unit: 'TC' },
+            { id: 'specializedMandatory', label: 'Chuyên ngành (BB)', current: currentSpecializedMandatory, target: targetSpecializedMandatory, unit: 'TC' },
+            { id: 'specializedElective', label: 'Chuyên ngành (TC)', current: currentSpecializedElective, target: targetSpecializedElective, unit: 'TC' },
+            { id: 'internshipGraduation', label: 'Thực tập & Khóa luận', current: currentInternship, target: targetInternship, unit: 'TC' },
+        ];
+
+        const missingBlocks = blocks.filter(b => b.target > 0 && b.current < b.target);
+        const isComplete = missingBlocks.length === 0 && totalEarned >= totalTarget;
+
+        return {
+            evalType,
+            blocks,
+            totalEarned,
+            totalTarget,
+            unit: 'TC',
+            missingBlocks,
+            isComplete
+        };
+    }
 
     if (evalType === 'credits') {
         const activeMods = progModules.filter(m => m.type !== 'elective' || m.isSelected);
@@ -1606,9 +1866,11 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        totalCreditsRequired: 34,
+        category: 'dai_hoc',
+        evaluationType: 'credits',
+        totalCreditsRequired: 135,
         status: 'active',
-        rules: { mandatoryA: 15, electiveA: 2, mandatoryB: 9, practiceB: 6, electiveB: 2 }
+        rules: { general: 28, fundamentalMandatory: 26, fundamentalElective: 8, specializedMandatory: 42, specializedElective: 16, internshipGraduation: 15 }
     });
 
     const statusFilterOptions = [
@@ -1617,6 +1879,30 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
         { label: 'Lên kế hoạch', value: 'planning' },
         { label: 'Đã hoàn thành', value: 'completed' },
     ];
+
+    const handleUpdateProgramFormRule = (field, val) => {
+        const num = Math.max(0, parseInt(val, 10) || 0);
+        const nextRules = { ...formData.rules, [field]: num };
+        setFormData({
+            ...formData,
+            rules: nextRules
+        });
+    };
+
+    const programTotalCredits = formData.category === 'dai_hoc'
+        ? ((formData.rules?.general ?? 0) +
+           (formData.rules?.fundamentalMandatory ?? formData.rules?.fundamental ?? 0) +
+           (formData.rules?.fundamentalElective ?? 0) +
+           (formData.rules?.specializedMandatory ?? 0) +
+           (formData.rules?.specializedElective ?? 0) +
+           (formData.rules?.internshipGraduation ?? 0))
+        : formData.evaluationType === 'modules' || formData.evaluationType === 'hours'
+            ? ((formData.rules?.mandatoryA ?? 0) + (formData.rules?.electiveA ?? 0))
+            : ((formData.rules?.mandatoryA ?? 0) +
+               (formData.rules?.electiveA ?? 0) +
+               (formData.rules?.mandatoryB ?? 0) +
+               (formData.rules?.practiceB ?? 0) +
+               (formData.rules?.electiveB ?? 0));
 
     const handleCreate = (e) => {
         e.preventDefault();
@@ -1632,9 +1918,11 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
         setFormData({
             name: '',
             description: '',
-            totalCreditsRequired: 34,
+            category: 'dai_hoc',
+            evaluationType: 'credits',
+            totalCreditsRequired: 135,
             status: 'active',
-            rules: { mandatoryA: 15, electiveA: 2, mandatoryB: 9, practiceB: 6, electiveB: 2 }
+            rules: { general: 28, fundamentalMandatory: 26, fundamentalElective: 8, specializedMandatory: 42, specializedElective: 16, internshipGraduation: 15 }
         });
     };
 
@@ -1647,7 +1935,7 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
             <div className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
                     <h2 className="text-4xl font-serif-title text-brand-cerulean">Quản lý Chương trình đào tạo</h2>
-                    <p className="text-lg text-gray-600 mt-2">Cấu trúc quy tắc tín chỉ các khối kiến thức & khóa đào tạo.</p>
+                    <p className="text-lg text-gray-600 mt-2">Cấu trúc quy tắc tín chỉ Đại học & Khóa bồi dưỡng nghiệp vụ.</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="w-52">
@@ -1667,6 +1955,7 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
                 {filteredPrograms.map(prog => {
                     const sharedCount = modules.filter(m => isModuleInProgram(m, prog.id) && m.programIds && m.programIds.length > 1).length;
                     const isEnrolled = prog.isEnrolled !== false;
+                    const isDaiHoc = prog.category === 'dai_hoc' || prog.rules?.general !== undefined;
 
                     return (
                         <div key={prog.id} className="border-editorial p-6 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group hover:bg-blue-50/30 transition-colors">
@@ -1684,6 +1973,11 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
                                             Chưa chọn
                                         </span>
                                     )}
+                                    {isDaiHoc && (
+                                        <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-800 text-xs font-bold font-serif-title rounded border border-emerald-300">
+                                            Bậc Đại học (4 năm)
+                                        </span>
+                                    )}
                                     {sharedCount > 0 && (
                                         <span className="px-2.5 py-0.5 bg-blue-50 text-brand-cerulean/80 text-xs font-bold font-serif-title rounded border border-brand-cerulean/20">
                                             {sharedCount} học phần dùng chung
@@ -1692,42 +1986,32 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
                                 </div>
                                 <p className="text-gray-600 text-sm line-clamp-2">{prog.description}</p>
                                 
-                                {/* Dynamic Rules breakdown display according to evaluationType */}
-                                {prog.evaluationType === 'modules' ? (
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-serif bg-emerald-50/60 p-3 border border-emerald-200">
-                                        <div><strong className="text-emerald-900">Chuyên đề Bắt buộc:</strong> {prog.rules?.mandatoryA || 4} chuyên đề</div>
-                                        <div><strong className="text-emerald-900">Chuyên đề Tự chọn:</strong> {prog.rules?.electiveA || 2} chuyên đề</div>
-                                        <div><strong className="text-emerald-900">Tổng yêu cầu:</strong> {prog.totalCreditsRequired || 6} chuyên đề</div>
+                                {isDaiHoc ? (
+                                    <div className="pt-2 flex flex-wrap gap-2 text-xs font-sans">
+                                        <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">GD Đại cương: <b>{prog.rules?.general ?? 28} TC</b></span>
+                                        <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Cơ sở ngành (BB): <b>{prog.rules?.fundamentalMandatory ?? prog.rules?.fundamental ?? 26} TC</b></span>
+                                        <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Cơ sở ngành (TC): <b>{prog.rules?.fundamentalElective ?? 8} TC</b></span>
+                                        <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Chuyên ngành (BB): <b>{prog.rules?.specializedMandatory ?? 42} TC</b></span>
+                                        <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Chuyên ngành (TC): <b>{prog.rules?.specializedElective ?? 16} TC</b></span>
+                                        <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Thực tập & Khóa luận: <b>{prog.rules?.internshipGraduation ?? 15} TC</b></span>
                                     </div>
-                                ) : prog.evaluationType === 'hours' ? (
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-serif bg-blue-50/60 p-3 border border-blue-200">
-                                        <div><strong className="text-blue-900">Lý thuyết / Bài học:</strong> {prog.rules?.mandatoryA || 80} tiết</div>
-                                        <div><strong className="text-blue-900">Thực hành / Bài tập:</strong> {prog.rules?.electiveA || 40} tiết</div>
-                                        <div><strong className="text-blue-900">Tổng thời lượng:</strong> {prog.totalCreditsRequired || 120} tiết</div>
+                                ) : prog.evaluationType === 'credits' && prog.rules ? (
+                                    <div className="pt-2 flex flex-wrap gap-2 text-xs font-sans">
+                                        <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">A Bắt buộc: <b>{prog.rules.mandatoryA || 0} TC</b></span>
+                                        <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">A Tự chọn: <b>{prog.rules.electiveA || 0} TC</b></span>
+                                        <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">B Bắt buộc: <b>{prog.rules.mandatoryB || 0} TC</b></span>
+                                        <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">B Thực hành: <b>{prog.rules.practiceB || 0} TC</b></span>
+                                        <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">B Tự chọn: <b>{prog.rules.electiveB || 0} TC</b></span>
                                     </div>
-                                ) : (
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-serif bg-brand-cream p-3 border border-brand-cerulean/20">
-                                        <div><strong className="text-brand-cerulean">Khối A Bắt buộc:</strong> {prog.rules?.mandatoryA || 15} TC</div>
-                                        <div><strong className="text-brand-cerulean">Khối A Tự chọn:</strong> {prog.rules?.electiveA || 2} TC</div>
-                                        <div><strong className="text-brand-cerulean">Khối B Bắt buộc:</strong> {prog.rules?.mandatoryB || 9} TC</div>
-                                        <div><strong className="text-brand-cerulean">Khối B Thực hành:</strong> {prog.rules?.practiceB || 6} TC</div>
-                                    </div>
-                                )}
-
-                                <div className="flex gap-4 text-sm font-sans text-gray-500">
-                                    <span className="flex items-center gap-1">
-                                        <Target size={14} /> Tổng yêu cầu: {prog.totalCreditsRequired} {prog.evaluationType === 'modules' ? 'Chuyên đề' : prog.evaluationType === 'hours' ? 'Tiết học' : 'Tín chỉ'}
-                                    </span>
-                                    <span className="flex items-center gap-1"><Activity size={14} /> Trạng thái: {prog.status}</span>
-                                </div>
+                                ) : null}
                             </div>
-                            <div className="flex flex-col sm:flex-row md:flex-col gap-3 shrink-0 w-full md:w-auto">
+                            
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                                 <button
-                                    type="button"
                                     onClick={() => onToggleEnrollProgram && onToggleEnrollProgram(prog.id)}
-                                    className={`px-5 py-2 text-xs font-serif-title font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 rounded-sm ${
+                                    className={`px-4 py-2 text-xs font-serif-title font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
                                         isEnrolled
-                                            ? 'bg-brand-cerulean text-white hover:bg-brand-jasper'
+                                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100'
                                             : 'bg-brand-cream border border-brand-cerulean text-brand-cerulean hover:bg-brand-cerulean hover:text-white'
                                     }`}
                                 >
@@ -1746,19 +2030,19 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Khởi tạo Chương trình đào tạo mới">
                 <form onSubmit={handleCreate} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Tên chương trình (VD: NVSP THCS 2026)</label>
+                        <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Tên chương trình (VD: Cử nhân Sư phạm Toán 2023 - 2027)</label>
                         <input required type="text" className="input-editorial w-full text-xl" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Nhập tên chương trình..." />
                     </div>
                     <div>
                         <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Mô tả mục tiêu</label>
-                        <textarea className="input-editorial w-full resize-none" rows="2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Chứng chỉ nghiệp vụ sư phạm cấp trung học cơ sở..."></textarea>
+                        <textarea className="input-editorial w-full resize-none" rows="2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Chương trình đào tạo cử nhân chất lượng cao..."></textarea>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <EditorialSelect
-                                label="Phân loại Nhánh đào tạo"
-                                value={formData.category || 'nhanh_a'}
+                                label="Phân loại Cấp bậc & Nhánh đào tạo"
+                                value={formData.category || 'dai_hoc'}
                                 onChange={val => {
                                     const presets = getCategoryPresets(val);
                                     setFormData({
@@ -1770,7 +2054,8 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
                                     });
                                 }}
                                 options={[
-                                    { label: 'Nhánh A: Nghiệp vụ sư phạm (NVSP)', value: 'nhanh_a' },
+                                    { label: 'Bậc Đại học (Cử nhân / Kỹ sư 120-150 TC)', value: 'dai_hoc' },
+                                    { label: 'Nhánh A: Nghiệp vụ Sư phạm (34-36 TC)', value: 'nhanh_a' },
                                     { label: 'Nhánh B: Bồi dưỡng CDNN Giáo viên', value: 'nhanh_b' },
                                     { label: 'Nhánh C: Chứng chỉ Kỹ năng / Ngắn hạn', value: 'nhanh_c' }
                                 ]}
@@ -1782,7 +2067,7 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
                                 value={formData.evaluationType || 'credits'}
                                 onChange={val => setFormData({ ...formData, evaluationType: val })}
                                 options={[
-                                    { label: 'Hệ Tín chỉ & GPA (NVSP, Đại học)', value: 'credits' },
+                                    { label: 'Hệ Tín chỉ & GPA (Đại học, NVSP)', value: 'credits' },
                                     { label: 'Hệ Học phần & Chuyên đề (Bồi dưỡng CDNN)', value: 'modules' },
                                     { label: 'Hệ Thời lượng Tiết/Giờ học (BDTX, Kỹ năng)', value: 'hours' }
                                 ]}
@@ -1790,74 +2075,132 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
                         </div>
                     </div>
 
-                    {/* Dynamic Rule Config according to evaluationType */}
+                    {/* Dynamic Rule Config according to category and evaluationType */}
                     <div className="border p-4 bg-brand-cream border-brand-cerulean/20 space-y-4">
-                        <h4 className="font-serif-title text-brand-cerulean text-lg border-b border-brand-cerulean/20 pb-1">
-                            {formData.evaluationType === 'modules'
-                                ? 'Quy tắc phân bổ Chuyên đề (Số môn)'
-                                : formData.evaluationType === 'hours'
-                                    ? 'Quy tắc phân bổ Thời lượng (Tiết học)'
-                                    : 'Quy tắc phân bổ Tín chỉ (TC)'}
-                        </h4>
+                        <div className="flex justify-between items-center border-b border-brand-cerulean/20 pb-1">
+                            <h4 className="font-serif-title text-brand-cerulean text-lg">
+                                {formData.category === 'dai_hoc'
+                                    ? 'Cơ cấu số tín chỉ các khối có trong CTĐT'
+                                    : formData.evaluationType === 'modules'
+                                        ? 'Cơ cấu chuyên đề có trong CTĐT'
+                                        : formData.evaluationType === 'hours'
+                                            ? 'Cơ cấu thời lượng tiết học trong CTĐT'
+                                            : 'Cơ cấu tín chỉ các khối có trong CTĐT'}
+                            </h4>
+                            <span className="text-[11px] text-gray-500 font-sans italic">
+                                * Điền số lượng mở trong chương trình
+                            </span>
+                        </div>
 
-                        {formData.evaluationType === 'modules' ? (
-                            <div className="grid grid-cols-3 gap-4">
+                        {formData.category === 'dai_hoc' ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">GD Đại cương (TC)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.general ?? 28} onChange={e => handleUpdateProgramFormRule('general', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Cơ sở ngành BB (TC)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.fundamentalMandatory ?? formData.rules.fundamental ?? 26} onChange={e => handleUpdateProgramFormRule('fundamentalMandatory', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Cơ sở ngành TC (TC)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.fundamentalElective ?? 8} onChange={e => handleUpdateProgramFormRule('fundamentalElective', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Chuyên ngành BB (TC)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.specializedMandatory ?? 42} onChange={e => handleUpdateProgramFormRule('specializedMandatory', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Chuyên ngành TC (TC)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.specializedElective ?? 16} onChange={e => handleUpdateProgramFormRule('specializedElective', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Thực tập & Khóa luận (TC)</label>
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.internshipGraduation ?? 15} onChange={e => handleUpdateProgramFormRule('internshipGraduation', e.target.value)} />
+                                </div>
+                            </div>
+                        ) : formData.evaluationType === 'modules' ? (
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 mb-1">Chuyên đề Bắt buộc (Số môn)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, mandatoryA: Number(e.target.value) } })} />
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA} onChange={e => handleUpdateProgramFormRule('mandatoryA', e.target.value)} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 mb-1">Chuyên đề Tự chọn (Số môn)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, electiveA: Number(e.target.value) } })} />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-brand-cerulean mb-1">Tổng chuyên đề yêu cầu</label>
-                                    <input type="number" min="1" className="input-editorial w-full font-bold" value={formData.totalCreditsRequired} onChange={e => setFormData({ ...formData, totalCreditsRequired: Number(e.target.value) })} />
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA} onChange={e => handleUpdateProgramFormRule('electiveA', e.target.value)} />
                                 </div>
                             </div>
                         ) : formData.evaluationType === 'hours' ? (
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 mb-1">Lý thuyết / Bài học (Tiết)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, mandatoryA: Number(e.target.value) } })} />
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA} onChange={e => handleUpdateProgramFormRule('mandatoryA', e.target.value)} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 mb-1">Thực hành / Bài tập (Tiết)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, electiveA: Number(e.target.value) } })} />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-brand-cerulean mb-1">Tổng số tiết yêu cầu</label>
-                                    <input type="number" min="1" className="input-editorial w-full font-bold" value={formData.totalCreditsRequired} onChange={e => setFormData({ ...formData, totalCreditsRequired: Number(e.target.value) })} />
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA} onChange={e => handleUpdateProgramFormRule('electiveA', e.target.value)} />
                                 </div>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Bắt buộc (TC)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, mandatoryA: Number(e.target.value) } })} />
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA} onChange={e => handleUpdateProgramFormRule('mandatoryA', e.target.value)} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Tự chọn (TC)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, electiveA: Number(e.target.value) } })} />
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA} onChange={e => handleUpdateProgramFormRule('electiveA', e.target.value)} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Bắt buộc (TC)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryB} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, mandatoryB: Number(e.target.value) } })} />
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryB} onChange={e => handleUpdateProgramFormRule('mandatoryB', e.target.value)} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Thực hành (TC)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.practiceB} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, practiceB: Number(e.target.value) } })} />
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.practiceB} onChange={e => handleUpdateProgramFormRule('practiceB', e.target.value)} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Tự chọn (TC)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveB} onChange={e => setFormData({ ...formData, rules: { ...formData.rules, electiveB: Number(e.target.value) } })} />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-brand-cerulean mb-1">Tổng tín chỉ yêu cầu</label>
-                                    <input type="number" min="1" className="input-editorial w-full font-bold" value={formData.totalCreditsRequired} onChange={e => setFormData({ ...formData, totalCreditsRequired: Number(e.target.value) })} />
+                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveB} onChange={e => handleUpdateProgramFormRule('electiveB', e.target.value)} />
                                 </div>
                             </div>
                         )}
+
+                        {/* Summary & Graduation Target Requirement */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-brand-cerulean/20">
+                            <div className="p-3.5 bg-blue-50/70 border border-brand-cerulean/25 rounded space-y-1">
+                                <div className="text-xs font-bold text-gray-700">
+                                    Tổng số {formData.evaluationType === 'modules' ? 'chuyên đề' : formData.evaluationType === 'hours' ? 'tiết học' : 'TC'} có trong CTĐT (Tự động cộng)
+                                </div>
+                                <div className="text-2xl font-serif-title font-bold text-brand-cerulean flex items-baseline gap-1.5">
+                                    <span>{programTotalCredits}</span>
+                                    <span className="text-xs font-sans text-gray-500 font-normal">
+                                        {formData.evaluationType === 'modules' ? 'chuyên đề mở' : formData.evaluationType === 'hours' ? 'tiết' : 'tín chỉ mở'}
+                                    </span>
+                                </div>
+                                <p className="text-[11px] text-gray-500 italic">Tổng số lượng có trong toàn bộ danh mục chương trình đào tạo</p>
+                            </div>
+                            <div className="p-3.5 bg-amber-50/80 border border-amber-300 rounded space-y-1">
+                                <label className="block text-xs font-bold text-brand-jasper">
+                                    Số {formData.evaluationType === 'modules' ? 'chuyên đề' : formData.evaluationType === 'hours' ? 'tiết' : 'tín chỉ'} cần học để tốt nghiệp (Định mức) *
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        required
+                                        className="input-editorial w-full font-bold text-brand-jasper bg-white text-lg"
+                                        value={formData.totalCreditsRequired}
+                                        onChange={e => setFormData({ ...formData, totalCreditsRequired: Number(e.target.value) })}
+                                        placeholder={formData.category === 'dai_hoc' ? "VD: 135" : "VD: 34"}
+                                    />
+                                    <span className="text-xs font-bold font-serif-title text-brand-jasper shrink-0">
+                                        {formData.evaluationType === 'modules' ? 'Chuyên đề' : formData.evaluationType === 'hours' ? 'Tiết' : 'TC'}
+                                    </span>
+                                </div>
+                                <p className="text-[11px] text-brand-jasper/80 italic">Số tín chỉ thực tế sinh viên phải tích lũy để được xét tốt nghiệp</p>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="pt-4 flex justify-end gap-4">
@@ -1873,25 +2216,63 @@ const ProgramsView = ({ programs, modules = [], onAddProgram, onToggleEnrollProg
 // PROGRAM DETAIL VIEW
 const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule, onUpdateModule, onDeleteModule, onUpdateProgram, navigate }) => {
     const program = programs.find(p => p.id === programId) || (programs && programs.length > 0 ? programs[0] : null);
+    const isDaiHoc = program?.category === 'dai_hoc' || program?.rules?.general !== undefined;
+
     const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
     const [editingModule, setEditingModule] = useState(null);
     const [isProgramEditModalOpen, setIsProgramEditModalOpen] = useState(false);
+    const [isDescExpanded, setIsDescExpanded] = useState(false);
+    const [viewMode, setViewMode] = useState('category'); // 'category' | 'semester'
     const [programFormData, setProgramFormData] = useState(null);
     const [categoryFilter, setCategoryFilter] = useState('all');
-    const [modForm, setModForm] = useState({ code: '', name: '', credits: 2, category: 'A', type: 'mandatory' });
+    const [semesterFilter, setSemesterFilter] = useState('all');
+    const [modForm, setModForm] = useState({
+        code: '',
+        name: '',
+        credits: isDaiHoc ? 3 : 2,
+        category: isDaiHoc ? 'general' : 'A',
+        knowledgeBlock: isDaiHoc ? 'general' : 'A',
+        semester: '1',
+        prerequisites: '',
+        type: 'mandatory'
+    });
     const [modalTab, setModalTab] = useState('create'); // 'create' | 'link'
     const [linkSearch, setLinkSearch] = useState('');
 
     const moduleTypeOptions = [
         { label: 'Bắt buộc', value: 'mandatory' },
         { label: 'Tự chọn', value: 'elective' },
-        { label: 'Thực hành', value: 'practice' },
+        { label: 'Thực hành / Khóa luận', value: 'practice' },
     ];
 
-    const categoryFormOptions = [
-        { label: 'A', value: 'A' },
-        { label: 'B', value: 'B' },
-        { label: 'C', value: 'C' },
+    const categoryFormOptions = isDaiHoc
+        ? [
+            { label: 'GD Đại cương', value: 'general' },
+            { label: 'Cơ sở ngành & Bổ trợ', value: 'fundamental' },
+            { label: 'Chuyên ngành', value: 'specialized' },
+            { label: 'Thực tập & Khóa luận tốt nghiệp', value: 'internship' },
+        ]
+        : [
+            { label: 'Nhánh A', value: 'A' },
+            { label: 'Nhánh B', value: 'B' },
+            { label: 'Nhánh C', value: 'C' },
+        ];
+
+    const semesterOptions = [
+        { label: 'Học kỳ 1 (Năm 1)', value: '1' },
+        { label: 'Học kỳ 2 (Năm 1)', value: '2' },
+        { label: 'Học kỳ 3 (Năm 2)', value: '3' },
+        { label: 'Học kỳ 4 (Năm 2)', value: '4' },
+        { label: 'Học kỳ 5 (Năm 3)', value: '5' },
+        { label: 'Học kỳ 6 (Năm 3)', value: '6' },
+        { label: 'Học kỳ 7 (Năm 4)', value: '7' },
+        { label: 'Học kỳ 8 (Năm 4)', value: '8' },
+        { label: 'Kỳ hè / Dự thính', value: 'summer' }
+    ];
+
+    const semesterFilterOptions = [
+        { label: 'Tất cả các học kỳ', value: 'all' },
+        ...semesterOptions
     ];
 
     const statusOptions = [
@@ -1916,9 +2297,14 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
         );
     }
 
-    // Auto-generate next module code number based on category (e.g. A01, A02 -> A03)
+    // Auto-generate next module code number based on category
     const generateNextModuleCode = (category, currentModules) => {
         if (!category) return '';
+        if (isDaiHoc) {
+            const prefix = category === 'general' ? 'GEN' : category === 'fundamental' ? 'BAS' : category === 'specialized' ? 'SPE' : 'INT';
+            const count = currentModules.filter(m => m.category === category || m.knowledgeBlock === category).length + 1;
+            return `${prefix}${String(count).padStart(2, '0')}`;
+        }
         const prefix = category.toUpperCase();
         const existingForCat = currentModules.filter(m => (m.category || '').toUpperCase() === prefix);
 
@@ -1939,9 +2325,18 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
     };
 
     const handleOpenAddModal = () => {
-        const defaultCat = 'A';
+        const defaultCat = isDaiHoc ? 'general' : 'A';
         const autoCode = generateNextModuleCode(defaultCat, programModules);
-        setModForm({ code: autoCode, name: '', credits: 2, category: defaultCat, type: 'mandatory' });
+        setModForm({
+            code: autoCode,
+            name: '',
+            credits: isDaiHoc ? 3 : 2,
+            category: defaultCat,
+            knowledgeBlock: defaultCat,
+            semester: semesterFilter !== 'all' ? semesterFilter : '1',
+            prerequisites: '',
+            type: 'mandatory'
+        });
         setIsModuleModalOpen(true);
     };
 
@@ -1953,6 +2348,9 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
             ...modForm,
             code: (modForm.code || '').toUpperCase().trim(),
             credits: Number(modForm.credits),
+            semester: modForm.semester || '1',
+            prerequisites: modForm.prerequisites?.trim() || '',
+            knowledgeBlock: modForm.category || 'general',
             status: 'planned',
             syllabus: {
                 description: '',
@@ -1963,8 +2361,18 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
         };
         onAddModule(newMod);
         setIsModuleModalOpen(false);
-        const autoCode = generateNextModuleCode('A', [...programModules, newMod]);
-        setModForm({ code: autoCode, name: '', credits: 2, category: 'A', type: 'mandatory' });
+        const defaultCat = isDaiHoc ? 'general' : 'A';
+        const autoCode = generateNextModuleCode(defaultCat, [...programModules, newMod]);
+        setModForm({
+            code: autoCode,
+            name: '',
+            credits: isDaiHoc ? 3 : 2,
+            category: defaultCat,
+            knowledgeBlock: defaultCat,
+            semester: semesterFilter !== 'all' ? semesterFilter : '1',
+            prerequisites: '',
+            type: 'mandatory'
+        });
     };
 
     // Link an existing module from another program into this program
@@ -1990,16 +2398,17 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
         if (isCurrentlySelected) {
             onUpdateModule({ ...targetMod, isSelected: false });
         } else {
-            // Select targetMod and unselect all other electives in the same category/branch
+            // Select targetMod and unselect other electives in same group/semester if needed
             programModules.forEach(m => {
                 if (m.category === targetMod.category && m.type === 'elective') {
                     if (m.id === targetMod.id) {
                         onUpdateModule({ ...m, isSelected: true });
-                    } else if (m.isSelected) {
+                    } else if (m.isSelected && !isDaiHoc) {
                         onUpdateModule({ ...m, isSelected: false });
                     }
                 }
             });
+            onUpdateModule({ ...targetMod, isSelected: true });
         }
     };
 
@@ -2009,7 +2418,10 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
         onUpdateModule({
             ...editingModule,
             code: (editingModule.code || '').toUpperCase().trim(),
-            credits: Number(editingModule.credits)
+            credits: Number(editingModule.credits),
+            semester: editingModule.semester || '1',
+            prerequisites: editingModule.prerequisites?.trim() || '',
+            knowledgeBlock: editingModule.category || editingModule.knowledgeBlock || 'general'
         });
         setEditingModule(null);
     };
@@ -2022,30 +2434,97 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
         }
     };
 
-    const filteredModules = categoryFilter === 'all'
-        ? programModules
-        : programModules.filter(m => m.category === categoryFilter);
+    const filteredModules = programModules.filter(m => {
+        const catMatch = categoryFilter === 'all' || m.category === categoryFilter || (isDaiHoc && m.knowledgeBlock === categoryFilter);
+        const semMatch = !isDaiHoc || semesterFilter === 'all' || String(m.semester || '1') === String(semesterFilter);
+        return catMatch && semMatch;
+    });
 
     const categoryFilterOptions = [
         { label: 'Tất cả khối kiến thức', value: 'all' },
-        ...Array.from(new Set(programModules.map(m => m.category))).map(cat => ({ label: `Nhánh ${cat}`, value: cat }))
+        ...(isDaiHoc
+            ? [
+                { label: 'Khối GD Đại cương', value: 'general' },
+                { label: 'Khối Cơ sở ngành & Bổ trợ', value: 'fundamental' },
+                { label: 'Khối Chuyên ngành', value: 'specialized' },
+                { label: 'Khối Thực tập & Tốt nghiệp', value: 'internship' },
+            ]
+            : Array.from(new Set(programModules.map(m => m.category))).map(cat => ({ label: `Nhánh ${cat}`, value: cat }))
+        )
     ];
 
+    const getCategoryTitle = (cat) => {
+        if (cat === 'general') return 'KHỐI KIẾN THỨC GIÁO DỤC ĐẠI CƯƠNG';
+        if (cat === 'fundamental') return 'KHỐI KIẾN THỨC CƠ SỞ NGÀNH & BỔ TRỢ';
+        if (cat === 'specialized') return 'KHỐI KIẾN THỨC CHUYÊN NGÀNH';
+        if (cat === 'internship') return 'KHỐI THỰC TẬP & TỐT NGHIỆP';
+        return `NHÁNH ${cat}`;
+    };
+
+    const getSemesterTitle = (sem) => {
+        switch (String(sem)) {
+            case '1': return 'HỌC KỲ 1 (NĂM THỨ NHẤT)';
+            case '2': return 'HỌC KỲ 2 (NĂM THỨ NHẤT)';
+            case '3': return 'HỌC KỲ 3 (NĂM THỨ HAI)';
+            case '4': return 'HỌC KỲ 4 (NĂM THỨ HAI)';
+            case '5': return 'HỌC KỲ 5 (NĂM THỨ BA)';
+            case '6': return 'HỌC KỲ 6 (NĂM THỨ BA)';
+            case '7': return 'HỌC KỲ 7 (NĂM THỨ TƯ)';
+            case '8': return 'HỌC KỲ 8 (NĂM THỨ TƯ)';
+            case 'summer': return 'HỌC KỲ HÈ (BỔ TRỢ / DỰ THÍNH)';
+            default: return `HỌC KỲ ${sem}`;
+        }
+    };
+
     const groupedModules = filteredModules.reduce((acc, mod) => {
-        (acc[mod.category] = acc[mod.category] || []).push(mod);
+        const key = mod.category || mod.knowledgeBlock || (isDaiHoc ? 'general' : 'A');
+        (acc[key] = acc[key] || []).push(mod);
         return acc;
     }, {});
+
+    const groupedBySemester = filteredModules.reduce((acc, mod) => {
+        const sem = String(mod.semester || '1');
+        (acc[sem] = acc[sem] || []).push(mod);
+        return acc;
+    }, {});
+
+    const sortedSemesters = Object.keys(groupedBySemester).sort((a, b) => {
+        if (a === 'summer') return 1;
+        if (b === 'summer') return -1;
+        const numA = parseInt(a, 10);
+        const numB = parseInt(b, 10);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.localeCompare(b);
+    });
+
+    const handleUpdateProgramFormDataRule = (field, val) => {
+        const num = Math.max(0, parseInt(val, 10) || 0);
+        const nextRules = { ...(programFormData?.rules || {}), [field]: num };
+        setProgramFormData({
+            ...programFormData,
+            rules: nextRules
+        });
+    };
 
     const handleOpenProgramEditModal = () => {
         setProgramFormData({
             ...program,
-            rules: {
-                mandatoryA: program.rules?.mandatoryA || 0,
-                electiveA: program.rules?.electiveA || 0,
-                mandatoryB: program.rules?.mandatoryB || 0,
-                practiceB: program.rules?.practiceB || 0,
-                electiveB: program.rules?.electiveB || 0,
-            }
+            rules: isDaiHoc
+                ? {
+                    general: program.rules?.general ?? 28,
+                    fundamentalMandatory: program.rules?.fundamentalMandatory ?? program.rules?.fundamental ?? 26,
+                    fundamentalElective: program.rules?.fundamentalElective ?? 8,
+                    specializedMandatory: program.rules?.specializedMandatory ?? 42,
+                    specializedElective: program.rules?.specializedElective ?? 16,
+                    internshipGraduation: program.rules?.internshipGraduation ?? 15,
+                }
+                : {
+                    mandatoryA: program.rules?.mandatoryA || 0,
+                    electiveA: program.rules?.electiveA || 0,
+                    mandatoryB: program.rules?.mandatoryB || 0,
+                    practiceB: program.rules?.practiceB || 0,
+                    electiveB: program.rules?.electiveB || 0,
+                }
         });
         setIsProgramEditModalOpen(true);
     };
@@ -2072,6 +2551,11 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                     <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-3 flex-wrap">
                             <h1 className="text-4xl sm:text-5xl font-serif-title text-brand-cerulean">{program.name}</h1>
+                            {isDaiHoc && (
+                                <span className="px-3 py-1 bg-emerald-50 text-emerald-800 text-xs font-bold font-serif-title rounded border border-emerald-300">
+                                    Bậc Đại học (4 năm &bull; 8 Học kỳ)
+                                </span>
+                            )}
                             <button
                                 onClick={handleOpenProgramEditModal}
                                 className="p-2 text-brand-cerulean hover:text-brand-jasper hover:bg-brand-cerulean/10 border border-brand-cerulean/30 rounded transition-all shadow-sm"
@@ -2080,7 +2564,22 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                 <Pencil size={18} />
                             </button>
                         </div>
-                        <p className="text-lg text-gray-600 font-body">{program.description}</p>
+                        {program.description && (
+                            <div className="max-w-3xl">
+                                <p className={`text-sm text-gray-600 font-body leading-relaxed transition-all ${!isDescExpanded ? 'line-clamp-2' : ''}`}>
+                                    {program.description}
+                                </p>
+                                {program.description.length > 120 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsDescExpanded(!isDescExpanded)}
+                                        className="inline-flex items-center gap-1 text-xs font-serif-title font-bold text-brand-cerulean hover:text-brand-jasper transition-colors mt-0.5"
+                                    >
+                                        {isDescExpanded ? 'Thu gọn ▲' : 'Xem thêm mục tiêu ▼'}
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                     <div className="text-right min-w-[200px]">
                         {program.evaluationType === 'modules' ? (
@@ -2095,7 +2594,7 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                             </>
                         ) : (
                             <>
-                                <div className="text-4xl font-serif-title text-brand-jasper">{totalProgramCredits} <span className="text-lg text-gray-500">/ {program.totalCreditsRequired || 34}</span></div>
+                                <div className="text-4xl font-serif-title text-brand-jasper">{totalProgramCredits} <span className="text-lg text-gray-500">/ {program.totalCreditsRequired || (isDaiHoc ? 135 : 34)}</span></div>
                                 <div className="text-sm uppercase tracking-wider text-brand-cerulean font-bold mt-1">Tín chỉ hiện có trong CTĐT</div>
                             </>
                         )}
@@ -2106,11 +2605,51 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
             {/* Live Rule Validation Breakdown Panel */}
             <RuleValidationPanel program={program} modules={modules} />
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-3xl font-serif-title text-brand-cerulean">Danh sách Học phần theo Đề cương</h2>
-                <div className="flex items-center gap-4">
+            {/* Action Bar with View Mode Switcher and Filters */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-brand-cerulean/20 pb-4">
+                <div className="space-y-2">
+                    <h2 className="text-3xl font-serif-title text-brand-cerulean">
+                        {viewMode === 'category' ? 'Danh sách Học phần theo Khối kiến thức' : 'Lộ trình Học phần theo Từng Học kỳ'}
+                    </h2>
+                    {/* View Switcher Toggle */}
+                    <div className="inline-flex p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs">
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('category')}
+                            className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-serif-title font-bold transition-all rounded ${
+                                viewMode === 'category'
+                                    ? 'bg-brand-cerulean text-white shadow-xs'
+                                    : 'text-brand-cerulean hover:bg-brand-cerulean/10'
+                            }`}
+                        >
+                            <BookOpen size={14} /> Theo Khối kiến thức
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('semester')}
+                            className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-serif-title font-bold transition-all rounded ${
+                                viewMode === 'semester'
+                                    ? 'bg-brand-cerulean text-white shadow-xs'
+                                    : 'text-brand-cerulean hover:bg-brand-cerulean/10'
+                            }`}
+                        >
+                            <Calendar size={14} /> Theo Học kỳ (Kỳ 1 - Kỳ 8)
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                    {isDaiHoc && viewMode === 'category' && (
+                        <div className="w-48">
+                            <EditorialSelect
+                                value={semesterFilter}
+                                onChange={setSemesterFilter}
+                                options={semesterFilterOptions}
+                            />
+                        </div>
+                    )}
                     {programModules.length > 0 && (
-                        <div className="w-60">
+                        <div className="w-52">
                             <EditorialSelect
                                 value={categoryFilter}
                                 onChange={setCategoryFilter}
@@ -2124,171 +2663,88 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                 </div>
             </div>
 
-            {Object.keys(groupedModules).length === 0 ? (
-                <div className="p-12 border border-dashed border-brand-cerulean text-center">
-                    <p className="text-xl font-serif-title text-gray-500">Chưa có học phần nào trong cấu trúc này.</p>
-                </div>
-            ) : (
-                <div className="space-y-12">
-                    {Object.entries(groupedModules).map(([category, mods]) => {
-                        const mandatoryAndPractice = mods.filter(m => m.type !== 'elective');
-                        const electives = mods.filter(m => m.type === 'elective');
+            {/* Render Modules: View Mode = Semester */}
+            {viewMode === 'semester' ? (
+                Object.keys(groupedBySemester).length === 0 ? (
+                    <div className="p-12 border border-dashed border-brand-cerulean text-center bg-white">
+                        <p className="text-xl font-serif-title text-gray-500">Chưa có học phần nào trong bộ lọc này.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-10">
+                        {sortedSemesters.map(semKey => {
+                            const mods = groupedBySemester[semKey] || [];
+                            const mandatoryAndPractice = mods.filter(m => m.type !== 'elective');
+                            const electives = mods.filter(m => m.type === 'elective');
+                            const semTotalCredits = mods.reduce((s, m) => s + Number(m.credits || 0), 0);
 
-                        // Check if any elective in this branch is currently selected
-                        const selectedElectiveId = electives.find(m => m.isSelected)?.id;
-
-                        return (
-                            <section key={category} className="space-y-6 break-inside-avoid bg-white p-6 border-editorial shadow-editorial">
-                                <div className="flex justify-between items-center border-b border-brand-cerulean pb-3">
-                                    <h3 className="text-3xl font-serif-title text-brand-cerulean uppercase tracking-wider">
-                                        NHÁNH {category}
-                                    </h3>
-                                    <span className="text-xs font-serif-title text-gray-500 uppercase tracking-widest">
-                                        {mods.length} Học phần
-                                    </span>
-                                </div>
-
-                                {/* PART 1: BẮT BUỘC & THỰC HÀNH */}
-                                <div className="space-y-3">
-                                    <h4 className="text-lg font-serif-title text-brand-jasper font-bold flex items-center gap-2 border-b border-brand-jasper/20 pb-1">
-                                        <span className="w-2.5 h-2.5 rounded-full bg-brand-jasper"></span>
-                                        I. Học phần Bắt buộc & Thực hành ({mandatoryAndPractice.length})
-                                    </h4>
-                                    {mandatoryAndPractice.length === 0 ? (
-                                        <p className="text-sm text-gray-400 italic py-2">Chưa có học phần bắt buộc/thực hành nào.</p>
-                                    ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[460px] overflow-y-auto pr-2">
-                                            {mandatoryAndPractice.map(mod => (
-                                                <div
-                                                    key={mod.id}
-                                                    className="border border-brand-cerulean/30 p-4 bg-brand-cream/30 relative group shadow-sm hover:border-brand-cerulean hover:shadow-editorial transition-all"
-                                                >
-                                                    <div className="absolute top-0 right-0 bg-brand-cerulean text-white px-2 py-1 text-xs font-bold">
-                                                        {mod.credits} TC
-                                                    </div>
-                                                    <div className="pr-12">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <span className="text-sm font-sans font-bold text-gray-500">{(mod.code || '').toUpperCase()}</span>
-                                                            {mod.programIds && mod.programIds.length > 1 && (
-                                                                <span className="px-1.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-[10px] font-bold font-serif-title rounded border border-brand-cerulean/20 flex items-center gap-1">
-                                                                    <Link2 size={10} /> Dùng chung ({mod.programIds.length} CT)
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <h4
-                                                            onClick={() => navigate('module_detail', { moduleId: mod.id, programId: program.id })}
-                                                            className="text-xl font-serif-title text-brand-cerulean leading-tight mt-1 mb-2 group-hover:text-brand-jasper transition-colors cursor-pointer"
-                                                        >
-                                                            {formatModuleName(mod.name, profile?.teachingSubject || profile?.major)}
-                                                        </h4>
-                                                        <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
-                                                            <span className="text-xs italic text-gray-500">
-                                                                {mod.type === 'mandatory' ? 'Bắt buộc' : 'Thực hành'} &bull; {mod.status === 'completed' ? 'Đã hoàn thành' : mod.status === 'in_progress' ? 'Đang học' : 'Lên kế hoạch'}
-                                                            </span>
-                                                            <div className="flex items-center gap-2">
-                                                                <button
-                                                                    type="button"
-                                                                    title="Sửa thông tin học phần"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setEditingModule({ ...mod, code: (mod.code || '').toUpperCase() });
-                                                                    }}
-                                                                    className="p-1.5 text-brand-cerulean hover:text-brand-jasper hover:bg-brand-cerulean/10 rounded transition-colors"
-                                                                >
-                                                                    <Pencil size={15} />
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        navigate('module_detail', { moduleId: mod.id, programId: program.id });
-                                                                    }}
-                                                                    className="text-sm font-serif-title text-brand-jasper hover:underline font-bold flex items-center gap-1"
-                                                                >
-                                                                    Chi tiết &rarr;
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                            return (
+                                <section key={semKey} className="space-y-6 break-inside-avoid bg-white p-6 border-editorial shadow-editorial">
+                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b-2 border-brand-cerulean pb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded bg-brand-cerulean text-white font-serif-title font-bold flex items-center justify-center text-lg shrink-0 shadow-xs">
+                                                {semKey === 'summer' ? 'Hè' : `K${semKey}`}
+                                            </div>
+                                            <div>
+                                                <h3 className="text-2xl font-serif-title text-brand-cerulean uppercase tracking-wider">
+                                                    {getSemesterTitle(semKey)}
+                                                </h3>
+                                                <p className="text-xs text-gray-500 font-sans mt-0.5">
+                                                    {semKey === 'summer' ? 'Kỳ học bổ sung / Tích lũy trước' : `Giai đoạn đào tạo học kỳ ${semKey}`}
+                                                </p>
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-
-                                {/* PART 2: TỰ CHỌN (CHỈ CHỌN 1 HỌC PHẦN) */}
-                                <div className="space-y-3 pt-2">
-                                    <div className="flex justify-between items-center border-b border-brand-jasper/20 pb-1">
-                                        <h4 className="text-lg font-serif-title text-brand-jasper font-bold flex items-center gap-2 border-b border-brand-jasper/20 pb-1">
-                                            <span className="w-2.5 h-2.5 rounded-full bg-brand-jasper"></span>
-                                            II. Học phần Tự chọn (Chỉ chọn 1 học phần)
-                                        </h4>
-                                        {selectedElectiveId && (
-                                            <span className="text-xs bg-brand-jasper text-white font-serif-title font-bold px-2.5 py-0.5 rounded-full shadow-sm">
-                                                ✓ Đã chọn 1 môn tự chọn
-                                            </span>
-                                        )}
+                                        <span className="px-3 py-1 bg-brand-cream border border-brand-cerulean/30 rounded text-xs font-serif-title font-bold text-brand-cerulean shrink-0">
+                                            {mods.length} Học phần &bull; <span className="text-brand-jasper font-bold">{semTotalCredits} TC</span>
+                                        </span>
                                     </div>
 
-                                    {electives.length === 0 ? (
-                                        <p className="text-sm text-gray-400 italic py-2">Chưa có học phần tự chọn nào trong nhánh này.</p>
-                                    ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[460px] overflow-y-auto pr-2">
-                                            {electives.map(mod => {
-                                                const isSelected = !!mod.isSelected;
-                                                const isDimmed = selectedElectiveId && !isSelected;
-
-                                                return (
+                                    {/* Bắt buộc trong kỳ */}
+                                    {mandatoryAndPractice.length > 0 && (
+                                        <div className="space-y-3">
+                                            <h4 className="text-base font-serif-title text-brand-jasper font-bold flex items-center gap-2 border-b border-brand-jasper/20 pb-1">
+                                                <span className="w-2.5 h-2.5 rounded-full bg-brand-jasper"></span>
+                                                Học phần Bắt buộc & Thực hành ({mandatoryAndPractice.length}) &bull; {mandatoryAndPractice.reduce((s, m) => s + Number(m.credits || 0), 0)} TC
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {mandatoryAndPractice.map(mod => (
                                                     <div
                                                         key={mod.id}
-                                                        className={`p-4 relative transition-all duration-300 ${
-                                                            isSelected
-                                                                ? 'bg-amber-50/80 border-2 border-brand-jasper shadow-editorial'
-                                                                : isDimmed
-                                                                ? 'bg-gray-100/60 border border-dashed border-gray-300 opacity-45 grayscale hover:opacity-80'
-                                                                : 'bg-white border border-brand-cerulean/30 hover:border-brand-cerulean hover:shadow-sm'
-                                                        }`}
+                                                        className="border border-brand-cerulean/30 p-4 bg-brand-cream/30 relative group shadow-sm hover:border-brand-cerulean hover:shadow-editorial transition-all"
                                                     >
-                                                        <div className="absolute top-0 right-0 bg-brand-cerulean text-white px-2 py-1 text-xs font-bold">
+                                                        <div className="absolute top-0 right-0 bg-brand-cerulean text-white px-2 py-1 text-xs font-bold font-serif-title">
                                                             {mod.credits} TC
                                                         </div>
-
-                                                        <div className="pr-12 space-y-2">
-                                                            <div className="flex items-center gap-2">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleToggleElectiveSelect(mod)}
-                                                                    className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-serif-title font-bold rounded transition-colors ${
-                                                                        isSelected
-                                                                            ? 'bg-brand-jasper text-white shadow-sm'
-                                                                            : 'bg-white border border-gray-400 text-gray-700 hover:border-brand-jasper hover:text-brand-jasper'
-                                                                    }`}
-                                                                >
-                                                                    <div className={`w-4 h-4 rounded-sm border flex items-center justify-center ${isSelected ? 'border-white bg-white/20' : 'border-gray-400'}`}>
-                                                                        {isSelected && <Check size={12} className="text-white" />}
-                                                                    </div>
-                                                                    <span>{isSelected ? 'Đã chọn môn này' : 'Chọn môn này'}</span>
-                                                                </button>
-                                                                <span className="text-xs font-sans font-bold text-gray-500">{(mod.code || '').toUpperCase()}</span>
+                                                        <div className="pr-12">
+                                                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                                <span className="text-sm font-sans font-bold text-gray-600">{(mod.code || '').toUpperCase()}</span>
+                                                                {isDaiHoc && (
+                                                                    <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 text-[10px] font-bold font-serif-title rounded border border-gray-300">
+                                                                        {mod.knowledgeBlock === 'general' || mod.category === 'general' ? 'Đại cương' :
+                                                                         mod.knowledgeBlock === 'fundamental' || mod.category === 'fundamental' ? 'Cơ sở ngành' :
+                                                                         mod.knowledgeBlock === 'specialized' || mod.category === 'specialized' ? 'Chuyên ngành' :
+                                                                         mod.knowledgeBlock === 'internship' || mod.category === 'internship' ? 'TT & Khóa luận' : 'Khối khác'}
+                                                                    </span>
+                                                                )}
+                                                                {mod.prerequisites && (
+                                                                    <span className="px-1.5 py-0.5 bg-amber-50 text-amber-900 text-[10px] font-bold font-serif-title rounded border border-amber-300">
+                                                                        Tiên quyết: {mod.prerequisites}
+                                                                    </span>
+                                                                )}
                                                                 {mod.programIds && mod.programIds.length > 1 && (
-                                                                    <span className="px-1.5 py-0.5 bg-blue-50/50 text-brand-cerulean/80 text-xs font-bold font-serif-title rounded border border-brand-cerulean/20 flex items-center gap-1">
-                                                                        <Link2 size={10} /> Dùng chung
+                                                                    <span className="px-1.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-[10px] font-bold font-serif-title rounded border border-brand-cerulean/20 flex items-center gap-1">
+                                                                        <Link2 size={10} /> Dùng chung ({mod.programIds.length} CT)
                                                                     </span>
                                                                 )}
                                                             </div>
-
                                                             <h4
                                                                 onClick={() => navigate('module_detail', { moduleId: mod.id, programId: program.id })}
-                                                                className={`text-xl font-serif-title leading-tight mt-1 mb-2 transition-colors cursor-pointer ${
-                                                                    isSelected ? 'text-brand-jasper font-bold' : 'text-brand-cerulean hover:text-brand-jasper'
-                                                                }`}
+                                                                className="text-xl font-serif-title text-brand-cerulean leading-tight mb-2 group-hover:text-brand-jasper transition-colors cursor-pointer"
                                                             >
                                                                 {formatModuleName(mod.name, profile?.teachingSubject || profile?.major)}
                                                             </h4>
-
                                                             <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
                                                                 <span className="text-xs italic text-gray-500">
-                                                                    Tự chọn &bull; {mod.status === 'completed' ? 'Đã hoàn thành' : mod.status === 'in_progress' ? 'Đang học' : 'Lên kế hoạch'}
+                                                                    {mod.type === 'mandatory' ? 'Bắt buộc' : 'Thực hành'} &bull; {mod.status === 'completed' ? 'Đã hoàn thành' : mod.status === 'in_progress' ? 'Đang học' : 'Lên kế hoạch'}
                                                                 </span>
                                                                 <div className="flex items-center gap-2">
                                                                     <button
@@ -2316,15 +2772,345 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                                             </div>
                                                         </div>
                                                     </div>
-                                                );
-                                            })}
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
-                                </div>
-                            </section>
-                        );
-                    })}
-                </div>
+
+                                    {/* Tự chọn trong kỳ */}
+                                    {electives.length > 0 && (
+                                        <div className="space-y-3 pt-2">
+                                            <h4 className="text-base font-serif-title text-brand-jasper font-bold flex items-center gap-2 border-b border-brand-jasper/20 pb-1">
+                                                <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                                Học phần Tự chọn trong kỳ ({electives.length}) &bull; {electives.reduce((s, m) => s + Number(m.credits || 0), 0)} TC
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {electives.map(mod => {
+                                                    const isSelected = !!mod.isSelected;
+
+                                                    return (
+                                                        <div
+                                                            key={mod.id}
+                                                            className={`p-4 relative transition-all duration-300 ${
+                                                                isSelected
+                                                                    ? 'bg-amber-50/80 border-2 border-brand-jasper shadow-editorial'
+                                                                    : 'bg-white border border-brand-cerulean/30 hover:border-brand-cerulean hover:shadow-sm'
+                                                            }`}
+                                                        >
+                                                            <div className="absolute top-0 right-0 bg-brand-cerulean text-white px-2 py-1 text-xs font-bold font-serif-title">
+                                                                {mod.credits} TC
+                                                            </div>
+
+                                                            <div className="pr-12 space-y-2">
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleToggleElectiveSelect(mod)}
+                                                                        className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-serif-title font-bold rounded transition-colors ${
+                                                                            isSelected
+                                                                                ? 'bg-brand-jasper text-white shadow-sm'
+                                                                                : 'bg-white border border-gray-400 text-gray-700 hover:border-brand-jasper hover:text-brand-jasper'
+                                                                        }`}
+                                                                    >
+                                                                        <div className={`w-4 h-4 rounded-sm border flex items-center justify-center ${isSelected ? 'border-white bg-white/20' : 'border-gray-400'}`}>
+                                                                            {isSelected && <Check size={12} className="text-white" />}
+                                                                        </div>
+                                                                        <span>{isSelected ? 'Đã chọn học' : 'Chọn học'}</span>
+                                                                    </button>
+                                                                    <span className="text-xs font-sans font-bold text-gray-600">{(mod.code || '').toUpperCase()}</span>
+                                                                    {isDaiHoc && (
+                                                                        <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 text-[10px] font-bold font-serif-title rounded border border-gray-300">
+                                                                            {mod.knowledgeBlock === 'general' || mod.category === 'general' ? 'Đại cương' :
+                                                                             mod.knowledgeBlock === 'fundamental' || mod.category === 'fundamental' ? 'Cơ sở ngành' :
+                                                                             mod.knowledgeBlock === 'specialized' || mod.category === 'specialized' ? 'Chuyên ngành' :
+                                                                             mod.knowledgeBlock === 'internship' || mod.category === 'internship' ? 'TT & Khóa luận' : 'Khối khác'}
+                                                                        </span>
+                                                                    )}
+                                                                    {mod.prerequisites && (
+                                                                        <span className="px-1.5 py-0.5 bg-amber-50 text-amber-900 text-[10px] font-bold font-serif-title rounded border border-amber-300">
+                                                                            Tiên quyết: {mod.prerequisites}
+                                                                        </span>
+                                                                    )}
+                                                                    {mod.programIds && mod.programIds.length > 1 && (
+                                                                        <span className="px-1.5 py-0.5 bg-blue-50/50 text-brand-cerulean/80 text-xs font-bold font-serif-title rounded border border-brand-cerulean/20 flex items-center gap-1">
+                                                                            <Link2 size={10} /> Dùng chung
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                <h4
+                                                                    onClick={() => navigate('module_detail', { moduleId: mod.id, programId: program.id })}
+                                                                    className={`text-xl font-serif-title leading-tight mt-1 mb-2 transition-colors cursor-pointer ${
+                                                                        isSelected ? 'text-brand-jasper font-bold' : 'text-brand-cerulean hover:text-brand-jasper'
+                                                                    }`}
+                                                                >
+                                                                    {formatModuleName(mod.name, profile?.teachingSubject || profile?.major)}
+                                                                </h4>
+
+                                                                <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
+                                                                    <span className="text-xs italic text-gray-500">
+                                                                        Tự chọn &bull; {mod.status === 'completed' ? 'Đã hoàn thành' : mod.status === 'in_progress' ? 'Đang học' : 'Lên kế hoạch'}
+                                                                    </span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <button
+                                                                            type="button"
+                                                                            title="Sửa thông tin học phần"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setEditingModule({ ...mod, code: (mod.code || '').toUpperCase() });
+                                                                            }}
+                                                                            className="p-1.5 text-brand-cerulean hover:text-brand-jasper hover:bg-brand-cerulean/10 rounded transition-colors"
+                                                                        >
+                                                                            <Pencil size={15} />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                navigate('module_detail', { moduleId: mod.id, programId: program.id });
+                                                                            }}
+                                                                            className="text-sm font-serif-title text-brand-jasper hover:underline font-bold flex items-center gap-1"
+                                                                        >
+                                                                            Chi tiết &rarr;
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </section>
+                            );
+                        })}
+                    </div>
+                )
+            ) : (
+                /* Render Modules: View Mode = Category */
+                Object.keys(groupedModules).length === 0 ? (
+                    <div className="p-12 border border-dashed border-brand-cerulean text-center bg-white">
+                        <p className="text-xl font-serif-title text-gray-500">Chưa có học phần nào trong bộ lọc này.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-12">
+                        {Object.entries(groupedModules).map(([category, mods]) => {
+                            const mandatoryAndPractice = mods.filter(m => m.type !== 'elective');
+                            const electives = mods.filter(m => m.type === 'elective');
+
+                            // Check if any elective in this branch is currently selected
+                            const selectedElectiveId = electives.find(m => m.isSelected)?.id;
+
+                            return (
+                                <section key={category} className="space-y-6 break-inside-avoid bg-white p-6 border-editorial shadow-editorial">
+                                    <div className="flex justify-between items-center border-b border-brand-cerulean pb-3">
+                                        <h3 className="text-2xl font-serif-title text-brand-cerulean uppercase tracking-wider">
+                                            {getCategoryTitle(category)}
+                                        </h3>
+                                        <span className="text-xs font-serif-title text-gray-500 uppercase tracking-widest">
+                                            {mods.length} Học phần &bull; {mods.reduce((s, m) => s + Number(m.credits || 0), 0)} TC
+                                        </span>
+                                    </div>
+
+                                    {/* PART 1: BẮT BUỘC & THỰC HÀNH */}
+                                    <div className="space-y-3">
+                                        <h4 className="text-lg font-serif-title text-brand-jasper font-bold flex items-center gap-2 border-b border-brand-jasper/20 pb-1">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-brand-jasper"></span>
+                                            I. Học phần Bắt buộc & Thực hành ({mandatoryAndPractice.length})
+                                        </h4>
+                                        {mandatoryAndPractice.length === 0 ? (
+                                            <p className="text-sm text-gray-400 italic py-2">Chưa có học phần bắt buộc/thực hành nào.</p>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[460px] overflow-y-auto pr-2">
+                                                {mandatoryAndPractice.map(mod => (
+                                                    <div
+                                                        key={mod.id}
+                                                        className="border border-brand-cerulean/30 p-4 bg-brand-cream/30 relative group shadow-sm hover:border-brand-cerulean hover:shadow-editorial transition-all"
+                                                    >
+                                                        <div className="absolute top-0 right-0 bg-brand-cerulean text-white px-2 py-1 text-xs font-bold">
+                                                            {mod.credits} TC
+                                                        </div>
+                                                        <div className="pr-12">
+                                                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                                <span className="text-sm font-sans font-bold text-gray-500">{(mod.code || '').toUpperCase()}</span>
+                                                                {isDaiHoc && mod.semester && (
+                                                                    <span className="px-1.5 py-0.5 bg-blue-100 text-brand-cerulean text-[11px] font-bold font-serif-title rounded border border-brand-cerulean/20">
+                                                                        Kỳ {mod.semester === 'summer' ? 'Hè' : mod.semester}
+                                                                    </span>
+                                                                )}
+                                                                {mod.prerequisites && (
+                                                                    <span className="px-1.5 py-0.5 bg-amber-50 text-amber-900 text-[10px] font-bold font-serif-title rounded border border-amber-300">
+                                                                        Tiên quyết: {mod.prerequisites}
+                                                                    </span>
+                                                                )}
+                                                                {mod.programIds && mod.programIds.length > 1 && (
+                                                                    <span className="px-1.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-[10px] font-bold font-serif-title rounded border border-brand-cerulean/20 flex items-center gap-1">
+                                                                        <Link2 size={10} /> Dùng chung ({mod.programIds.length} CT)
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <h4
+                                                                onClick={() => navigate('module_detail', { moduleId: mod.id, programId: program.id })}
+                                                                className="text-xl font-serif-title text-brand-cerulean leading-tight mb-2 group-hover:text-brand-jasper transition-colors cursor-pointer"
+                                                            >
+                                                                {formatModuleName(mod.name, profile?.teachingSubject || profile?.major)}
+                                                            </h4>
+                                                            <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
+                                                                <span className="text-xs italic text-gray-500">
+                                                                    {mod.type === 'mandatory' ? 'Bắt buộc' : 'Thực hành'} &bull; {mod.status === 'completed' ? 'Đã hoàn thành' : mod.status === 'in_progress' ? 'Đang học' : 'Lên kế hoạch'}
+                                                                </span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        title="Sửa thông tin học phần"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setEditingModule({ ...mod, code: (mod.code || '').toUpperCase() });
+                                                                        }}
+                                                                        className="p-1.5 text-brand-cerulean hover:text-brand-jasper hover:bg-brand-cerulean/10 rounded transition-colors"
+                                                                    >
+                                                                        <Pencil size={15} />
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            navigate('module_detail', { moduleId: mod.id, programId: program.id });
+                                                                        }}
+                                                                        className="text-sm font-serif-title text-brand-jasper hover:underline font-bold flex items-center gap-1"
+                                                                    >
+                                                                        Chi tiết &rarr;
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* PART 2: TỰ CHỌN */}
+                                    <div className="space-y-3 pt-2">
+                                        <div className="flex justify-between items-center border-b border-brand-jasper/20 pb-1">
+                                            <h4 className="text-lg font-serif-title text-brand-jasper font-bold flex items-center gap-2 border-b border-brand-jasper/20 pb-1">
+                                                <span className="w-2.5 h-2.5 rounded-full bg-brand-jasper"></span>
+                                                II. Học phần Tự chọn ({electives.length})
+                                            </h4>
+                                            {selectedElectiveId && (
+                                                <span className="text-xs bg-brand-jasper text-white font-serif-title font-bold px-2.5 py-0.5 rounded-full shadow-sm">
+                                                    ✓ Đã đăng ký môn tự chọn
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {electives.length === 0 ? (
+                                            <p className="text-sm text-gray-400 italic py-2">Chưa có học phần tự chọn nào trong khối này.</p>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[460px] overflow-y-auto pr-2">
+                                                {electives.map(mod => {
+                                                    const isSelected = !!mod.isSelected;
+                                                    const isDimmed = !isDaiHoc && selectedElectiveId && !isSelected;
+
+                                                    return (
+                                                        <div
+                                                            key={mod.id}
+                                                            className={`p-4 relative transition-all duration-300 ${
+                                                                isSelected
+                                                                    ? 'bg-amber-50/80 border-2 border-brand-jasper shadow-editorial'
+                                                                    : isDimmed
+                                                                    ? 'bg-gray-100/60 border border-dashed border-gray-300 opacity-45 grayscale hover:opacity-80'
+                                                                    : 'bg-white border border-brand-cerulean/30 hover:border-brand-cerulean hover:shadow-sm'
+                                                            }`}
+                                                        >
+                                                            <div className="absolute top-0 right-0 bg-brand-cerulean text-white px-2 py-1 text-xs font-bold">
+                                                                {mod.credits} TC
+                                                            </div>
+
+                                                            <div className="pr-12 space-y-2">
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleToggleElectiveSelect(mod)}
+                                                                        className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-serif-title font-bold rounded transition-colors ${
+                                                                            isSelected
+                                                                                ? 'bg-brand-jasper text-white shadow-sm'
+                                                                                : 'bg-white border border-gray-400 text-gray-700 hover:border-brand-jasper hover:text-brand-jasper'
+                                                                        }`}
+                                                                    >
+                                                                        <div className={`w-4 h-4 rounded-sm border flex items-center justify-center ${isSelected ? 'border-white bg-white/20' : 'border-gray-400'}`}>
+                                                                            {isSelected && <Check size={12} className="text-white" />}
+                                                                        </div>
+                                                                        <span>{isSelected ? 'Đã chọn học' : 'Chọn học'}</span>
+                                                                    </button>
+                                                                    <span className="text-xs font-sans font-bold text-gray-500">{(mod.code || '').toUpperCase()}</span>
+                                                                    {isDaiHoc && mod.semester && (
+                                                                        <span className="px-1.5 py-0.5 bg-blue-100 text-brand-cerulean text-[11px] font-bold font-serif-title rounded border border-brand-cerulean/20">
+                                                                            Kỳ {mod.semester === 'summer' ? 'Hè' : mod.semester}
+                                                                        </span>
+                                                                    )}
+                                                                    {mod.prerequisites && (
+                                                                        <span className="px-1.5 py-0.5 bg-amber-50 text-amber-900 text-[10px] font-bold font-serif-title rounded border border-amber-300">
+                                                                            Tiên quyết: {mod.prerequisites}
+                                                                        </span>
+                                                                    )}
+                                                                    {mod.programIds && mod.programIds.length > 1 && (
+                                                                        <span className="px-1.5 py-0.5 bg-blue-50/50 text-brand-cerulean/80 text-xs font-bold font-serif-title rounded border border-brand-cerulean/20 flex items-center gap-1">
+                                                                            <Link2 size={10} /> Dùng chung
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                <h4
+                                                                    onClick={() => navigate('module_detail', { moduleId: mod.id, programId: program.id })}
+                                                                    className={`text-xl font-serif-title leading-tight mt-1 mb-2 transition-colors cursor-pointer ${
+                                                                        isSelected ? 'text-brand-jasper font-bold' : 'text-brand-cerulean hover:text-brand-jasper'
+                                                                    }`}
+                                                                >
+                                                                    {formatModuleName(mod.name, profile?.teachingSubject || profile?.major)}
+                                                                </h4>
+
+                                                                <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
+                                                                    <span className="text-xs italic text-gray-500">
+                                                                        Tự chọn &bull; {mod.status === 'completed' ? 'Đã hoàn thành' : mod.status === 'in_progress' ? 'Đang học' : 'Lên kế hoạch'}
+                                                                    </span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <button
+                                                                            type="button"
+                                                                            title="Sửa thông tin học phần"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setEditingModule({ ...mod, code: (mod.code || '').toUpperCase() });
+                                                                            }}
+                                                                            className="p-1.5 text-brand-cerulean hover:text-brand-jasper hover:bg-brand-cerulean/10 rounded transition-colors"
+                                                                        >
+                                                                            <Pencil size={15} />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                navigate('module_detail', { moduleId: mod.id, programId: program.id });
+                                                                            }}
+                                                                            className="text-sm font-serif-title text-brand-jasper hover:underline font-bold flex items-center gap-1"
+                                                                        >
+                                                                            Chi tiết &rarr;
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
+                            );
+                        })}
+                    </div>
+                )
             )}
 
             {/* Modal Thêm Học Phần — 2 Tab: Tạo mới / Liên kết */}
@@ -2361,15 +3147,17 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                         <div className="grid grid-cols-3 gap-4">
                             <div className="col-span-1">
                                 <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Mã môn</label>
-                                <input required type="text" className="input-editorial w-full uppercase" value={modForm.code} onChange={e => setModForm({ ...modForm, code: e.target.value.toUpperCase() })} placeholder="VD: A01" />
+                                <input required type="text" className="input-editorial w-full uppercase" value={modForm.code} onChange={e => setModForm({ ...modForm, code: e.target.value.toUpperCase() })} placeholder={isDaiHoc ? "VD: MTH101" : "VD: A01"} />
                             </div>
                             <div className="col-span-2">
                                 <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Tên học phần</label>
-                                <input required type="text" className="input-editorial w-full" value={modForm.name} onChange={e => setModForm({ ...modForm, name: e.target.value })} placeholder="Tâm lý học giáo dục..." />
+                                <input required type="text" className="input-editorial w-full" value={modForm.name} onChange={e => setModForm({ ...modForm, name: e.target.value })} placeholder="Giải tích 1, Triết học..." />
                             </div>
                         </div>
 
-                        {modForm.category === 'B' && (
+
+
+                        {modForm.category === 'B' && !isDaiHoc && (
                             <div className="p-3 bg-blue-50/80 border border-brand-cerulean/30 rounded space-y-2">
                                 <label className="block text-xs font-serif-title font-bold text-brand-cerulean">
                                     Mẫu học phần chuẩn Nhánh B {profile?.teachingSubject ? `(Áp dụng môn: ${profile.teachingSubject})` : ''}:
@@ -2407,45 +3195,7 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                             </div>
                         )}
 
-                        {modForm.category === 'C' && (
-                            <div className="p-3 bg-blue-50/80 border border-brand-cerulean/30 rounded space-y-2">
-                                <label className="block text-xs font-serif-title font-bold text-brand-cerulean">
-                                    Mẫu học phần chuẩn Nhánh C {profile?.teachingSubject ? `(Áp dụng môn: ${profile.teachingSubject})` : ''}:
-                                </label>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {[
-                                        { code: 'C01', name: `Phương pháp dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THPT`, credits: 2, type: 'mandatory' },
-                                        { code: 'C02', name: `Xây dựng kế hoạch dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THPT`, credits: 2, type: 'mandatory' },
-                                        { code: 'C03', name: `Tổ chức dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THPT`, credits: 2, type: 'mandatory' },
-                                        { code: 'C04', name: `Thực hành dạy học [${profile?.teachingSubject || 'Môn học'}] cấp THPT ở trường sư phạm`, credits: 3, type: 'mandatory' },
-                                        { code: 'C05', name: 'Thực hành kỹ năng giáo dục ở trường THPT', credits: 2, type: 'practice' },
-                                        { code: 'C06', name: 'Thực tập sư phạm 1 ở trường THPT', credits: 2, type: 'practice' },
-                                        { code: 'C07', name: 'Thực tập sư phạm 2 ở trường THPT', credits: 2, type: 'practice' },
-                                    ].map(tpl => (
-                                        <button
-                                            key={tpl.code}
-                                            type="button"
-                                            onClick={() => {
-                                                const formattedName = formatModuleName(tpl.name, profile?.teachingSubject || profile?.major);
-                                                setModForm({
-                                                    ...modForm,
-                                                    code: tpl.code,
-                                                    name: formattedName,
-                                                    credits: tpl.credits,
-                                                    type: tpl.type,
-                                                    category: 'C'
-                                                });
-                                            }}
-                                            className="px-2.5 py-1 text-xs bg-white border border-brand-cerulean/40 hover:border-brand-cerulean hover:bg-blue-100/80 text-brand-cerulean font-bold transition-all rounded shadow-xs"
-                                        >
-                                            + Mẫu {tpl.code} ({tpl.credits} TC)
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Số Tín chỉ</label>
                                 <input required type="number" min="1" className="input-editorial w-full" value={modForm.credits} onChange={e => setModForm({ ...modForm, credits: e.target.value })} />
@@ -2460,16 +3210,39 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                             </div>
                             <div>
                                 <EditorialSelect
-                                    label="Nhánh"
+                                    label={isDaiHoc ? "Khối kiến thức" : "Nhánh"}
                                     value={modForm.category}
                                     onChange={val => {
                                         const autoCode = generateNextModuleCode(val, programModules);
-                                        setModForm({ ...modForm, category: val, code: autoCode });
+                                        setModForm({ ...modForm, category: val, knowledgeBlock: val, code: autoCode });
                                     }}
                                     options={categoryFormOptions}
                                 />
                             </div>
                         </div>
+
+                        {isDaiHoc && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <EditorialSelect
+                                        label="Học kỳ đề xuất"
+                                        value={modForm.semester || '1'}
+                                        onChange={val => setModForm({ ...modForm, semester: val })}
+                                        options={semesterOptions}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Học phần tiên quyết (nếu có)</label>
+                                    <input
+                                        type="text"
+                                        className="input-editorial w-full uppercase"
+                                        value={modForm.prerequisites || ''}
+                                        onChange={e => setModForm({ ...modForm, prerequisites: e.target.value.toUpperCase() })}
+                                        placeholder="VD: MTH101, PHY102"
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         <div className="pt-4 flex justify-end gap-4 border-t border-brand-cerulean/20">
                             <button type="button" onClick={() => setIsModuleModalOpen(false)} className="px-6 py-2 text-gray-500 font-serif-title">Hủy</button>
@@ -2586,13 +3359,36 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                             </div>
                             <div>
                                 <EditorialSelect
-                                    label="Nhánh"
-                                    value={editingModule.category || 'A'}
-                                    onChange={val => setEditingModule({ ...editingModule, category: val })}
+                                    label={isDaiHoc ? "Khối kiến thức" : "Nhánh"}
+                                    value={editingModule.category || (isDaiHoc ? 'general' : 'A')}
+                                    onChange={val => setEditingModule({ ...editingModule, category: val, knowledgeBlock: val })}
                                     options={categoryFormOptions}
                                 />
                             </div>
                         </div>
+
+                        {isDaiHoc && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <EditorialSelect
+                                        label="Học kỳ đề xuất"
+                                        value={editingModule.semester || '1'}
+                                        onChange={val => setEditingModule({ ...editingModule, semester: val })}
+                                        options={semesterOptions}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Học phần tiên quyết</label>
+                                    <input
+                                        type="text"
+                                        className="input-editorial w-full uppercase"
+                                        value={editingModule.prerequisites || ''}
+                                        onChange={e => setEditingModule({ ...editingModule, prerequisites: e.target.value.toUpperCase() })}
+                                        placeholder="VD: MTH101"
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         <div>
                             <EditorialSelect
@@ -2658,69 +3454,190 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                         </div>
 
                         <div className="border p-4 bg-brand-cream border-brand-cerulean/20 space-y-4">
-                            <h4 className="font-serif-title text-brand-cerulean text-lg border-b border-brand-cerulean/20 pb-1">Quy tắc phân bổ Tín chỉ</h4>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Bắt buộc (TC)</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        className="input-editorial w-full"
-                                        value={programFormData.rules?.mandatoryA ?? 0}
-                                        onChange={e => setProgramFormData({ ...programFormData, rules: { ...programFormData.rules, mandatoryA: Number(e.target.value) } })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Tự chọn (TC)</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        className="input-editorial w-full"
-                                        value={programFormData.rules?.electiveA ?? 0}
-                                        onChange={e => setProgramFormData({ ...programFormData, rules: { ...programFormData.rules, electiveA: Number(e.target.value) } })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Bắt buộc (TC)</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        className="input-editorial w-full"
-                                        value={programFormData.rules?.mandatoryB ?? 0}
-                                        onChange={e => setProgramFormData({ ...programFormData, rules: { ...programFormData.rules, mandatoryB: Number(e.target.value) } })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Thực hành (TC)</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        className="input-editorial w-full"
-                                        value={programFormData.rules?.practiceB ?? 0}
-                                        onChange={e => setProgramFormData({ ...programFormData, rules: { ...programFormData.rules, practiceB: Number(e.target.value) } })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Tự chọn (TC)</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        className="input-editorial w-full"
-                                        value={programFormData.rules?.electiveB ?? 0}
-                                        onChange={e => setProgramFormData({ ...programFormData, rules: { ...programFormData.rules, electiveB: Number(e.target.value) } })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-brand-cerulean mb-1">Tổng TC yêu cầu</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        className="input-editorial w-full font-bold"
-                                        value={programFormData.totalCreditsRequired ?? 34}
-                                        onChange={e => setProgramFormData({ ...programFormData, totalCreditsRequired: Number(e.target.value) })}
-                                    />
-                                </div>
+                            <div className="flex justify-between items-center border-b border-brand-cerulean/20 pb-1">
+                                <h4 className="font-serif-title text-brand-cerulean text-lg">
+                                    {isDaiHoc
+                                        ? 'Cơ cấu số tín chỉ các khối có trong CTĐT'
+                                        : program.evaluationType === 'modules'
+                                            ? 'Cơ cấu chuyên đề có trong CTĐT'
+                                            : program.evaluationType === 'hours'
+                                                ? 'Cơ cấu thời lượng tiết học trong CTĐT'
+                                                : 'Cơ cấu tín chỉ các khối có trong CTĐT'}
+                                </h4>
+                                <span className="text-[11px] text-gray-500 font-sans italic">
+                                    * Điền số lượng mở trong chương trình
+                                </span>
                             </div>
+                            {isDaiHoc ? (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">GD Đại cương (TC)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="input-editorial w-full"
+                                            value={programFormData.rules?.general ?? 28}
+                                            onChange={e => handleUpdateProgramFormDataRule('general', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Cơ sở ngành BB (TC)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="input-editorial w-full"
+                                            value={programFormData.rules?.fundamentalMandatory ?? programFormData.rules?.fundamental ?? 26}
+                                            onChange={e => handleUpdateProgramFormDataRule('fundamentalMandatory', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Cơ sở ngành TC (TC)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="input-editorial w-full"
+                                            value={programFormData.rules?.fundamentalElective ?? 8}
+                                            onChange={e => handleUpdateProgramFormDataRule('fundamentalElective', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Chuyên ngành BB (TC)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="input-editorial w-full"
+                                            value={programFormData.rules?.specializedMandatory ?? 42}
+                                            onChange={e => handleUpdateProgramFormDataRule('specializedMandatory', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Chuyên ngành TC (TC)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="input-editorial w-full"
+                                            value={programFormData.rules?.specializedElective ?? 16}
+                                            onChange={e => handleUpdateProgramFormDataRule('specializedElective', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Thực tập & Khóa luận (TC)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="input-editorial w-full"
+                                            value={programFormData.rules?.internshipGraduation ?? 15}
+                                            onChange={e => handleUpdateProgramFormDataRule('internshipGraduation', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Bắt buộc (TC)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="input-editorial w-full"
+                                            value={programFormData.rules?.mandatoryA ?? 0}
+                                            onChange={e => handleUpdateProgramFormDataRule('mandatoryA', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Tự chọn (TC)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="input-editorial w-full"
+                                            value={programFormData.rules?.electiveA ?? 0}
+                                            onChange={e => handleUpdateProgramFormDataRule('electiveA', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Bắt buộc (TC)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="input-editorial w-full"
+                                            value={programFormData.rules?.mandatoryB ?? 0}
+                                            onChange={e => handleUpdateProgramFormDataRule('mandatoryB', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Thực hành (TC)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="input-editorial w-full"
+                                            value={programFormData.rules?.practiceB ?? 0}
+                                            onChange={e => handleUpdateProgramFormDataRule('practiceB', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Tự chọn (TC)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="input-editorial w-full"
+                                            value={programFormData.rules?.electiveB ?? 0}
+                                            onChange={e => handleUpdateProgramFormDataRule('electiveB', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Summary & Graduation Target Requirement */}
+                            {(() => {
+                                const editProgramTotalCredits = isDaiHoc
+                                    ? ((programFormData.rules?.general ?? 0) +
+                                       (programFormData.rules?.fundamentalMandatory ?? programFormData.rules?.fundamental ?? 0) +
+                                       (programFormData.rules?.fundamentalElective ?? 0) +
+                                       (programFormData.rules?.specializedMandatory ?? 0) +
+                                       (programFormData.rules?.specializedElective ?? 0) +
+                                       (programFormData.rules?.internshipGraduation ?? 0))
+                                    : ((programFormData.rules?.mandatoryA ?? 0) +
+                                       (programFormData.rules?.electiveA ?? 0) +
+                                       (programFormData.rules?.mandatoryB ?? 0) +
+                                       (programFormData.rules?.practiceB ?? 0) +
+                                       (programFormData.rules?.electiveB ?? 0));
+
+                                return (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-brand-cerulean/20">
+                                        <div className="p-3.5 bg-blue-50/70 border border-brand-cerulean/25 rounded space-y-1">
+                                            <div className="text-xs font-bold text-gray-700">
+                                                Tổng số {program.evaluationType === 'modules' ? 'chuyên đề' : program.evaluationType === 'hours' ? 'tiết học' : 'TC'} có trong CTĐT (Tự động cộng)
+                                            </div>
+                                            <div className="text-2xl font-serif-title font-bold text-brand-cerulean flex items-baseline gap-1.5">
+                                                <span>{editProgramTotalCredits}</span>
+                                                <span className="text-xs font-sans text-gray-500 font-normal">
+                                                    {program.evaluationType === 'modules' ? 'chuyên đề mở' : program.evaluationType === 'hours' ? 'tiết' : 'tín chỉ mở'}
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] text-gray-500 italic">Tổng số lượng có trong toàn bộ danh mục chương trình đào tạo</p>
+                                        </div>
+                                        <div className="p-3.5 bg-amber-50/80 border border-amber-300 rounded space-y-1">
+                                            <label className="block text-xs font-bold text-brand-jasper">
+                                                Số {program.evaluationType === 'modules' ? 'chuyên đề' : program.evaluationType === 'hours' ? 'tiết' : 'tín chỉ'} cần học để tốt nghiệp (Định mức) *
+                                            </label>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    required
+                                                    className="input-editorial w-full font-bold text-brand-jasper bg-white text-lg"
+                                                    value={programFormData.totalCreditsRequired ?? 135}
+                                                    onChange={e => setProgramFormData({ ...programFormData, totalCreditsRequired: Number(e.target.value) })}
+                                                    placeholder={isDaiHoc ? "VD: 135" : "VD: 34"}
+                                                />
+                                                <span className="text-xs font-bold font-serif-title text-brand-jasper shrink-0">
+                                                    {program.evaluationType === 'modules' ? 'Chuyên đề' : program.evaluationType === 'hours' ? 'Tiết' : 'TC'}
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] text-brand-jasper/80 italic">Số tín chỉ thực tế sinh viên phải tích lũy để được xét tốt nghiệp</p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                         <div className="pt-4 flex justify-end gap-4 border-t border-brand-cerulean/20">
@@ -4993,9 +5910,10 @@ export default function App() {
     }, []);
 
     // Initial Data State (strictly driven by Firestore Realtime Sync)
+    const firestoreSubscriptionsRef = useRef([]);
     const [profile, setProfile] = useState(() => DEFAULT_PROFILE);
-    const [programs, setPrograms] = useState(() => []);
-    const [modules, setModules] = useState(() => []);
+    const [programs, setPrograms] = useState(() => DEFAULT_PROGRAMS);
+    const [modules, setModules] = useState(() => DEFAULT_MODULES);
     const [events, setEvents] = useState(() => []);
     const [studyLogs, setStudyLogs] = useState(() => []);
     const [resources, setResources] = useState(() => []);
@@ -5124,14 +6042,22 @@ export default function App() {
                 setUser(null);
                 setProfile(DEFAULT_PROFILE);
                 setPrograms(DEFAULT_PROGRAMS);
-                setModules([]);
+                setModules(DEFAULT_MODULES);
                 setEvents([]);
                 setStudyLogs([]);
                 setResources([]);
             }
             setLoading(false);
         });
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            if (firestoreSubscriptionsRef.current && firestoreSubscriptionsRef.current.length > 0) {
+                firestoreSubscriptionsRef.current.forEach(unsub => {
+                    try { if (typeof unsub === 'function') unsub(); } catch (e) {}
+                });
+                firestoreSubscriptionsRef.current = [];
+            }
+        };
     }, []);
 
     // LocalStorage Auto-Sync (Scoped by logged-in user to prevent cross-account leakage)
@@ -5201,72 +6127,106 @@ export default function App() {
             const mockResults = ['res_001', 'res_002', 'res_003', 'res_004', 'res_005'];
             mockResults.forEach(id => { deleteDoc(getDocRef(userId, 'thptResults', id)).catch(() => {}); });
 
-            onSnapshot(getCollectionRef(userId, 'programs'), (snapshot) => {
-                setPrograms(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-            });
+            // Cleanup any active listeners before starting new ones
+            if (firestoreSubscriptionsRef.current && firestoreSubscriptionsRef.current.length > 0) {
+                firestoreSubscriptionsRef.current.forEach(unsub => {
+                    try { if (typeof unsub === 'function') unsub(); } catch (e) {}
+                });
+                firestoreSubscriptionsRef.current = [];
+            }
 
-            onSnapshot(getCollectionRef(userId, 'modules'), (snapshot) => {
-                setModules(snapshot.docs.map(d => normalizeModuleProgramIds({ id: d.id, ...d.data() })));
-            });
+            const unsubs = [];
 
-            onSnapshot(getCollectionRef(userId, 'events'), (snapshot) => {
-                setEvents(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-            });
+            unsubs.push(
+                onSnapshot(getCollectionRef(userId, 'programs'), (snapshot) => {
+                    setPrograms(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                }, (err) => handleFirestoreError('programs-sync', err))
+            );
 
-            onSnapshot(getCollectionRef(userId, 'studyLogs'), (snapshot) => {
-                setStudyLogs(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-            });
+            unsubs.push(
+                onSnapshot(getCollectionRef(userId, 'modules'), (snapshot) => {
+                    setModules(snapshot.docs.map(d => normalizeModuleProgramIds({ id: d.id, ...d.data() })));
+                }, (err) => handleFirestoreError('modules-sync', err))
+            );
 
-            onSnapshot(getCollectionRef(userId, 'resources'), (snapshot) => {
-                setResources(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-            });
+            unsubs.push(
+                onSnapshot(getCollectionRef(userId, 'events'), (snapshot) => {
+                    setEvents(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                }, (err) => handleFirestoreError('events-sync', err))
+            );
 
-            onSnapshot(getCollectionRef(userId, 'thptExams'), (snapshot) => {
-                const cleanExams = snapshot.docs
-                    .map(d => ({ id: d.id, ...d.data() }))
-                    .filter(e => !e.id.startsWith('exam_toan_') && !e.id.startsWith('exam_vatly_') && !e.id.startsWith('exam_hoahoc_') && !e.id.startsWith('exam_tienganh_'));
-                setThptExams(cleanExams);
-            });
+            unsubs.push(
+                onSnapshot(getCollectionRef(userId, 'studyLogs'), (snapshot) => {
+                    setStudyLogs(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                }, (err) => handleFirestoreError('studyLogs-sync', err))
+            );
 
-            onSnapshot(getDocRef(userId, 'thptProfile', 'main'), (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    let modified = false;
-                    if (data.targetUniversity === 'Đại học Bách Khoa TP.HCM - Ngành Khoa học Máy tính' ||
-                        data.targetUniversity === 'Đại học Bách Khoa - Ngành Khoa học Máy tính' ||
-                        data.targetUniversity === 'Đại học Bách Khoa TP.HCM - Khoa học Máy tính') {
-                        data.targetUniversity = '';
-                        data.targetTotalScore = 0;
-                        data.combination = '';
-                        data.subjectTargets = [];
-                        modified = true;
+            unsubs.push(
+                onSnapshot(getCollectionRef(userId, 'resources'), (snapshot) => {
+                    setResources(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                }, (err) => handleFirestoreError('resources-sync', err))
+            );
+
+            unsubs.push(
+                onSnapshot(getCollectionRef(userId, 'thptExams'), (snapshot) => {
+                    const cleanExams = snapshot.docs
+                        .map(d => ({ id: d.id, ...d.data() }))
+                        .filter(e => !e.id.startsWith('exam_toan_') && !e.id.startsWith('exam_vatly_') && !e.id.startsWith('exam_hoahoc_') && !e.id.startsWith('exam_tienganh_'));
+                    setThptExams(cleanExams);
+                }, (err) => handleFirestoreError('thptExams-sync', err))
+            );
+
+            unsubs.push(
+                onSnapshot(getDocRef(userId, 'thptProfile', 'main'), (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        let modified = false;
+                        if (data.targetUniversity === 'Đại học Bách Khoa TP.HCM - Ngành Khoa học Máy tính' ||
+                            data.targetUniversity === 'Đại học Bách Khoa - Ngành Khoa học Máy tính' ||
+                            data.targetUniversity === 'Đại học Bách Khoa TP.HCM - Khoa học Máy tính') {
+                            data.targetUniversity = '';
+                            data.targetTotalScore = 0;
+                            data.combination = '';
+                            data.subjectTargets = [];
+                            modified = true;
+                        }
+                        if (data.mistakeNotes) {
+                            const originalLen = data.mistakeNotes.length;
+                            data.mistakeNotes = data.mistakeNotes.filter(m => !m.id.startsWith('mis_00'));
+                            if (data.mistakeNotes.length !== originalLen) modified = true;
+                        }
+                        if (modified) {
+                            setDoc(getDocRef(userId, 'thptProfile', 'main'), data).catch(() => {});
+                        }
+                        setThptProfile(data);
                     }
-                    if (data.mistakeNotes) {
-                        const originalLen = data.mistakeNotes.length;
-                        data.mistakeNotes = data.mistakeNotes.filter(m => !m.id.startsWith('mis_00'));
-                        if (data.mistakeNotes.length !== originalLen) modified = true;
-                    }
-                    if (modified) {
-                        setDoc(getDocRef(userId, 'thptProfile', 'main'), data).catch(() => {});
-                    }
-                    setThptProfile(data);
-                }
-            });
+                }, (err) => handleFirestoreError('thptProfile-sync', err))
+            );
 
-            onSnapshot(getCollectionRef(userId, 'thptResults'), (snapshot) => {
-                const cleanResults = snapshot.docs
-                    .map(d => ({ id: d.id, ...d.data() }))
-                    .filter(r => !r.id.startsWith('res_00'));
-                setThptResults(cleanResults);
-            });
+            unsubs.push(
+                onSnapshot(getCollectionRef(userId, 'thptResults'), (snapshot) => {
+                    const cleanResults = snapshot.docs
+                        .map(d => ({ id: d.id, ...d.data() }))
+                        .filter(r => !r.id.startsWith('res_00'));
+                    setThptResults(cleanResults);
+                }, (err) => handleFirestoreError('thptResults-sync', err))
+            );
+
+            firestoreSubscriptionsRef.current = unsubs;
         } catch (err) {
-            console.warn("Firestore sync setup error:", err);
+            handleFirestoreError("syncFirestoreData", err);
         }
     };
 
     const handleSignOut = async () => {
         try {
             setAuthLoadingState('logging_out');
+            if (firestoreSubscriptionsRef.current && firestoreSubscriptionsRef.current.length > 0) {
+                firestoreSubscriptionsRef.current.forEach(unsub => {
+                    try { if (typeof unsub === 'function') unsub(); } catch (e) {}
+                });
+                firestoreSubscriptionsRef.current = [];
+            }
             await new Promise(resolve => setTimeout(resolve, 500)); // Smooth exit delay
             await signOut(auth);
             setUser(null);
@@ -5589,7 +6549,7 @@ if (!user) {
                             
                             {error && (
                                 <div className="mt-5 p-3 bg-red-50 border-l-4 border-brand-jasper text-brand-jasper text-sm font-bold flex items-center gap-2">
-                                    <span>⚠️</span> {error}
+                                    <AlertCircle size={16} className="shrink-0 text-brand-jasper" /> {error}
                                 </div>
                             )}
                         </div>
