@@ -155,7 +155,7 @@ if (typeof window !== 'undefined' && localStorage.getItem('pedagogy_real_data_on
 }
 
 // --- CUSTOM EDITORIAL DROPDOWN / SELECT COMPONENT ---
-const EditorialSelect = ({ label, value, onChange, options, className = "", placeholder, direction = "auto", isMulti = false }) => {
+const EditorialSelect = ({ label, value, onChange, options = [], className = "", placeholder, direction = "auto", isMulti = false }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [coords, setCoords] = useState({ top: 0, bottom: 0, left: 0, width: 0, openUpward: false });
     const dropdownRef = useRef(null);
@@ -164,35 +164,33 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
     const selectedValues = isMulti
         ? (Array.isArray(value)
             ? value
-            : (value ? String(value).split(', ').map(s => s.trim()).filter(Boolean) : []))
+            : (value ? String(value).split(',').map(s => s.trim()).filter(Boolean) : []))
         : [];
-
-    const selectedOption = !isMulti
-        ? (options.find(opt => opt.value === value) || { label: placeholder || value, value })
-        : null;
 
     let displayLabel = placeholder || 'Chọn...';
     if (isMulti) {
         if (selectedValues.length > 0) {
-            const labels = options
-                .filter(opt => selectedValues.includes(opt.value))
-                .map(opt => opt.label);
-            displayLabel = labels.length > 0 ? labels.join(', ') : selectedValues.join(', ');
+            const labels = selectedValues.map(val => {
+                const found = (options || []).find(opt => String(opt.value) === String(val));
+                return found ? found.label : val;
+            });
+            displayLabel = labels.join(', ');
         }
     } else {
-        displayLabel = selectedOption?.label || selectedOption?.value || value || (placeholder || 'Chọn...');
+        const found = (options || []).find(opt => String(opt.value) === String(value));
+        displayLabel = found?.label || found?.value || value || (placeholder || 'Chọn...');
     }
 
     const updateCoords = () => {
         if (dropdownRef.current) {
             const rect = dropdownRef.current.getBoundingClientRect();
             const spaceBelow = window.innerHeight - rect.bottom;
-            const openUp = direction === "up" || (direction === "auto" && spaceBelow < 220 && rect.top > 220);
+            const openUp = direction === "up" || (direction === "auto" && spaceBelow < 240 && rect.top > 240);
             setCoords({
                 top: rect.bottom + 4,
                 bottom: window.innerHeight - rect.top + 4,
-                left: rect.left,
-                width: rect.width,
+                left: Math.max(8, Math.min(rect.left, window.innerWidth - Math.max(rect.width, 240) - 8)),
+                width: Math.max(rect.width, 240),
                 openUpward: openUp
             });
         }
@@ -222,8 +220,8 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
     const handleSelectOption = (optValue) => {
         if (isMulti) {
             let updated;
-            if (selectedValues.includes(optValue)) {
-                updated = selectedValues.filter(v => v !== optValue);
+            if (selectedValues.some(v => String(v) === String(optValue))) {
+                updated = selectedValues.filter(v => String(v) !== String(optValue));
             } else {
                 updated = [...selectedValues, optValue];
             }
@@ -246,7 +244,7 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
                 onClick={handleToggle}
                 className="w-full flex items-center justify-between py-2 border-b border-brand-cerulean font-body text-brand-ink text-left hover:border-brand-jasper focus:outline-none transition-colors bg-transparent group"
             >
-                <span className="truncate text-lg" title={typeof displayLabel === 'string' ? displayLabel : ''}>{displayLabel}</span>
+                <span className="truncate text-base" title={typeof displayLabel === 'string' ? displayLabel : ''}>{displayLabel}</span>
                 <ChevronDown size={16} className={`text-brand-cerulean group-hover:text-brand-jasper transition-transform duration-200 shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -262,33 +260,58 @@ const EditorialSelect = ({ label, value, onChange, options, className = "", plac
                     }}
                     className="editorial-portal-select bg-brand-cream border-editorial shadow-2xl max-h-56 overflow-y-auto animate-fade-in-down"
                 >
-                    {options.map((opt) => {
-                        const isSelected = isMulti ? selectedValues.includes(opt.value) : value === opt.value;
-                        return (
-                            <div
-                                key={opt.value}
-                                onClick={() => handleSelectOption(opt.value)}
-                                className={`px-4 py-2.5 text-base font-body cursor-pointer flex items-center justify-between transition-colors ${
-                                    isSelected
-                                        ? 'bg-brand-cerulean text-brand-cream font-semibold'
-                                        : 'text-brand-ink hover:bg-brand-cerulean/10 hover:text-brand-jasper'
-                                }`}
-                            >
-                                <span className="flex items-center gap-2 truncate">
-                                    {isMulti && (
-                                        <input
-                                            type="checkbox"
-                                            checked={isSelected}
-                                            onChange={() => {}}
-                                            className="accent-brand-jasper w-4 h-4 cursor-pointer shrink-0"
-                                        />
-                                    )}
-                                    <span className="truncate">{opt.label}</span>
-                                </span>
-                                {isSelected && <Check size={16} className="shrink-0 ml-2 text-brand-cream" />}
-                            </div>
-                        );
-                    })}
+                    {(!options || options.length === 0) ? (
+                        <div className="px-4 py-3 text-xs text-gray-500 italic text-center font-serif-title">
+                            Chưa có học phần nào để chọn
+                        </div>
+                    ) : (
+                        <>
+                            {isMulti && selectedValues.length > 0 && (
+                                <div className="px-3 py-1.5 bg-amber-50 border-b border-amber-200/60 flex justify-between items-center text-xs font-serif-title sticky top-0 z-10">
+                                    <span className="text-amber-800 font-bold">Đã chọn ({selectedValues.length})</span>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onChange([]);
+                                        }}
+                                        className="text-brand-jasper hover:underline font-bold"
+                                    >
+                                        Bỏ chọn tất cả
+                                    </button>
+                                </div>
+                            )}
+                            {options.map((opt) => {
+                                const isSelected = isMulti 
+                                    ? selectedValues.some(v => String(v) === String(opt.value))
+                                    : String(value) === String(opt.value);
+                                return (
+                                    <div
+                                        key={opt.value}
+                                        onClick={() => handleSelectOption(opt.value)}
+                                        className={`px-4 py-2 text-sm font-body cursor-pointer flex items-center justify-between transition-colors ${
+                                            isSelected
+                                                ? 'bg-brand-cerulean text-brand-cream font-semibold'
+                                                : 'text-brand-ink hover:bg-brand-cerulean/10 hover:text-brand-jasper'
+                                        }`}
+                                    >
+                                        <span className="flex items-center gap-2 truncate pr-2">
+                                            {isMulti && (
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => {}}
+                                                    className="accent-brand-jasper w-4 h-4 cursor-pointer shrink-0"
+                                                />
+                                            )}
+                                            <span className="truncate">{opt.label}</span>
+                                        </span>
+                                        {isSelected && <Check size={16} className="shrink-0 ml-2 text-brand-cream" />}
+                                    </div>
+                                );
+                            })}
+                        </>
+                    )}
                 </div>,
                 document.body
             )}
@@ -2283,6 +2306,27 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
 
     const programModules = program ? modules.filter(m => isModuleInProgram(m, program.id)) : [];
 
+    const sortedProgramModules = [...programModules].sort((a, b) => {
+        const semA = Number(a.semester) || 99;
+        const semB = Number(b.semester) || 99;
+        if (semA !== semB) return semA - semB;
+        return (a.code || '').localeCompare(b.code || '');
+    });
+
+    const prerequisiteOptions = sortedProgramModules.map(m => ({
+        label: `${m.code ? `[${m.code}] ` : ''}${m.name}${m.semester ? ` (HK ${m.semester})` : ''}`,
+        value: m.code || m.name
+    }));
+
+    const editingPrerequisiteOptions = editingModule
+        ? sortedProgramModules
+            .filter(m => m.id !== editingModule.id && m.code !== editingModule.code)
+            .map(m => ({
+                label: `${m.code ? `[${m.code}] ` : ''}${m.name}${m.semester ? ` (HK ${m.semester})` : ''}`,
+                value: m.code || m.name
+            }))
+        : prerequisiteOptions;
+
     if (!program) {
         return (
             <div className="max-w-5xl mx-auto p-12 text-center border border-dashed border-brand-cerulean">
@@ -2349,7 +2393,7 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
             code: (modForm.code || '').toUpperCase().trim(),
             credits: Number(modForm.credits),
             semester: modForm.semester || '1',
-            prerequisites: modForm.prerequisites?.trim() || '',
+            prerequisites: Array.isArray(modForm.prerequisites) ? modForm.prerequisites.join(', ') : (modForm.prerequisites?.trim() || ''),
             knowledgeBlock: modForm.category || 'general',
             status: 'planned',
             syllabus: {
@@ -2420,7 +2464,7 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
             code: (editingModule.code || '').toUpperCase().trim(),
             credits: Number(editingModule.credits),
             semester: editingModule.semester || '1',
-            prerequisites: editingModule.prerequisites?.trim() || '',
+            prerequisites: Array.isArray(editingModule.prerequisites) ? editingModule.prerequisites.join(', ') : (editingModule.prerequisites?.trim() || ''),
             knowledgeBlock: editingModule.category || editingModule.knowledgeBlock || 'general'
         });
         setEditingModule(null);
@@ -3232,13 +3276,13 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Học phần tiên quyết (nếu có)</label>
-                                    <input
-                                        type="text"
-                                        className="input-editorial w-full uppercase"
+                                    <EditorialSelect
+                                        label="Học phần tiên quyết (nếu có)"
                                         value={modForm.prerequisites || ''}
-                                        onChange={e => setModForm({ ...modForm, prerequisites: e.target.value.toUpperCase() })}
-                                        placeholder="VD: MTH101, PHY102"
+                                        onChange={val => setModForm({ ...modForm, prerequisites: Array.isArray(val) ? val.join(', ') : val })}
+                                        options={prerequisiteOptions}
+                                        placeholder="Không có (hoặc chọn học phần...)"
+                                        isMulti={true}
                                     />
                                 </div>
                             </div>
@@ -3378,13 +3422,13 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Học phần tiên quyết</label>
-                                    <input
-                                        type="text"
-                                        className="input-editorial w-full uppercase"
+                                    <EditorialSelect
+                                        label="Học phần tiên quyết (nếu có)"
                                         value={editingModule.prerequisites || ''}
-                                        onChange={e => setEditingModule({ ...editingModule, prerequisites: e.target.value.toUpperCase() })}
-                                        placeholder="VD: MTH101"
+                                        onChange={val => setEditingModule({ ...editingModule, prerequisites: Array.isArray(val) ? val.join(', ') : val })}
+                                        options={editingPrerequisiteOptions}
+                                        placeholder="Không có (hoặc chọn học phần...)"
+                                        isMulti={true}
                                     />
                                 </div>
                             </div>
