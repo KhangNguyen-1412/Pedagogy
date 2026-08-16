@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import vietnamLocations from './vietnamLocations.json';
 import {
@@ -2255,12 +2255,19 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
         credits: isDaiHoc ? 3 : 2,
         category: isDaiHoc ? 'general' : 'A',
         knowledgeBlock: isDaiHoc ? 'general' : 'A',
-        semester: '1',
+        semester: 'unassigned',
         prerequisites: '',
         type: 'mandatory'
     });
-    const [modalTab, setModalTab] = useState('create'); // 'create' | 'link'
+    const [modalTab, setModalTab] = useState('create'); // 'create' | 'batch' | 'link'
     const [linkSearch, setLinkSearch] = useState('');
+    const [batchText, setBatchText] = useState('');
+    const [batchDefaults, setBatchDefaults] = useState({
+        category: isDaiHoc ? 'general' : 'A',
+        type: 'mandatory',
+        credits: isDaiHoc ? 3 : 2,
+        semester: 'unassigned'
+    });
 
     const moduleTypeOptions = [
         { label: 'Bắt buộc', value: 'mandatory' },
@@ -2282,6 +2289,7 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
         ];
 
     const semesterOptions = [
+        { label: 'Chưa xếp học kỳ (Xếp sau)', value: 'unassigned' },
         { label: 'Học kỳ 1 (Năm 1)', value: '1' },
         { label: 'Học kỳ 2 (Năm 1)', value: '2' },
         { label: 'Học kỳ 3 (Năm 2)', value: '3' },
@@ -2293,9 +2301,13 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
         { label: 'Kỳ hè / Dự thính', value: 'summer' }
     ];
 
+    const programModules = program ? modules.filter(m => isModuleInProgram(m, program.id)) : [];
+    const unassignedCount = programModules.filter(m => !m.semester || m.semester === 'unassigned').length;
+
     const semesterFilterOptions = [
         { label: 'Tất cả các học kỳ', value: 'all' },
-        ...semesterOptions
+        ...(unassignedCount > 0 ? [{ label: `⚠️ Chưa xếp học kỳ (${unassignedCount})`, value: 'unassigned' }] : []),
+        ...semesterOptions.filter(opt => opt.value !== 'unassigned')
     ];
 
     const statusOptions = [
@@ -2304,17 +2316,15 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
         { label: 'Đã hoàn thành', value: 'completed' },
     ];
 
-    const programModules = program ? modules.filter(m => isModuleInProgram(m, program.id)) : [];
-
     const sortedProgramModules = [...programModules].sort((a, b) => {
-        const semA = Number(a.semester) || 99;
-        const semB = Number(b.semester) || 99;
+        const semA = a.semester === 'unassigned' ? 999 : (Number(a.semester) || 99);
+        const semB = b.semester === 'unassigned' ? 999 : (Number(b.semester) || 99);
         if (semA !== semB) return semA - semB;
         return (a.code || '').localeCompare(b.code || '');
     });
 
     const prerequisiteOptions = sortedProgramModules.map(m => ({
-        label: `${m.code ? `[${m.code}] ` : ''}${m.name}${m.semester ? ` (HK ${m.semester})` : ''}`,
+        label: `${m.code ? `[${m.code}] ` : ''}${m.name}${m.semester && m.semester !== 'unassigned' ? ` (HK ${m.semester})` : ''}`,
         value: m.code || m.name
     }));
 
@@ -2322,7 +2332,7 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
         ? sortedProgramModules
             .filter(m => m.id !== editingModule.id && m.code !== editingModule.code)
             .map(m => ({
-                label: `${m.code ? `[${m.code}] ` : ''}${m.name}${m.semester ? ` (HK ${m.semester})` : ''}`,
+                label: `${m.code ? `[${m.code}] ` : ''}${m.name}${m.semester && m.semester !== 'unassigned' ? ` (HK ${m.semester})` : ''}`,
                 value: m.code || m.name
             }))
         : prerequisiteOptions;
@@ -2410,7 +2420,7 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
             credits: isDaiHoc ? 3 : 2,
             category: defaultCat,
             knowledgeBlock: defaultCat,
-            semester: semesterFilter !== 'all' ? semesterFilter : '1',
+            semester: semesterFilter !== 'all' ? semesterFilter : 'unassigned',
             prerequisites: '',
             type: 'mandatory'
         });
@@ -2430,7 +2440,7 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
             ...modForm,
             code: (modForm.code || '').toUpperCase().trim(),
             credits: Number(modForm.credits),
-            semester: modForm.semester || '1',
+            semester: modForm.semester || 'unassigned',
             prerequisites: Array.isArray(modForm.prerequisites) ? modForm.prerequisites.join(', ') : (modForm.prerequisites?.trim() || ''),
             knowledgeBlock: modForm.category || 'general',
             status: 'planned',
@@ -2451,10 +2461,100 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
             credits: isDaiHoc ? 3 : 2,
             category: defaultCat,
             knowledgeBlock: defaultCat,
-            semester: semesterFilter !== 'all' ? semesterFilter : '1',
+            semester: semesterFilter !== 'all' ? semesterFilter : 'unassigned',
             prerequisites: '',
             type: 'mandatory'
         });
+    };
+
+    // Parser for quick batch list input
+    const parsedBatchModules = useMemo(() => {
+        if (!batchText.trim()) return [];
+        const lines = batchText.split('\n').map(l => l.trim()).filter(Boolean);
+        
+        let genCount = programModules.filter(m => (m.category || m.knowledgeBlock) === batchDefaults.category).length;
+
+        return lines.map((line, idx) => {
+            let code = '';
+            let name = line;
+            let credits = batchDefaults.credits || (isDaiHoc ? 3 : 2);
+            let category = batchDefaults.category || (isDaiHoc ? 'general' : 'A');
+            let type = batchDefaults.type || 'mandatory';
+            let semester = batchDefaults.semester || 'unassigned';
+
+            // 1. Pipe or Tab separated format: CODE | NAME | CREDITS | CATEGORY
+            if (line.includes('|') || line.includes('\t')) {
+                const parts = line.split(/[|\t]/).map(p => p.trim());
+                if (parts.length >= 2) {
+                    if (parts[0].match(/^[A-Za-z0-9_-]{2,10}$/)) {
+                        code = parts[0].toUpperCase();
+                        name = parts[1];
+                        if (parts[2] && !isNaN(Number(parts[2]))) credits = Number(parts[2]);
+                        if (parts[3] && ['general', 'fundamental', 'specialized', 'internship', 'A', 'B', 'C'].includes(parts[3])) category = parts[3];
+                    } else {
+                        name = parts[0];
+                        if (!isNaN(Number(parts[1]))) credits = Number(parts[1]);
+                    }
+                }
+            } else {
+                // 2. Format: "MTH101: Giải tích 1" or "MTH101 - Giải tích 1" or "MTH101. Giải tích 1"
+                const codeMatch = line.match(/^([A-Za-z0-9_-]{2,10})[\s:.\–—-]+(.*)$/);
+                if (codeMatch) {
+                    code = codeMatch[1].toUpperCase();
+                    name = codeMatch[2].trim();
+                }
+
+                // 3. Format: "... (3 TC)" or "... - 3 tín chỉ" or "... (3 tín chỉ)"
+                const credMatch = name.match(/[\(\[-]?\s*(\d+)\s*(?:tc|tín chỉ|credits?)?\s*[\)\]]?$/i);
+                if (credMatch && credMatch[1]) {
+                    credits = Number(credMatch[1]);
+                    name = name.replace(/[\(\[-]?\s*(\d+)\s*(?:tc|tín chỉ|credits?)?\s*[\)\]]?$/i, '').trim();
+                }
+            }
+
+            if (!code) {
+                genCount++;
+                const prefix = isDaiHoc
+                    ? (category === 'general' ? 'GEN' : category === 'fundamental' ? 'BAS' : category === 'specialized' ? 'SPE' : 'INT')
+                    : (category.toUpperCase());
+                code = `${prefix}${String(genCount).padStart(2, '0')}`;
+            }
+
+            return {
+                id: `batch_mod_${Date.now()}_${idx}`,
+                code: code.toUpperCase(),
+                name: name || `Học phần ${idx + 1}`,
+                credits: Number(credits) || 3,
+                category,
+                knowledgeBlock: category,
+                type,
+                semester,
+                prerequisites: '',
+                status: 'planned',
+                syllabus: {
+                    description: '',
+                    clos: [],
+                    weights: { attendance: 10, midterm: 30, final: 60 }
+                },
+                grades: { attendance: 0, midterm: 0, final: 0 }
+            };
+        });
+    }, [batchText, batchDefaults, programModules, isDaiHoc]);
+
+    const handleSaveBatchModules = (e) => {
+        e.preventDefault();
+        if (parsedBatchModules.length === 0) return;
+
+        parsedBatchModules.forEach((mod, idx) => {
+            onAddModule({
+                ...mod,
+                id: `mod_${Date.now()}_${idx}`,
+                programIds: [programId]
+            });
+        });
+
+        setBatchText('');
+        setIsModuleModalOpen(false);
     };
 
     // Link an existing module from another program into this program
@@ -2518,7 +2618,7 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
 
     const filteredModules = programModules.filter(m => {
         const catMatch = categoryFilter === 'all' || m.category === categoryFilter || (isDaiHoc && m.knowledgeBlock === categoryFilter);
-        const semMatch = !isDaiHoc || semesterFilter === 'all' || String(m.semester || '1') === String(semesterFilter);
+        const semMatch = !isDaiHoc || semesterFilter === 'all' || String(m.semester || 'unassigned') === String(semesterFilter);
         return catMatch && semMatch;
     });
 
@@ -2545,6 +2645,7 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
 
     const getSemesterTitle = (sem) => {
         switch (String(sem)) {
+            case 'unassigned': return 'HỌC PHẦN CHƯA XẾP HỌC KỲ (CẦN PHÂN BỔ)';
             case '1': return 'HỌC KỲ 1 (NĂM THỨ NHẤT)';
             case '2': return 'HỌC KỲ 2 (NĂM THỨ NHẤT)';
             case '3': return 'HỌC KỲ 3 (NĂM THỨ HAI)';
@@ -2565,12 +2666,14 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
     }, {});
 
     const groupedBySemester = filteredModules.reduce((acc, mod) => {
-        const sem = String(mod.semester || '1');
+        const sem = mod.semester ? String(mod.semester) : 'unassigned';
         (acc[sem] = acc[sem] || []).push(mod);
         return acc;
     }, {});
 
     const sortedSemesters = Object.keys(groupedBySemester).sort((a, b) => {
+        if (a === 'unassigned') return -1;
+        if (b === 'unassigned') return 1;
         if (a === 'summer') return 1;
         if (b === 'summer') return -1;
         const numA = parseInt(a, 10);
@@ -2767,11 +2870,20 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                                 {semKey === 'summer' ? 'Hè' : `K${semKey}`}
                                             </div>
                                             <div>
-                                                <h3 className="text-2xl font-serif-title text-brand-cerulean uppercase tracking-wider">
+                                                <h3 className="text-2xl font-serif-title text-brand-cerulean uppercase tracking-wider flex items-center gap-2 flex-wrap">
                                                     {getSemesterTitle(semKey)}
+                                                    {semKey === 'unassigned' && (
+                                                        <span className="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold font-sans rounded-full normal-case">
+                                                            Chưa phân bổ
+                                                        </span>
+                                                    )}
                                                 </h3>
                                                 <p className="text-xs text-gray-500 font-sans mt-0.5">
-                                                    {semKey === 'summer' ? 'Kỳ học bổ sung / Tích lũy trước' : `Giai đoạn đào tạo học kỳ ${semKey}`}
+                                                    {semKey === 'unassigned' 
+                                                        ? 'Các học phần đã nhập nhưng chưa gán kỳ học — bạn có thể chọn học kỳ ngay trên thẻ môn'
+                                                        : semKey === 'summer' 
+                                                        ? 'Kỳ học bổ sung / Tích lũy trước' 
+                                                        : `Giai đoạn đào tạo học kỳ ${semKey}`}
                                                 </p>
                                             </div>
                                         </div>
@@ -2779,6 +2891,18 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                             {mods.length} Học phần &bull; <span className="text-brand-jasper font-bold">{semTotalCredits} TC</span>
                                         </span>
                                     </div>
+
+                                    {semKey === 'unassigned' && (
+                                        <div className="p-3.5 bg-amber-50 border-2 border-amber-300 rounded flex items-start gap-2.5 text-xs text-amber-950 font-serif-title">
+                                            <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                                            <div>
+                                                <p className="font-bold">Danh sách học phần cần xếp học kỳ:</p>
+                                                <p className="font-sans text-amber-900 mt-0.5">
+                                                    Sử dụng ô chọn <strong>[⚠️ Chưa xếp kỳ ▾]</strong> trên từng thẻ môn học bên dưới để phân bổ trực tiếp môn học vào Học kỳ 1, 2, 3...
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Bắt buộc trong kỳ */}
                                     {mandatoryAndPractice.length > 0 && (
@@ -2799,6 +2923,36 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                                         <div className="pr-12">
                                                             <div className="flex items-center gap-2 flex-wrap mb-1">
                                                                 <span className="text-sm font-sans font-bold text-gray-600">{(mod.code || '').toUpperCase()}</span>
+                                                                {isDaiHoc && (
+                                                                    <select
+                                                                        value={mod.semester || 'unassigned'}
+                                                                        onChange={(e) => {
+                                                                            e.stopPropagation();
+                                                                            onUpdateModule({
+                                                                                ...mod,
+                                                                                semester: e.target.value
+                                                                            });
+                                                                        }}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        title="Phân bổ / Chuyển học kỳ"
+                                                                        className={`text-[11px] font-bold font-serif-title py-0.5 px-1.5 rounded border transition-colors cursor-pointer outline-none ${
+                                                                            !mod.semester || mod.semester === 'unassigned'
+                                                                                ? 'bg-amber-100 text-amber-900 border-amber-400 hover:bg-amber-200 shadow-xs font-bold'
+                                                                                : 'bg-blue-50 text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
+                                                                        }`}
+                                                                    >
+                                                                        <option value="unassigned">⚠️ Chưa xếp kỳ</option>
+                                                                        <option value="1">Học kỳ 1</option>
+                                                                        <option value="2">Học kỳ 2</option>
+                                                                        <option value="3">Học kỳ 3</option>
+                                                                        <option value="4">Học kỳ 4</option>
+                                                                        <option value="5">Học kỳ 5</option>
+                                                                        <option value="6">Học kỳ 6</option>
+                                                                        <option value="7">Học kỳ 7</option>
+                                                                        <option value="8">Học kỳ 8</option>
+                                                                        <option value="summer">Kỳ hè</option>
+                                                                    </select>
+                                                                )}
                                                                 {isDaiHoc && (
                                                                     <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 text-[10px] font-bold font-serif-title rounded border border-gray-300">
                                                                         {mod.knowledgeBlock === 'general' || mod.category === 'general' ? 'Đại cương' :
@@ -2900,6 +3054,36 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                                                         <span>{isSelected ? 'Đã chọn học' : 'Chọn học'}</span>
                                                                     </button>
                                                                     <span className="text-xs font-sans font-bold text-gray-600">{(mod.code || '').toUpperCase()}</span>
+                                                                    {isDaiHoc && (
+                                                                        <select
+                                                                            value={mod.semester || 'unassigned'}
+                                                                            onChange={(e) => {
+                                                                                e.stopPropagation();
+                                                                                onUpdateModule({
+                                                                                    ...mod,
+                                                                                    semester: e.target.value
+                                                                                });
+                                                                            }}
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                            title="Phân bổ / Chuyển học kỳ"
+                                                                            className={`text-[11px] font-bold font-serif-title py-0.5 px-1.5 rounded border transition-colors cursor-pointer outline-none ${
+                                                                                !mod.semester || mod.semester === 'unassigned'
+                                                                                    ? 'bg-amber-100 text-amber-900 border-amber-400 hover:bg-amber-200 font-bold'
+                                                                                    : 'bg-blue-50 text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
+                                                                            }`}
+                                                                        >
+                                                                            <option value="unassigned">⚠️ Chưa xếp kỳ</option>
+                                                                            <option value="1">Học kỳ 1</option>
+                                                                            <option value="2">Học kỳ 2</option>
+                                                                            <option value="3">Học kỳ 3</option>
+                                                                            <option value="4">Học kỳ 4</option>
+                                                                            <option value="5">Học kỳ 5</option>
+                                                                            <option value="6">Học kỳ 6</option>
+                                                                            <option value="7">Học kỳ 7</option>
+                                                                            <option value="8">Học kỳ 8</option>
+                                                                            <option value="summer">Kỳ hè</option>
+                                                                        </select>
+                                                                    )}
                                                                     {isDaiHoc && (
                                                                         <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 text-[10px] font-bold font-serif-title rounded border border-gray-300">
                                                                             {mod.knowledgeBlock === 'general' || mod.category === 'general' ? 'Đại cương' :
@@ -3016,10 +3200,35 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                                         <div className="pr-12">
                                                             <div className="flex items-center gap-2 flex-wrap mb-1">
                                                                 <span className="text-sm font-sans font-bold text-gray-500">{(mod.code || '').toUpperCase()}</span>
-                                                                {isDaiHoc && mod.semester && (
-                                                                    <span className="px-1.5 py-0.5 bg-blue-100 text-brand-cerulean text-[11px] font-bold font-serif-title rounded border border-brand-cerulean/20">
-                                                                        Kỳ {mod.semester === 'summer' ? 'Hè' : mod.semester}
-                                                                    </span>
+                                                                {isDaiHoc && (
+                                                                    <select
+                                                                        value={mod.semester || 'unassigned'}
+                                                                        onChange={(e) => {
+                                                                            e.stopPropagation();
+                                                                            onUpdateModule({
+                                                                                ...mod,
+                                                                                semester: e.target.value
+                                                                            });
+                                                                        }}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        title="Phân bổ / Chuyển học kỳ"
+                                                                        className={`text-[11px] font-bold font-serif-title py-0.5 px-1.5 rounded border transition-colors cursor-pointer outline-none ${
+                                                                            !mod.semester || mod.semester === 'unassigned'
+                                                                                ? 'bg-amber-100 text-amber-900 border-amber-400 hover:bg-amber-200 font-bold'
+                                                                                : 'bg-blue-50 text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
+                                                                        }`}
+                                                                    >
+                                                                        <option value="unassigned">⚠️ Chưa xếp kỳ</option>
+                                                                        <option value="1">Học kỳ 1</option>
+                                                                        <option value="2">Học kỳ 2</option>
+                                                                        <option value="3">Học kỳ 3</option>
+                                                                        <option value="4">Học kỳ 4</option>
+                                                                        <option value="5">Học kỳ 5</option>
+                                                                        <option value="6">Học kỳ 6</option>
+                                                                        <option value="7">Học kỳ 7</option>
+                                                                        <option value="8">Học kỳ 8</option>
+                                                                        <option value="summer">Kỳ hè</option>
+                                                                    </select>
                                                                 )}
                                                                 {mod.prerequisites && (
                                                                     <span className="px-1.5 py-0.5 bg-amber-50 text-amber-900 text-[10px] font-bold font-serif-title rounded border border-amber-300">
@@ -3127,10 +3336,35 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                                                         <span>{isSelected ? 'Đã chọn học' : 'Chọn học'}</span>
                                                                     </button>
                                                                     <span className="text-xs font-sans font-bold text-gray-500">{(mod.code || '').toUpperCase()}</span>
-                                                                    {isDaiHoc && mod.semester && (
-                                                                        <span className="px-1.5 py-0.5 bg-blue-100 text-brand-cerulean text-[11px] font-bold font-serif-title rounded border border-brand-cerulean/20">
-                                                                            Kỳ {mod.semester === 'summer' ? 'Hè' : mod.semester}
-                                                                        </span>
+                                                                    {isDaiHoc && (
+                                                                        <select
+                                                                            value={mod.semester || 'unassigned'}
+                                                                            onChange={(e) => {
+                                                                                e.stopPropagation();
+                                                                                onUpdateModule({
+                                                                                    ...mod,
+                                                                                    semester: e.target.value
+                                                                                });
+                                                                            }}
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                            title="Phân bổ / Chuyển học kỳ"
+                                                                            className={`text-[11px] font-bold font-serif-title py-0.5 px-1.5 rounded border transition-colors cursor-pointer outline-none ${
+                                                                                !mod.semester || mod.semester === 'unassigned'
+                                                                                    ? 'bg-amber-100 text-amber-900 border-amber-400 hover:bg-amber-200 font-bold'
+                                                                                    : 'bg-blue-50 text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
+                                                                            }`}
+                                                                        >
+                                                                            <option value="unassigned">⚠️ Chưa xếp kỳ</option>
+                                                                            <option value="1">Học kỳ 1</option>
+                                                                            <option value="2">Học kỳ 2</option>
+                                                                            <option value="3">Học kỳ 3</option>
+                                                                            <option value="4">Học kỳ 4</option>
+                                                                            <option value="5">Học kỳ 5</option>
+                                                                            <option value="6">Học kỳ 6</option>
+                                                                            <option value="7">Học kỳ 7</option>
+                                                                            <option value="8">Học kỳ 8</option>
+                                                                            <option value="summer">Kỳ hè</option>
+                                                                        </select>
                                                                     )}
                                                                     {mod.prerequisites && (
                                                                         <span className="px-1.5 py-0.5 bg-amber-50 text-amber-900 text-[10px] font-bold font-serif-title rounded border border-amber-300">
@@ -3195,25 +3429,36 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                 )
             )}
 
-            {/* Modal Thêm Học Phần — 2 Tab: Tạo mới / Liên kết */}
-            <Modal isOpen={isModuleModalOpen} onClose={() => { setIsModuleModalOpen(false); setModalTab('create'); setLinkSearch(''); }} title="Thêm Học phần">
+            {/* Modal Thêm Học Phần — 3 Tab: Tạo từng môn / Nhập nhanh danh sách / Liên kết */}
+            <Modal isOpen={isModuleModalOpen} onClose={() => { setIsModuleModalOpen(false); setModalTab('create'); setLinkSearch(''); setBatchText(''); }} title="Thêm Học phần">
                 {/* Tab Switcher */}
-                <div className="flex border-b border-brand-cerulean/30 mb-6 -mt-2">
+                <div className="flex border-b border-brand-cerulean/30 mb-6 -mt-2 overflow-x-auto">
                     <button
                         type="button"
                         onClick={() => setModalTab('create')}
-                        className={`flex items-center gap-2 px-5 py-2.5 text-sm font-serif-title font-bold transition-colors border-b-2 ${
+                        className={`flex items-center gap-2 px-5 py-2.5 text-sm font-serif-title font-bold transition-colors border-b-2 whitespace-nowrap ${
                             modalTab === 'create'
                                 ? 'border-brand-cerulean text-brand-cerulean'
                                 : 'border-transparent text-gray-500 hover:text-brand-cerulean'
                         }`}
                     >
-                        <Plus size={16} /> Tạo mới
+                        <Plus size={16} /> Tạo từng môn
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setModalTab('batch')}
+                        className={`flex items-center gap-2 px-5 py-2.5 text-sm font-serif-title font-bold transition-colors border-b-2 whitespace-nowrap ${
+                            modalTab === 'batch'
+                                ? 'border-brand-cerulean text-brand-cerulean'
+                                : 'border-transparent text-gray-500 hover:text-brand-cerulean'
+                        }`}
+                    >
+                        <FileText size={16} /> Nhập nhanh danh sách {parsedBatchModules.length > 0 ? `(${parsedBatchModules.length})` : ''}
                     </button>
                     <button
                         type="button"
                         onClick={() => setModalTab('link')}
-                        className={`flex items-center gap-2 px-5 py-2.5 text-sm font-serif-title font-bold transition-colors border-b-2 ${
+                        className={`flex items-center gap-2 px-5 py-2.5 text-sm font-serif-title font-bold transition-colors border-b-2 whitespace-nowrap ${
                             modalTab === 'link'
                                 ? 'border-brand-cerulean text-brand-cerulean'
                                 : 'border-transparent text-gray-500 hover:text-brand-cerulean'
@@ -3371,6 +3616,122 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                         <div className="pt-4 flex justify-end gap-4 border-t border-brand-cerulean/20">
                             <button type="button" onClick={() => setIsModuleModalOpen(false)} className="px-6 py-2 text-gray-500 font-serif-title">Hủy</button>
                             <button type="submit" className="px-6 py-2 bg-brand-cerulean text-brand-cream font-serif-title shadow-editorial hover:shadow-editorial-hover">Lưu Học phần</button>
+                        </div>
+                    </form>
+                )}
+
+                {/* Tab Content: Batch List Input */}
+                {modalTab === 'batch' && (
+                    <form onSubmit={handleSaveBatchModules} className="space-y-5">
+                        <div className="p-3.5 bg-blue-50/70 border border-brand-cerulean/30 rounded text-xs space-y-1 text-brand-cerulean">
+                            <p className="font-serif-title font-bold text-sm">💡 Nhập danh sách học phần hàng loạt (Xếp học kỳ sau)</p>
+                            <p className="text-gray-700">
+                                Nhập hoặc dán danh sách tên học phần (mỗi dòng một môn). Hệ thống sẽ tự động gán mã môn, số tín chỉ và đặt trạng thái <strong>Chưa xếp học kỳ</strong> để bạn phân bổ sau.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <EditorialSelect
+                                    label={isDaiHoc ? "Khối kiến thức mặc định" : "Nhánh"}
+                                    value={batchDefaults.category}
+                                    onChange={val => setBatchDefaults({ ...batchDefaults, category: val })}
+                                    options={categoryFormOptions}
+                                />
+                            </div>
+                            <div>
+                                <EditorialSelect
+                                    label="Phân loại mặc định"
+                                    value={batchDefaults.type}
+                                    onChange={val => setBatchDefaults({ ...batchDefaults, type: val })}
+                                    options={moduleTypeOptions}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Số TC mặc định</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    className="input-editorial w-full"
+                                    value={batchDefaults.credits}
+                                    onChange={e => setBatchDefaults({ ...batchDefaults, credits: Number(e.target.value) || 1 })}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-serif-title text-brand-cerulean font-bold">
+                                    Danh sách học phần (Mỗi dòng 1 môn)
+                                </label>
+                                <span className="text-xs text-gray-500 font-sans">
+                                    {parsedBatchModules.length} học phần được nhận diện
+                                </span>
+                            </div>
+                            <textarea
+                                rows="6"
+                                className="input-editorial w-full font-mono text-sm leading-relaxed p-3 border border-brand-cerulean/30 focus:border-brand-cerulean bg-white"
+                                placeholder={`Ví dụ:\nTriết học Mác - Lênin (3 TC)\nKinh tế chính trị Mác - Lênin\nChủ nghĩa xã hội khoa học\nLịch sử Đảng Cộng sản Việt Nam\nTư tưởng Hồ Chí Minh\nNgoại ngữ 1 (3 TC)`}
+                                value={batchText}
+                                onChange={e => setBatchText(e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+
+                        {/* Live Preview List */}
+                        {parsedBatchModules.length > 0 && (
+                            <div className="space-y-2">
+                                <h5 className="text-xs font-serif-title font-bold text-brand-cerulean uppercase tracking-wide">
+                                    Xem trước kết quả nhập ({parsedBatchModules.length} môn):
+                                </h5>
+                                <div className="max-h-48 overflow-y-auto border border-gray-200 bg-white divide-y divide-gray-100 text-xs">
+                                    {parsedBatchModules.map((m, idx) => (
+                                        <div key={idx} className="p-2.5 flex items-center justify-between gap-3 hover:bg-blue-50/30">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <span className="font-bold text-gray-400 w-5 text-right">{idx + 1}.</span>
+                                                <span className="font-bold font-sans bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded text-[11px]">
+                                                    {m.code}
+                                                </span>
+                                                <span className="font-serif-title text-brand-cerulean font-bold truncate">
+                                                    {m.name}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-900 border border-amber-200 rounded font-bold text-[10px]">
+                                                    {m.credits} TC
+                                                </span>
+                                                <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px]">
+                                                    {m.type === 'mandatory' ? 'Bắt buộc' : m.type === 'practice' ? 'Thực hành' : 'Tự chọn'}
+                                                </span>
+                                                <span className="px-1.5 py-0.5 bg-amber-100/70 text-amber-900 rounded text-[10px] font-bold">
+                                                    Chưa xếp kỳ
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="pt-4 flex justify-between items-center border-t border-brand-cerulean/20">
+                            <button
+                                type="button"
+                                onClick={() => { setIsModuleModalOpen(false); setBatchText(''); }}
+                                className="px-6 py-2 text-gray-500 font-serif-title"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={parsedBatchModules.length === 0}
+                                className={`px-6 py-2 font-serif-title font-bold shadow-editorial transition-all flex items-center gap-2 ${
+                                    parsedBatchModules.length > 0
+                                        ? 'bg-brand-cerulean text-brand-cream hover:bg-brand-cerulean/90'
+                                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                }`}
+                            >
+                                <Plus size={16} /> Lưu danh sách ({parsedBatchModules.length} học phần)
+                            </button>
                         </div>
                     </form>
                 )}
