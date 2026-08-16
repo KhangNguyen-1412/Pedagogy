@@ -2327,6 +2327,39 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
             }))
         : prerequisiteOptions;
 
+    // Duplicate detection in Add Module modal
+    const trimmedModCode = (modForm.code || '').trim().toUpperCase();
+    const trimmedModName = (modForm.name || '').trim().toLowerCase();
+
+    // Check duplicate in current program (by exact code or exact name)
+    const duplicateInCurrentProgram = (trimmedModCode || trimmedModName)
+        ? programModules.find(m => {
+            const mCode = (m.code || '').trim().toUpperCase();
+            const mName = (m.name || '').trim().toLowerCase();
+            return (trimmedModCode && mCode === trimmedModCode) || (trimmedModName && mName === trimmedModName);
+        })
+        : null;
+
+    // Check duplicate in other programs across the system (not yet linked to this program)
+    const duplicateInOtherPrograms = (!duplicateInCurrentProgram && (trimmedModCode || trimmedModName))
+        ? modules.find(m => {
+            if (isModuleInProgram(m, programId)) return false;
+            const mCode = (m.code || '').trim().toUpperCase();
+            const mName = (m.name || '').trim().toLowerCase();
+            return (trimmedModCode && mCode === trimmedModCode) || (trimmedModName && mName === trimmedModName);
+        })
+        : null;
+
+    // Duplicate detection in Edit Module modal
+    const trimmedEditCode = (editingModule?.code || '').trim().toUpperCase();
+    const trimmedEditName = (editingModule?.name || '').trim().toLowerCase();
+    const duplicateInEdit = editingModule && (trimmedEditCode || trimmedEditName)
+        ? programModules.find(m => m.id !== editingModule.id && (
+            (trimmedEditCode && (m.code || '').trim().toUpperCase() === trimmedEditCode) ||
+            (trimmedEditName && (m.name || '').trim().toLowerCase() === trimmedEditName)
+        ))
+        : null;
+
     if (!program) {
         return (
             <div className="max-w-5xl mx-auto p-12 text-center border border-dashed border-brand-cerulean">
@@ -2386,6 +2419,11 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
 
     const handleCreateModule = (e) => {
         e.preventDefault();
+        if (duplicateInCurrentProgram) {
+            if (!window.confirm(`Học phần "[${duplicateInCurrentProgram.code}] ${duplicateInCurrentProgram.name}" đã có trong chương trình này. Bạn có chắc chắn muốn tiếp tục tạo trùng lặp không?`)) {
+                return;
+            }
+        }
         const newMod = {
             id: 'mod_' + Date.now(),
             programIds: [programId],
@@ -3199,6 +3237,48 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                             </div>
                         </div>
 
+                        {/* Duplicate Alert in Current Program */}
+                        {duplicateInCurrentProgram && (
+                            <div className="p-3.5 bg-amber-50 border-2 border-amber-300 rounded-sm flex items-start gap-2.5 text-amber-900 animate-fade-in-down shadow-sm">
+                                <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                                <div className="text-xs space-y-1 flex-1">
+                                    <p className="font-serif-title font-bold text-amber-950 text-sm flex items-center gap-1.5">
+                                        Đã có học phần này trong chương trình!
+                                    </p>
+                                    <p className="text-amber-900">
+                                        Đã có học phần <span className="font-bold font-sans">[{duplicateInCurrentProgram.code}] {duplicateInCurrentProgram.name}</span> ({duplicateInCurrentProgram.credits} TC{duplicateInCurrentProgram.semester ? `, Học kỳ ${duplicateInCurrentProgram.semester}` : ''}) trong CTĐT hiện tại.
+                                    </p>
+                                    <p className="text-amber-800/80 italic text-[11px]">
+                                        Vui lòng kiểm tra lại mã môn hoặc tên học phần để tránh bị tạo trùng lặp.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Duplicate Found in Other Programs -> Link Suggestion */}
+                        {duplicateInOtherPrograms && (
+                            <div className="p-3.5 bg-blue-50 border-2 border-brand-cerulean/40 rounded-sm flex items-start gap-2.5 text-brand-cerulean animate-fade-in-down shadow-sm">
+                                <Info size={18} className="text-brand-cerulean shrink-0 mt-0.5" />
+                                <div className="text-xs space-y-1.5 flex-1">
+                                    <p className="font-serif-title font-bold text-brand-cerulean text-sm">
+                                        Tìm thấy học phần tương tự ở chương trình khác!
+                                    </p>
+                                    <p className="text-gray-700">
+                                        Học phần <span className="font-bold font-sans">[{duplicateInOtherPrograms.code}] {duplicateInOtherPrograms.name}</span> ({duplicateInOtherPrograms.credits} TC) đã có trong hệ thống (thuộc {getModuleProgramNames(duplicateInOtherPrograms, programs).join(', ') || 'CT khác'}).
+                                    </p>
+                                    <div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleLinkExistingModule(duplicateInOtherPrograms)}
+                                            className="px-3 py-1.5 bg-brand-cerulean text-white font-serif-title font-bold text-xs hover:bg-brand-cerulean/90 shadow-sm flex items-center gap-1.5 transition-colors"
+                                        >
+                                            <Link2 size={13} /> Dùng chung học phần này ngay
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
 
 
                         {modForm.category === 'B' && !isDaiHoc && (
@@ -3380,6 +3460,21 @@ const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule,
                                 />
                             </div>
                         </div>
+
+                        {/* Duplicate Alert in Edit Modal */}
+                        {duplicateInEdit && (
+                            <div className="p-3 bg-amber-50 border-2 border-amber-300 rounded-sm flex items-start gap-2.5 text-amber-900 animate-fade-in-down shadow-sm">
+                                <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                                <div className="text-xs space-y-0.5 flex-1">
+                                    <p className="font-serif-title font-bold text-amber-950 text-sm">
+                                        Cảnh báo trùng với học phần khác!
+                                    </p>
+                                    <p className="text-amber-900">
+                                        Mã môn hoặc tên học phần đang trùng với <span className="font-bold font-sans">[{duplicateInEdit.code}] {duplicateInEdit.name}</span> trong cùng chương trình đào tạo.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-3 gap-4">
                             <div>
