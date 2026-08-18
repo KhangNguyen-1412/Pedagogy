@@ -6,7 +6,7 @@ import {
     BookOpen, Landmark, Globe, Languages, Volume2, Quote, ListChecks, FileCheck, Layers, Link2, Music,
     ChevronDown, Scale, TrendingUp, Underline, Bold, Search, RefreshCw, Activity, FlaskConical, Dna, Binary
 } from 'lucide-react';
-import { MathText } from './MathText';
+import { MathText } from '../common/MathText';
 import { EditorialSelect } from './EditorialSelect';
 import { ThptDrawingCanvasModal } from './ThptDrawingCanvasModal';
 import { ThptTableBuilderModal } from './ThptTableBuilderModal';

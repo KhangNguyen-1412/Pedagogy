@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Check, Table, Plus, Trash2, LayoutGrid, Sparkles, RefreshCw, Code2 } from 'lucide-react';
-import { MathText } from './MathText';
+import { MathText } from '../common/MathText';
 
 // Presets for quick generation
 const TABLE_PRESETS = [

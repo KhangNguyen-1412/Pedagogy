@@ -3,8 +3,8 @@ import {
     TrendingUp, Award, Plus, Filter, User, BookOpen, Calendar,
     CheckCircle2, Clock, Trash2, ArrowUpRight, Target, Sparkles, BarChart2, FileText
 } from 'lucide-react';
-import { ThptTestEntryModal } from './ThptTestEntryModal';
-import { EditorialSelect } from './EditorialSelect';
+import { ThptTestEntryModal } from '../../components/thpt/ThptTestEntryModal';
+import { EditorialSelect } from '../../components/common/EditorialWidgets';
 
 export const ThptTrackingView = ({
     students = [],

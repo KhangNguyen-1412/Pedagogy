@@ -8,7 +8,7 @@ import {
     GripHorizontal, AlertTriangle, ShieldCheck, Flame, Focus, CheckSquare,
     Image as ImageIcon, UploadCloud, Trash2, ZoomIn, FileCheck, PenTool, Volume2, Quote
 } from 'lucide-react';
-import { MathText } from './MathText';
+import { MathText } from '../../components/common/MathText';
 
 export const ThptExamDetailView = ({
     exam,

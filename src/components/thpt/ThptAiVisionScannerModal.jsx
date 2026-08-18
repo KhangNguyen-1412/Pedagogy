@@ -5,7 +5,7 @@ import {
     FileCheck, RefreshCw, Paperclip, AlertCircle
 } from 'lucide-react';
 import mammoth from 'mammoth';
-import { MathText } from './MathText';
+import { MathText } from '../common/MathText';
 
 // ==========================================
 // SAMPLE EXAM TEXT TEMPLATES FOR QUICK TEST

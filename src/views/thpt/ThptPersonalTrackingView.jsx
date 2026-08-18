@@ -3,8 +3,8 @@ import {
     TrendingUp, Award, Plus, BookOpen, Calendar,
     CheckCircle2, Clock, Trash2, ArrowUpRight, Target, Sparkles, BarChart2, FileText, Check, Compass
 } from 'lucide-react';
-import { ThptPersonalTestModal } from './ThptPersonalTestModal';
-import { EditorialSelect } from './EditorialSelect';
+import { ThptPersonalTestModal } from '../../components/thpt/ThptPersonalTestModal';
+import { EditorialSelect } from '../../components/common/EditorialWidgets';
 import { getPhaseTimeStatus, getPhaseLabel, getCleanPhaseTitle } from './ThptPersonalGoalView';
 
 export const ThptPersonalTrackingView = ({

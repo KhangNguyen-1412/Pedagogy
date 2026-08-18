@@ -4,9 +4,9 @@ import {
     GraduationCap, Award, Building2, Plus, Trash2, Edit2,
     Save, X, ArrowUp, ArrowDown, Check, Sparkles, BookOpen, Clock
 } from 'lucide-react';
-import { EditorialSelect } from './EditorialSelect';
-import { EditorialUniversitySelect, HCMC_UNIVERSITIES } from './EditorialUniversitySelect';
-import { EditorialMajorSelect, STANDARD_MAJORS } from './EditorialMajorSelect';
+import { EditorialSelect } from '../../components/common/EditorialWidgets';
+import { EditorialUniversitySelect, HCMC_UNIVERSITIES } from '../../components/thpt/EditorialUniversitySelect';
+import { EditorialMajorSelect, STANDARD_MAJORS } from '../../components/thpt/EditorialMajorSelect';
 import { THPT_COMBINATIONS, OFFICIAL_THPT_SUBJECTS, calculateOfficialComboScore } from './ThptPersonalGoalView';
 
 /**

@@ -6,10 +6,10 @@ import {
     AlertTriangle, Calculator, Lightbulb, X, CheckSquare, Compass,
     Building2, ArrowUp, ArrowDown, Check, Zap
 } from 'lucide-react';
-import { EditorialSelect } from './EditorialSelect';
-import { EditorialDatePicker } from './EditorialDatePicker';
-import { EditorialUniversitySelect } from './EditorialUniversitySelect';
-import { MathText } from './MathText';
+import { EditorialSelect } from '../../components/common/EditorialWidgets';
+import { EditorialDatePicker } from '../../components/common/EditorialWidgets';
+import { EditorialUniversitySelect } from '../../components/thpt/EditorialUniversitySelect';
+import { MathText } from '../../components/common/MathText';
 
 export const THPT_COMBINATIONS = [
     { value: '', label: '-- Chọn Khối thi xét tuyển --', subjects: [] },

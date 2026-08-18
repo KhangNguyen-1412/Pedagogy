@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { EditorialSelect } from './EditorialSelect';
 import { EditorialDatePicker } from './EditorialDatePicker';
-import { MathText } from './MathText';
+import { MathText } from '../common/MathText';
 
 export const ThptPersonalTestModal = ({
     isOpen,

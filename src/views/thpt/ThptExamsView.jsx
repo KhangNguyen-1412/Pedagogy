@@ -3,10 +3,10 @@ import {
     Plus, Search, Filter, BookOpen, Calendar, Tag, FileText,
     Clock, Eye, Edit2, Trash2, Copy, Printer, Award, Sparkles, SlidersHorizontal
 } from 'lucide-react';
-import { ThptExamEditorModal } from './ThptExamEditorModal';
-import { ThptMetadataModal } from './ThptMetadataModal';
+import { ThptExamEditorModal } from '../../components/thpt/ThptExamEditorModal';
+import { ThptMetadataModal } from '../../components/thpt/ThptMetadataModal';
 import { ThptExamDetailView } from './ThptExamDetailView';
-import { EditorialSelect } from './EditorialSelect';
+import { EditorialSelect } from '../../components/common/EditorialWidgets';
 
 export const ThptExamsView = ({
     exams,

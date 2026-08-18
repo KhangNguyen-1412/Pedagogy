@@ -3,8 +3,8 @@ import {
     Users, Plus, Search, Filter, Phone, Mail, GraduationCap,
     Target, Award, TrendingUp, FileText, Trash2, Edit2, ChevronRight, Sparkles, Check, AlertTriangle
 } from 'lucide-react';
-import { ThptStudentDetailModal } from './ThptStudentDetailModal';
-import { EditorialSelect } from './EditorialSelect';
+import { ThptStudentDetailModal } from '../../components/thpt/ThptStudentDetailModal';
+import { EditorialSelect } from '../../components/common/EditorialWidgets';
 
 export const ThptStudentsView = ({
     students = [],

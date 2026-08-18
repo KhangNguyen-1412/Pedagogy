@@ -5,7 +5,7 @@ import {
     Calendar, TrendingUp, HelpCircle, Check, Plus,
     Image as ImageIcon, Upload, Eye, Trash2, X, Maximize2
 } from 'lucide-react';
-import { EditorialSelect } from './EditorialSelect';
+import { EditorialSelect } from '../../components/common/EditorialWidgets';
 import { OFFICIAL_THPT_SUBJECTS } from './ThptPersonalGoalView';
 
 /**
