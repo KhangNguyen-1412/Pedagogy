@@ -6,21 +6,11 @@ export const STORAGE_KEYS = {
     EVENTS: 'pedagogy_events',
     STUDY_LOGS: 'pedagogy_study_logs',
     RESOURCES: 'pedagogy_resources',
-    THPT_SUBJECTS: 'pedagogy_thpt_subjects',
-    THPT_YEARS: 'pedagogy_thpt_years',
-    THPT_EXAM_TYPES: 'pedagogy_thpt_exam_types',
-    THPT_EXAMS: 'pedagogy_thpt_exams',
-    THPT_PROFILE: 'pedagogy_thpt_profile',
-    THPT_RESULTS: 'pedagogy_thpt_results',
     IELTS_PROFILE: 'pedagogy_ielts_profile',
     IELTS_DRILL_HISTORY: 'pedagogy_ielts_drill_history',
     IELTS_WRITING_SUBMISSIONS: 'pedagogy_ielts_writing_submissions',
     IELTS_SPEAKING_RECORDINGS: 'pedagogy_ielts_speaking_recordings',
     IELTS_MOCK_RESULTS: 'pedagogy_ielts_mock_results',
-    TS10_PROFILE: 'pedagogy_ts10_profile',
-    TS10_SUBMISSIONS: 'pedagogy_ts10_submissions',
-    MOS_PROFILE: 'pedagogy_mos_profile',
-    MOS_PROJECT_HISTORY: 'pedagogy_mos_project_history',
 };
 
 export const DEFAULT_PROFILE = {

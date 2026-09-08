@@ -330,9 +330,13 @@ export const IeltsLanguageGym = ({ onSaveVocab, showToast }) => {
                                                 <div className="p-3.5 bg-white border border-brand-cerulean/20 text-xs font-newsreader space-y-1 animate-fade-in">
                                                     <div className="flex items-center gap-1.5 font-bold font-serif-title">
                                                         {isCorrect ? (
-                                                            <span className="text-emerald-800">✓ Hoàn toàn chính xác!</span>
+                                                            <span className="text-emerald-800 inline-flex items-center gap-1.5">
+                                                                <Check size={14} className="stroke-[2.5]" /> Hoàn toàn chính xác!
+                                                            </span>
                                                         ) : (
-                                                            <span className="text-red-700">✗ Chưa chính xác. Đáp án đúng: {quiz.options[quiz.correctIndex]}</span>
+                                                            <span className="text-red-700 inline-flex items-center gap-1.5">
+                                                                <X size={14} className="stroke-[2.5]" /> Chưa chính xác. Đáp án đúng: {quiz.options[quiz.correctIndex]}
+                                                            </span>
                                                         )}
                                                     </div>
                                                     <p className="text-gray-700 leading-relaxed italic">

@@ -18,7 +18,7 @@ import {
 import vietnamLocations from '../../data/vietnamLocations.json';
 import { EditorialSelect, EditorialDatePicker } from '../../components/common/EditorialWidgets';
 
-export const ProfileView = ({ profile, programs, thptProfile, navigate, onUpdateProfile, onOpenCertificate }) => {
+export const ProfileView = ({ profile, programs, navigate, onUpdateProfile, onOpenCertificate }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState(profile || {});
 
@@ -194,7 +194,7 @@ export const ProfileView = ({ profile, programs, thptProfile, navigate, onUpdate
                                 <input required type="text" className="input-editorial w-full font-serif-title text-lg font-bold" value={formData.fullName || ''} onChange={e => setFormData({ ...formData, fullName: e.target.value })} />
                             </div>
                             <div>
-                                <label className="block text-xs font-serif-title text-brand-cerulean mb-1">Mã số học viên (MSSV)</label>
+                                <label className="block text-xs font-serif-title text-brand-cerulean mb-1">Mã số học viên</label>
                                 <input required type="text" className="input-editorial w-full font-bold" value={formData.studentId || ''} onChange={e => setFormData({ ...formData, studentId: e.target.value })} />
                             </div>
                             <div>
@@ -519,60 +519,7 @@ export const ProfileView = ({ profile, programs, thptProfile, navigate, onUpdate
                     )}
                 </div>
 
-                {/* GROUP 4: KẾT QUẢ KỲ THI THPT & TRÚNG TUYỂN ĐẠI HỌC */}
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center border-b border-brand-cerulean/20 pb-2">
-                        <h3 className="text-lg font-serif-title text-brand-cerulean font-bold flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-brand-jasper"></span>
-                            4. Kết quả Kỳ thi THPT & Trúng tuyển Đại học
-                        </h3>
-                        {navigate && (
-                            <button
-                                type="button"
-                                onClick={() => navigate('thpt_goals')}
-                                className="text-xs font-serif-title font-bold text-brand-jasper hover:text-brand-cerulean underline flex items-center gap-1"
-                            >
-                                Quản lý Nguyện vọng & Điểm thi THPT →
-                            </button>
-                        )}
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-brand-cream/40 p-5 border border-brand-cerulean/20">
-                        <div>
-                            <span className="text-xs uppercase font-bold text-gray-400 block">Trường Đại học trúng tuyển</span>
-                            <span className="text-base font-serif-title text-brand-cerulean font-bold">
-                                {thptProfile?.admittedUniversity || profile?.admittedUniversity || 'Chưa cập nhật'}
-                            </span>
-                            {(thptProfile?.admittedWishNumber || profile?.admittedWishNumber) && (
-                                <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-serif-title border border-emerald-300">
-                                    {thptProfile?.admittedWishNumber || profile?.admittedWishNumber}
-                                </span>
-                            )}
-                        </div>
-
-                        <div>
-                            <span className="text-xs uppercase font-bold text-gray-400 block">Ngành & Khối xét tuyển</span>
-                            <span className="text-base font-serif-title text-brand-jasper font-bold">
-                                {thptProfile?.admittedMajor || profile?.admittedMajor || 'Chưa cập nhật'}
-                            </span>
-                            {(thptProfile?.admittedCombination || profile?.combination) && (
-                                <span className="text-xs text-gray-600 font-body block mt-0.5">
-                                    Khối: <strong>{thptProfile?.admittedCombination || profile?.combination}</strong>
-                                </span>
-                            )}
-                        </div>
-
-                        <div>
-                            <span className="text-xs uppercase font-bold text-gray-400 block">Điểm chuẩn & Nguyện vọng</span>
-                            <span className="text-base font-serif-title text-emerald-700 font-bold">
-                                {(thptProfile?.admittedScore || profile?.admittedScore) ? `${thptProfile?.admittedScore || profile?.admittedScore} đ` : 'Chưa cập nhật'}
-                            </span>
-                            <span className="text-xs text-gray-500 font-body block mt-0.5">
-                                Đã lưu {(thptProfile?.aspirations || []).length} nguyện vọng đăng ký
-                            </span>
-                        </div>
-                    </div>
-                </div>
 
                 {isEditing && (
                     <div className="pt-6 border-t border-brand-cerulean/20 flex justify-end gap-4">

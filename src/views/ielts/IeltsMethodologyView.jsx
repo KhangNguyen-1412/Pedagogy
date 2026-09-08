@@ -13,7 +13,10 @@ import {
     Mic,
     PenTool,
     Headphones,
-    ArrowRight
+    ArrowRight,
+    Check,
+    X,
+    Star
 } from 'lucide-react';
 import {
     IELTS_RUBRICS,
@@ -190,9 +193,9 @@ export const IeltsMethodologyView = ({ onSelectZone }) => {
                                                 </div>
                                                 <div className="p-3 bg-white border border-brand-cerulean/15">
                                                     <span className="font-serif-title font-bold text-brand-cerulean block mb-1">
-                                                        Pronunciation (P):
+                                                        Pronunciation (PR):
                                                     </span>
-                                                    {bandItem.P}
+                                                    {bandItem.PR || bandItem.P || '--'}
                                                 </div>
                                             </>
                                         )}
@@ -211,28 +214,30 @@ export const IeltsMethodologyView = ({ onSelectZone }) => {
                     <div className="border-editorial p-6 md:p-8 bg-white shadow-editorial space-y-4">
                         <div className="flex items-center gap-2 text-xl font-serif-title font-bold text-brand-cerulean border-b border-brand-cerulean/20 pb-3">
                             <Layers size={22} className="text-brand-jasper" />
-                            Khung Viết Đoạn Chuẩn Học Thuật: {IELTS_METHODOLOGIES.peel.name}
+                            Khung Viết Đoạn Chuẩn Học Thuật: {IELTS_METHODOLOGIES?.peel?.name || 'Mô Hình Lập Luận PEEL'}
                         </div>
                         <p className="text-xs font-newsreader text-gray-700 leading-relaxed">
-                            {IELTS_METHODOLOGIES.peel.description}
+                            {IELTS_METHODOLOGIES?.peel?.description || 'Khung cấu trúc vàng để đạt điểm tối đa tiêu chí Coherence & Task Response trong Writing Task 2.'}
                         </p>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-                            {IELTS_METHODOLOGIES.peel.steps.map((step, idx) => (
+                            {(IELTS_METHODOLOGIES?.peel?.steps || []).map((step, idx) => (
                                 <div key={idx} className="border border-brand-cerulean/25 bg-brand-cream/30 p-4 space-y-2 flex flex-col justify-between">
                                     <div className="space-y-1.5">
                                         <div className="flex items-center justify-between">
                                             <span className="w-6 h-6 bg-brand-cerulean text-white font-mono font-bold text-xs flex items-center justify-center">
-                                                {step.step}
+                                                {step.step || step.code || idx + 1}
                                             </span>
                                             <span className="text-[10px] font-mono text-gray-500 font-bold">Bước {idx + 1}</span>
                                         </div>
-                                        <h4 className="font-serif-title font-bold text-brand-cerulean text-sm">{step.meaning}</h4>
+                                        <h4 className="font-serif-title font-bold text-brand-cerulean text-sm">{step.meaning || step.name}</h4>
                                         <p className="text-xs font-newsreader text-gray-700 leading-relaxed">{step.desc}</p>
                                     </div>
-                                    <div className="mt-2 pt-2 border-t border-brand-cerulean/15 text-[11px] font-mono text-brand-jasper bg-white p-2 border">
-                                        {step.example}
-                                    </div>
+                                    {step.example && (
+                                        <div className="mt-2 pt-2 border-t border-brand-cerulean/15 text-[11px] font-mono text-brand-jasper bg-white p-2 border">
+                                            {step.example}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -242,20 +247,42 @@ export const IeltsMethodologyView = ({ onSelectZone }) => {
                     <div className="border-editorial p-6 md:p-8 bg-white shadow-editorial space-y-4">
                         <div className="flex items-center gap-2 text-xl font-serif-title font-bold text-brand-cerulean border-b border-brand-cerulean/20 pb-3">
                             <Mic size={22} className="text-brand-jasper" />
-                            Khung Phản Xạ Nói Không Bao Giờ Bí Ý: {IELTS_METHODOLOGIES.speaking5W1H.name}
+                            Khung Phản Xạ Nói Không Bao Giờ Bí Ý: {IELTS_METHODOLOGIES?.speaking5W1H?.name || 'Công Thức 5W1H'}
                         </div>
                         <p className="text-xs font-newsreader text-gray-700 leading-relaxed">
-                            {IELTS_METHODOLOGIES.speaking5W1H.description}
+                            {IELTS_METHODOLOGIES?.speaking5W1H?.description || 'Bí quyết giúp bài nói Speaking Part 1 & Part 2 trôi chảy, không bao giờ rơi vào tình trạng cạn ý tưởng.'}
                         </p>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-2">
-                            {IELTS_METHODOLOGIES.speaking5W1H.elements.map((el, idx) => (
+                            {(IELTS_METHODOLOGIES?.speaking5W1H?.elements || []).map((el, idx) => (
                                 <div key={idx} className="p-3 border border-brand-cerulean/25 bg-brand-cream/20 text-center space-y-1">
                                     <span className="font-mono font-bold text-brand-jasper text-base block">{el.q}</span>
                                     <span className="font-serif-title font-bold text-brand-cerulean text-xs block">{el.focus}</span>
                                     <p className="text-[11px] font-newsreader text-gray-600 leading-tight">{el.prompt}</p>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+
+                    {/* Reading & Listening Strategies */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="border-editorial p-6 bg-white shadow-editorial space-y-3">
+                            <div className="flex items-center gap-2 text-lg font-serif-title font-bold text-brand-cerulean border-b border-brand-cerulean/20 pb-2">
+                                <BookOpen size={20} className="text-brand-jasper" />
+                                Chiến Thuật Đọc: Skimming & Scanning
+                            </div>
+                            <p className="text-xs font-newsreader text-gray-700 leading-relaxed">
+                                Quy trình 3 bước xử lý mọi đoạn văn dài trong 20 phút mà không cần dịch từng chữ: Skim ý chính → Scan từ khóa tọa độ → Paraphrase giải mã đáp án.
+                            </p>
+                        </div>
+                        <div className="border-editorial p-6 bg-white shadow-editorial space-y-3">
+                            <div className="flex items-center gap-2 text-lg font-serif-title font-bold text-brand-cerulean border-b border-brand-cerulean/20 pb-2">
+                                <Headphones size={20} className="text-brand-jasper" />
+                                Chiến Thuật Nghe: Predicting & Trap Warning
+                            </div>
+                            <p className="text-xs font-newsreader text-gray-700 leading-relaxed">
+                                Tận dụng 30 giây chuẩn bị để dự đoán loại từ và trường ngữ nghĩa; cảnh giác cao độ với các tín hiệu bẫy sửa lời (self-correction traps).
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -277,7 +304,7 @@ export const IeltsMethodologyView = ({ onSelectZone }) => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                            {IELTS_ERROR_ANALYSIS.receptiveDistractors.map((trap, idx) => (
+                            {(IELTS_ERROR_ANALYSIS?.receptiveDistractors || []).map((trap, idx) => (
                                 <div key={idx} className="border border-brand-cerulean/25 bg-brand-cream/30 p-4.5 space-y-2.5 flex flex-col justify-between">
                                     <div className="space-y-1.5">
                                         <div className="flex items-center justify-between">
@@ -306,12 +333,18 @@ export const IeltsMethodologyView = ({ onSelectZone }) => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                            {IELTS_ERROR_ANALYSIS.productiveL1Errors.map((err, idx) => (
+                            {(IELTS_ERROR_ANALYSIS?.productiveL1Errors || []).map((err, idx) => (
                                 <div key={idx} className="border border-red-200 bg-red-50/20 p-4.5 space-y-2">
                                     <h4 className="font-serif-title font-bold text-red-950 text-sm">{err.error}</h4>
-                                    <div className="text-xs font-mono space-y-1 p-2.5 bg-white border border-red-200">
-                                        <div className="text-red-700">✗ Sai: {err.badExample}</div>
-                                        <div className="text-emerald-700 font-bold">✓ Chuẩn: {err.goodExample}</div>
+                                    <div className="text-xs font-mono space-y-1.5 p-2.5 bg-white border border-red-200">
+                                        <div className="text-red-700 flex items-center gap-1.5">
+                                            <X size={12} className="shrink-0 stroke-[2.5]" />
+                                            <span>Sai: {err.badExample}</span>
+                                        </div>
+                                        <div className="text-emerald-700 font-bold flex items-center gap-1.5">
+                                            <Check size={12} className="shrink-0 stroke-[2.5]" />
+                                            <span>Chuẩn: {err.goodExample}</span>
+                                        </div>
                                     </div>
                                     <p className="text-xs font-newsreader text-gray-700 italic pt-1">{err.explanation}</p>
                                 </div>
@@ -336,7 +369,7 @@ export const IeltsMethodologyView = ({ onSelectZone }) => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                            {IELTS_LINGUISTICS.academicCollocations.map((item, idx) => (
+                            {(IELTS_LINGUISTICS?.academicCollocations || []).map((item, idx) => (
                                 <div key={idx} className="border border-brand-cerulean/25 bg-brand-cream/30 p-5 space-y-3 flex flex-col justify-between">
                                     <div className="space-y-2">
                                         <span className="text-[10px] font-serif-title uppercase font-bold text-brand-cerulean bg-blue-50 px-2 py-0.5 border border-blue-200">
@@ -344,8 +377,9 @@ export const IeltsMethodologyView = ({ onSelectZone }) => {
                                         </span>
                                         <div className="text-xs space-y-1">
                                             <div className="text-gray-500 font-mono">Diễn đạt 6.0: {item.basicWord}</div>
-                                            <div className="text-brand-jasper font-bold font-serif-title text-base">
-                                                ★ Cụm 7.5+: {item.highBandCollocation}
+                                            <div className="text-brand-jasper font-bold font-serif-title text-base flex items-center gap-1.5">
+                                                <Star size={14} className="fill-brand-jasper text-brand-jasper shrink-0" />
+                                                <span>Cụm 7.5+: {item.highBandCollocation}</span>
                                             </div>
                                         </div>
                                     </div>

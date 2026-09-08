@@ -5,8 +5,6 @@ import {
     BookOpen,
     CheckCircle2,
     Clock,
-    Plus,
-    AlertCircle,
     Calendar,
     FileCheck2 as FileCheck,
     UserCheck
@@ -20,10 +18,6 @@ export const DashboardView = ({
     modules,
     events,
     studyLogs,
-    thptProfile,
-    thptExams = [],
-    thptResults = [],
-    thptSubjects = [],
     navigate,
     onOpenCertificate,
     selectedProgramFilter = 'all',
@@ -31,7 +25,7 @@ export const DashboardView = ({
 }) => {
     const normalizedPrograms = programs.map(normalizeProgram);
     const activePrograms = selectedProgramFilter === 'all'
-        ? normalizedPrograms.filter(p => p.isEnrolled !== false && p.status !== 'completed')
+        ? normalizedPrograms.filter(p => p.status === 'dang_hoc')
         : normalizedPrograms.filter(p => p.id === selectedProgramFilter);
 
     const currentProg = selectedProgramFilter !== 'all' ? normalizedPrograms.find(p => p.id === selectedProgramFilter) : null;
@@ -40,19 +34,7 @@ export const DashboardView = ({
     const overall = calculateOverallGPA(modules, normalizedPrograms, selectedProgramFilter);
     const upcomingEvents = [...events].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
 
-    // THPT Preparation Calculations (Personalized & Clean)
-    const thptExamDate = new Date('2026-06-26T07:30:00');
-    const today = new Date();
-    const diffTime = thptExamDate - today;
-    const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
-    const thptResultsCount = (thptResults || []).length;
-    const avgScore = thptResultsCount > 0
-        ? (thptResults.reduce((s, r) => s + (Number(r.score) || 0), 0) / thptResultsCount).toFixed(1)
-        : '--';
-    const maxScore = thptResultsCount > 0
-        ? Math.max(...thptResults.map(r => Number(r.score) || 0)).toFixed(1)
-        : '--';
 
     // Compute dynamic metric cards based on selectedProgramFilter and evalType
     let metricCards = null;
@@ -121,8 +103,15 @@ export const DashboardView = ({
                     </div>
                     <div>
                         <span className="text-xs uppercase text-gray-400 font-bold tracking-wider block">Cấp chứng chỉ</span>
-                        <h4 className="text-xl font-serif-title text-emerald-800 font-bold">
-                            {isEligible ? '✓ Đủ điều kiện' : 'Chưa đủ điều kiện'}
+                        <h4 className="text-xl font-serif-title text-emerald-800 font-bold flex items-center gap-1.5">
+                            {isEligible ? (
+                                <>
+                                    <CheckCircle2 size={18} className="text-emerald-700 shrink-0" />
+                                    <span>Đủ điều kiện</span>
+                                </>
+                            ) : (
+                                <span>Chưa đủ điều kiện</span>
+                            )}
                         </h4>
                         <span className="text-xs text-gray-500 font-sans">{isEligible ? 'Đã hoàn thành toàn bộ chuyên đề' : `Cần đạt thêm ${progModules.length - passedMods.length} chuyên đề`}</span>
                     </div>
@@ -217,109 +206,7 @@ export const DashboardView = ({
             {/* Quick Metrics Grid */}
             {metricCards}
 
-            {/* THPT Preparation & University Goal Section */}
-            <section className="bg-white border-editorial p-6 sm:p-8 shadow-editorial relative overflow-hidden space-y-6">
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-jasper"></div>
 
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-brand-cerulean/20">
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs uppercase tracking-widest text-brand-jasper font-bold flex items-center gap-1.5">
-                                <GraduationCap size={14} /> Kỳ thi Tốt nghiệp THPT 2026
-                            </span>
-                            {diffDays > 0 && (
-                                <span className="px-2 py-0.5 bg-brand-jasper/10 text-brand-jasper font-bold text-[11px] rounded border border-brand-jasper/20">
-                                    Còn {diffDays} ngày
-                                </span>
-                            )}
-                        </div>
-                        <h3 className="text-2xl font-serif-title font-bold text-brand-cerulean">
-                            Mục tiêu Ôn thi & Luyện đề THPT Quốc gia
-                        </h3>
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                            type="button"
-                            onClick={() => navigate('thpt_tracking')}
-                            className="px-3.5 py-1.5 bg-brand-jasper text-white font-sans text-xs font-bold shadow-sm hover:bg-brand-cerulean transition-all flex items-center gap-1.5 rounded"
-                        >
-                            <Plus size={13} /> Nhập điểm bài làm
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => navigate('thpt_goals')}
-                            className="px-3.5 py-1.5 bg-brand-cream border border-brand-cerulean/30 hover:border-brand-jasper text-brand-cerulean text-xs font-bold shadow-sm transition-all rounded"
-                        >
-                            Quản lý mục tiêu &rarr;
-                        </button>
-                    </div>
-                </div>
-
-                {/* THPT KPI Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* Goal Card */}
-                    <div className="p-4 bg-brand-cream border border-brand-cerulean/15 rounded space-y-1">
-                        <span className="text-xs text-gray-500 font-serif block">Trường & Ngành mục tiêu</span>
-                        <h4 className={`text-base font-serif-title font-bold line-clamp-1 ${thptProfile?.targetUniversity ? 'text-brand-cerulean' : 'text-gray-400 italic'}`}>
-                            {thptProfile?.targetUniversity || 'Chưa thiết lập mục tiêu'}
-                        </h4>
-                        <div className="flex items-center justify-between pt-2 border-t border-brand-cerulean/10 text-xs">
-                            <span className="text-gray-500">Khối: <strong>{thptProfile?.combination || '--'}</strong></span>
-                            <span className="text-brand-jasper font-bold font-serif-title">
-                                Mục tiêu: {thptProfile?.targetTotalScore > 0 ? `${thptProfile.targetTotalScore} đ` : '--'}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Progress & Average Score */}
-                    <div className="p-4 bg-brand-cream border border-brand-cerulean/15 rounded space-y-1">
-                        <span className="text-xs text-gray-500 font-serif block">Tiến độ Luyện đề</span>
-                        <div className="flex items-baseline justify-between">
-                            <h4 className="text-2xl font-serif-title font-bold text-brand-cerulean">
-                                {thptResultsCount} <span className="text-xs font-sans text-gray-500 font-normal">lượt đã luyện</span>
-                            </h4>
-                            <span className="text-xs font-bold text-brand-jasper">
-                                ĐTB: {avgScore} {avgScore !== '--' ? 'đ' : ''}
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between pt-2 border-t border-brand-cerulean/10 text-xs text-gray-500">
-                            <span>Kỷ lục cao nhất: <strong className="text-emerald-700">{maxScore !== '--' ? `${maxScore} đ` : '--'}</strong></span>
-                            <button onClick={() => navigate('thpt_tracking')} className="text-brand-cerulean hover:underline font-bold">
-                                Xem biểu đồ
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Mistakes & Tips */}
-                    <div className="p-4 bg-brand-cream border border-brand-cerulean/15 rounded space-y-1">
-                        <span className="text-xs text-gray-500 font-serif block">Sổ tay Rút kinh nghiệm</span>
-                        <div className="flex items-baseline justify-between">
-                            <h4 className="text-2xl font-serif-title font-bold text-brand-cerulean">
-                                {(thptProfile?.mistakeNotes || []).length} <span className="text-xs font-sans text-gray-500 font-normal">ghi chú bẫy/lỗi</span>
-                            </h4>
-                        </div>
-                        <div className="flex items-center justify-between pt-2 border-t border-brand-cerulean/10 text-xs">
-                            <span className="text-gray-500 truncate max-w-[170px]">
-                                {(thptProfile?.mistakeNotes || []).length > 0 ? (thptProfile.mistakeNotes[0].title) : 'Chưa có ghi chú'}
-                            </span>
-                            <button onClick={() => navigate('thpt_goals')} className="text-brand-jasper hover:underline font-bold shrink-0">
-                                Mở sổ tay
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Quick Mistake Tip Banner (if any mistake exists) */}
-                {(thptProfile?.mistakeNotes || []).length > 0 && (
-                    <div className="p-3 bg-red-50/60 border border-brand-jasper/20 rounded flex items-start gap-3">
-                        <AlertCircle size={16} className="text-brand-jasper shrink-0 mt-0.5" />
-                        <div className="text-xs text-gray-700 font-body">
-                            <strong className="text-brand-jasper font-serif-title">Ghi nhớ bẫy đề thi gần nhất:</strong> {thptProfile.mistakeNotes[0].title} — <span className="italic">{thptProfile.mistakeNotes[0].remedy || thptProfile.mistakeNotes[0].mistake}</span>
-                        </div>
-                    </div>
-                )}
-            </section>
 
             {/* Certificate Quick Banner */}
             <section className="bg-gradient-to-r from-blue-50/80 via-blue-50/50 to-blue-100/40 border-2 border-brand-cerulean/60 p-6 shadow-editorial flex flex-col sm:flex-row items-center justify-between gap-4">

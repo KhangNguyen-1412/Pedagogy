@@ -1,0 +1,59 @@
+name: 🐛 Báo cáo Sự cố (Bug Report)
+description: Báo cáo lỗi hoặc hành vi bất thường trong hệ thống Pedagogy
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cảm ơn bạn đã báo cáo sự cố! Vui lòng điền thông tin chi tiết dưới đây để đội ngũ kỹ thuật có thể tái hiện và khắc phục nhanh chóng.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Mô tả Sự cố (Bug Description)
+      description: Mô tả rõ ràng và súc tích về lỗi gặp phải.
+      placeholder: Khi nhấn vào nút... thì xảy ra lỗi...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Các bước Tái hiện lỗi (Steps to Reproduce)
+      description: Các bước cụ thể từng bước để tái hiện lại lỗi.
+      value: |
+        1. Truy cập vào mục '...'
+        2. Nhấp vào '...'
+        3. Cuộn xuống và chọn '...'
+        4. Quan sát lỗi hiển thị
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Hành vi Kỳ vọng (Expected Behavior)
+      description: Hành vi mong đợi của hệ thống khi thực hiện các bước trên.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Trình duyệt sử dụng (Browser)
+      options:
+        - Google Chrome
+        - Microsoft Edge
+        - Mozilla Firefox
+        - Apple Safari
+        - Khác
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log lỗi Console (nếu có)
+      description: Dán log lỗi xuất hiện trong Developer Tools Console (F12).
+      render: shell

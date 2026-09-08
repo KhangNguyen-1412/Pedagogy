@@ -441,11 +441,15 @@ export const IeltsExamSimulator = ({ onSaveMockResult, showToast }) => {
                                     </div>
                                     <div className="text-right shrink-0">
                                         {item.isCorrect ? (
-                                            <span className="text-emerald-800 font-bold font-mono">✓ Đúng (+1)</span>
+                                            <span className="text-emerald-800 font-bold font-mono inline-flex items-center gap-1">
+                                                <CheckCircle2 size={13} className="text-emerald-700" /> Đúng (+1)
+                                            </span>
                                         ) : (
                                             <div className="text-right">
-                                                <span className="text-red-700 font-bold font-mono block">✗ Sai</span>
-                                                <span className="text-[11px] text-emerald-800 font-mono">Chuẩn: {item.correctAnswer}</span>
+                                                <span className="text-red-700 font-bold font-mono inline-flex items-center gap-1 justify-end">
+                                                    <XCircle size={13} className="text-red-600" /> Sai
+                                                </span>
+                                                <span className="text-[11px] text-emerald-800 font-mono block">Chuẩn: {item.correctAnswer}</span>
                                             </div>
                                         )}
                                     </div>

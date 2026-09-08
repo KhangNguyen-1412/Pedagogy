@@ -157,6 +157,30 @@ export const IELTS_METHODOLOGIES = [
     }
 ];
 
+// Named properties for direct access
+IELTS_METHODOLOGIES.peel = {
+    name: 'PEEL (Point, Evidence, Explain, Link)',
+    description: 'Mô hình tư duy viết đoạn văn học thuật chuẩn mực, giúp luận điểm phát triển mạch lạc và đạt tối đa tiêu chí Coherence & Task Response.',
+    steps: [
+        { step: 'P', meaning: 'Point (Luận điểm)', desc: 'Câu chủ đề (Topic Sentence) nêu bật trực tiếp luận điểm cốt lõi của đoạn văn. Tránh viết vòng vo.', example: 'First and foremost, investing in public transport systems significantly mitigates urban air pollution.' },
+        { step: 'E1', meaning: 'Evidence (Dẫn chứng)', desc: 'Giải thích cơ chế logic hoặc nguyên nhân - hệ quả của luận điểm. Trả lời câu hỏi: Tại sao lại như vậy?', example: 'When commuters are provided with efficient subway networks, the reliance on private vehicles decreases drastically.' },
+        { step: 'E2', meaning: 'Explain (Giải thích & Ví dụ)', desc: 'Đưa ra một ví dụ cụ thể, có tính xác thực cao để củng cố luận điểm.', example: 'For instance, major metropolitan areas like Tokyo have reported up to a 30% reduction in emissions.' },
+        { step: 'L', meaning: 'Link (Liên kết)', desc: 'Câu chốt tóm lại tác động của luận điểm và liên kết trực tiếp trở lại câu hỏi đề bài.', example: 'Therefore, allocating state funds to green transit infrastructure is undeniably an effective solution.' }
+    ]
+};
+IELTS_METHODOLOGIES.speaking5W1H = {
+    name: '5W1H Reflex Framework',
+    description: 'Công thức phản xạ mở rộng ý Speaking Part 1 & 2 tự nhiên, giúp bài nói trôi chảy và không bao giờ cạn ý tưởng.',
+    elements: [
+        { q: 'What', focus: 'Đối tượng chính', prompt: 'Chính xác bạn đang nói về điều gì / sự vật gì?' },
+        { q: 'Where', focus: 'Không gian', prompt: 'Sự việc diễn ra ở đâu, bối cảnh như thế nào?' },
+        { q: 'When', focus: 'Thời gian', prompt: 'Diễn ra vào dịp nào, tần suất bao lâu một lần?' },
+        { q: 'Who', focus: 'Người đồng hành', prompt: 'Bạn trải nghiệm điều đó một mình hay với ai?' },
+        { q: 'Why', focus: 'Lý do & Cảm xúc', prompt: 'Tại sao điều đó lại đặc biệt hay để lại ấn tượng sâu sắc?' },
+        { q: 'How', focus: 'Diễn biến & Tương lai', prompt: 'Trải nghiệm đó đã thay đổi bạn thế nào và dự định tiếp theo là gì?' }
+    ]
+};
+
 // -----------------------------------------------------------------------------
 // 3. DISTRACTOR ANALYSIS & COMMON L1 (VIETNAMESE) PITFALLS
 // -----------------------------------------------------------------------------
@@ -193,6 +217,48 @@ export const IELTS_ERROR_ANALYSIS = [
     }
 ];
 
+IELTS_ERROR_ANALYSIS.receptiveDistractors = [
+    {
+        code: 'Over-Generalization',
+        type: 'Bẫy quy nạp quá mức (Always / Never / All)',
+        mechanism: 'Đề bài dùng các từ tuyệt đối trong khi bài đọc chỉ đề cập xu hướng (often / tend to / some).',
+        counterStrategy: 'Đối chiếu kỹ từ chỉ định mức độ (quantifiers & modal verbs) giữa bài đọc và câu hỏi.'
+    },
+    {
+        code: 'Word-Spotting',
+        type: 'Bẫy từ khóa trùng lặp (False Association)',
+        mechanism: 'Nghe hoặc đọc thấy đúng từ vựng trong đề nhưng ngữ cảnh đã bị phủ định hoặc áp dụng cho đối tượng khác.',
+        counterStrategy: 'Nghe/đọc hiểu trọn vẹn cấu trúc ngữ nghĩa thay vì chỉ vội vàng bắt từ khóa đơn lẻ.'
+    },
+    {
+        code: 'Self-Correction',
+        type: 'Bẫy sửa lời (Listening Distractor)',
+        mechanism: 'Người nói đưa ra thông tin A, nhưng sau đó đổi ý bằng "Actually...", "Wait, sorry...", "I meant...".',
+        counterStrategy: 'Giữ bình tĩnh nghe hết toàn bộ câu của diễn giả trước khi chốt phương án cuối cùng.'
+    }
+];
+
+IELTS_ERROR_ANALYSIS.productiveL1Errors = [
+    {
+        error: 'Cấu trúc dịch "There are many people think..."',
+        badExample: 'There are many students think that studying abroad is necessary.',
+        goodExample: 'A significant number of students believe that studying abroad is advantageous.',
+        explanation: 'Thói quen dịch Word-by-Word từ "Có nhiều người nghĩ rằng..." dẫn đến lỗi 2 động từ vị ngữ trong câu đơn.'
+    },
+    {
+        error: 'Lạm dụng văn nói trong bài thi Writing',
+        badExample: 'The government should do a lot of things to fix this big problem.',
+        goodExample: 'The authorities ought to allocate substantial resources to address this pressing issue.',
+        explanation: 'Thay thế các từ ngữ thông tục như "a lot of", "kids", "get", "big problem" bằng văn phong học thuật chuẩn mực.'
+    },
+    {
+        error: 'Thiếu mạo từ xác định "the" với danh từ tập hợp',
+        badExample: 'Environment is damaged severely by human activities.',
+        goodExample: 'The environment is severely compromised by anthropogenic activities.',
+        explanation: 'Các danh từ chỉ môi trường, chính phủ, internet ("the environment", "the government", "the internet") luôn đòi hỏi mạo từ xác định.'
+    }
+];
+
 // -----------------------------------------------------------------------------
 // 4. ADVANCED LINGUISTICS & LEXICOLOGY (Collocations, Register, Syntax)
 // -----------------------------------------------------------------------------
@@ -213,6 +279,27 @@ export const IELTS_LINGUISTICS = [
             { term: 'Not only... but also (Inversion)', type: 'Inversion Structure', formula: 'Not only + Trợ động từ + S + V..., but S also...', example: 'Not only does tourism stimulate local economies, but it also fosters cross-cultural understanding.' },
             { term: 'Under no circumstances', type: 'Negative Adverb Inversion', formula: 'Under no circumstances + should/must + S + V...', example: 'Under no circumstances should the safety of laboratory personnel be compromised.' }
         ]
+    }
+];
+
+IELTS_LINGUISTICS.academicCollocations = [
+    {
+        topic: 'Môi Trường',
+        basicWord: 'hurt the environment',
+        highBandCollocation: 'precipitate irreversible environmental degradation',
+        exampleSentence: 'Unchecked industrial emissions precipitate irreversible environmental degradation.'
+    },
+    {
+        topic: 'Kinh Tế',
+        basicWord: 'spend a lot of money',
+        highBandCollocation: 'allocate substantial financial resources',
+        exampleSentence: 'The government ought to allocate substantial financial resources to sustainable infrastructure.'
+    },
+    {
+        topic: 'Xã Hội',
+        basicWord: 'have a big effect on',
+        highBandCollocation: 'exert a profound influence on',
+        exampleSentence: 'Technological disruption exerts a profound influence on contemporary labor dynamics.'
     }
 ];
 

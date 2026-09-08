@@ -184,7 +184,13 @@ export const EditorialSelect = ({ label, value, onChange, options = [], classNam
 export const EditorialDatePicker = ({ label, value, onChange, className = "" }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [coords, setCoords] = useState({ top: 0, bottom: 0, left: 0, openUpward: false });
-    const dateObj = value ? new Date(value) : new Date();
+    const dateObj = (() => {
+        if (value) {
+            const parsed = new Date(value);
+            if (!isNaN(parsed.getTime())) return parsed;
+        }
+        return new Date();
+    })();
     const [viewDate, setViewDate] = useState(dateObj);
     const dropdownRef = useRef(null);
 
@@ -199,8 +205,8 @@ export const EditorialDatePicker = ({ label, value, onChange, className = "" }) 
         if (dropdownRef.current) {
             const rect = dropdownRef.current.getBoundingClientRect();
             const spaceBelow = window.innerHeight - rect.bottom;
-            const openUp = spaceBelow < 310 && rect.top > 310;
-            const left = Math.min(rect.left, window.innerWidth - 296);
+            const openUp = spaceBelow < 320 && rect.top > 320;
+            const left = Math.min(rect.left, window.innerWidth - 315);
             setCoords({
                 top: rect.bottom + 4,
                 bottom: window.innerHeight - rect.top + 4,
@@ -239,8 +245,26 @@ export const EditorialDatePicker = ({ label, value, onChange, className = "" }) 
         "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
     ];
 
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let y = currentYear + 15; y >= 1940; y--) {
+        years.push(y);
+    }
+
     const prevMonth = (e) => { e.stopPropagation(); setViewDate(new Date(year, month - 1, 1)); };
     const nextMonth = (e) => { e.stopPropagation(); setViewDate(new Date(year, month + 1, 1)); };
+
+    const handleMonthChange = (e) => {
+        e.stopPropagation();
+        const newMonth = parseInt(e.target.value, 10);
+        setViewDate(new Date(year, newMonth, 1));
+    };
+
+    const handleYearChange = (e) => {
+        e.stopPropagation();
+        const newYear = parseInt(e.target.value, 10);
+        setViewDate(new Date(newYear, month, 1));
+    };
 
     const firstDay = new Date(year, month, 1);
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -287,20 +311,54 @@ export const EditorialDatePicker = ({ label, value, onChange, className = "" }) 
                     style={{
                         position: 'fixed',
                         left: `${coords.left}px`,
-                        width: '288px',
+                        width: '300px',
                         top: coords.openUpward ? 'auto' : `${coords.top}px`,
                         bottom: coords.openUpward ? `${coords.bottom}px` : 'auto',
                         zIndex: 550
                     }}
                     className="editorial-portal-datepicker bg-brand-cream border-editorial shadow-2xl p-4 space-y-3 animate-fade-in-down"
                 >
-                    <div className="flex justify-between items-center pb-2 border-b border-brand-cerulean/20 font-serif-title">
-                        <button type="button" onClick={prevMonth} className="p-1 text-brand-cerulean hover:text-brand-jasper">
-                            <ChevronLeft size={18} />
+                    <div className="flex justify-between items-center pb-2 border-b border-brand-cerulean/20 font-serif-title gap-1">
+                        <button
+                            type="button"
+                            onClick={prevMonth}
+                            className="p-1.5 text-brand-cerulean hover:text-brand-jasper hover:bg-brand-cerulean/10 rounded transition-colors"
+                            title="Tháng trước"
+                        >
+                            <ChevronLeft size={16} />
                         </button>
-                        <span className="font-bold text-brand-cerulean">{monthNames[month]} {year}</span>
-                        <button type="button" onClick={nextMonth} className="p-1 text-brand-cerulean hover:text-brand-jasper">
-                            <ChevronRight size={18} />
+                        <div className="flex items-center gap-1.5 flex-1 justify-center">
+                            {/* Chọn Tháng */}
+                            <select
+                                value={month}
+                                onChange={handleMonthChange}
+                                onClick={e => e.stopPropagation()}
+                                className="bg-white border border-brand-cerulean/30 rounded px-2 py-1 text-xs font-bold font-serif-title text-brand-cerulean focus:outline-none focus:border-brand-jasper cursor-pointer hover:border-brand-cerulean transition-colors shadow-xs"
+                            >
+                                {monthNames.map((name, idx) => (
+                                    <option key={idx} value={idx}>{name}</option>
+                                ))}
+                            </select>
+
+                            {/* Chọn Năm */}
+                            <select
+                                value={year}
+                                onChange={handleYearChange}
+                                onClick={e => e.stopPropagation()}
+                                className="bg-white border border-brand-cerulean/30 rounded px-2 py-1 text-xs font-bold font-serif-title text-brand-cerulean focus:outline-none focus:border-brand-jasper cursor-pointer hover:border-brand-cerulean transition-colors shadow-xs"
+                            >
+                                {years.map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={nextMonth}
+                            className="p-1.5 text-brand-cerulean hover:text-brand-jasper hover:bg-brand-cerulean/10 rounded transition-colors"
+                            title="Tháng sau"
+                        >
+                            <ChevronRight size={16} />
                         </button>
                     </div>
 
@@ -333,11 +391,20 @@ export const EditorialDatePicker = ({ label, value, onChange, className = "" }) 
                         })}
                     </div>
 
-                    <div className="pt-2 border-t border-brand-cerulean/20 text-right">
+                    <div className="pt-2 border-t border-brand-cerulean/20 flex justify-between items-center text-xs font-serif-title">
+                        {value ? (
+                            <button
+                                type="button"
+                                onClick={() => { onChange(''); setIsOpen(false); }}
+                                className="text-gray-500 hover:text-red-600 hover:underline"
+                            >
+                                Xóa ngày
+                            </button>
+                        ) : <div />}
                         <button
                             type="button"
                             onClick={handleSelectToday}
-                            className="text-xs font-serif-title text-brand-jasper hover:underline font-bold"
+                            className="text-brand-jasper hover:underline font-bold"
                         >
                             Hôm nay
                         </button>

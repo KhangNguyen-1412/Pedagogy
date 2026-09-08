@@ -1,0 +1,48 @@
+name: ✨ Đề xuất Tính năng Mới (Feature Request)
+description: Gợi ý ý tưởng hoặc tính năng mới giúp tối ưu hóa hệ thống Pedagogy
+title: "[FEAT]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Chúng tôi luôn trân trọng những ý tưởng đóng góp để nâng cao chất lượng trải nghiệm học tập và quản lý!
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Vấn đề hoặc Bối cảnh thực tế (Problem Statement)
+      description: Tính năng này giải quyết nhu cầu hay điểm nghẽn (pain point) nào của bạn?
+      placeholder: Tôi gặp khó khăn khi phải...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Giải pháp đề xuất (Proposed Solution)
+      description: Mô tả chi tiết tính năng bạn mong muốn được bổ sung và cách hoạt động của nó.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Phân hệ liên quan (Related Module)
+      options:
+        - Đào tạo Nghiệp vụ Sư phạm (Programs & Modules)
+        - Đề cương học phần (Syllabus)
+        - Lịch biểu & Điểm danh (Calendar & Attendance)
+        - Sổ điểm & GPA (Gradebook)
+        - Học liệu & Nhật ký (Resources & Log)
+        - Hồ sơ cá nhân (Profile)
+        - Luyện thi IELTS (IELTS Hub)
+        - Hạ tầng & Hệ thống chung (Core & DevOps)
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Các giải pháp thay thế đã cân nhắc (Alternatives Considered)
+      description: Bạn đã từng thử qua cách làm nào khác chưa?

@@ -7,7 +7,7 @@ export const DEFAULT_PROGRAMS = [
         category: "dai_hoc",
         evaluationType: "credits",
         totalCreditsRequired: 135,
-        status: "active",
+        status: "dang_hoc",
         isEnrolled: true,
         rules: { general: 28, fundamentalMandatory: 26, fundamentalElective: 8, specializedMandatory: 42, specializedElective: 16, internshipGraduation: 15 }
     },
@@ -18,7 +18,7 @@ export const DEFAULT_PROGRAMS = [
         category: "nhanh_a",
         evaluationType: "credits",
         totalCreditsRequired: 34,
-        status: "active",
+        status: "dang_hoc",
         isEnrolled: true,
         rules: { mandatoryA: 15, electiveA: 2, mandatoryB: 9, practiceB: 6, electiveB: 2 }
     },
@@ -29,8 +29,8 @@ export const DEFAULT_PROGRAMS = [
         category: "nhanh_a",
         evaluationType: "credits",
         totalCreditsRequired: 36,
-        status: "active",
-        isEnrolled: true,
+        status: "chua_hoc",
+        isEnrolled: false,
         rules: { mandatoryA: 15, electiveA: 2, mandatoryB: 11, practiceB: 6, electiveB: 2 }
     }
 ];

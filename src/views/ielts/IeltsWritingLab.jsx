@@ -14,7 +14,8 @@ import {
     Save,
     Trash2,
     FileText,
-    ArrowRight
+    ArrowRight,
+    BarChart3
 } from 'lucide-react';
 import { IELTS_WRITING_TASKS, IELTS_RUBRICS } from '../../data/ieltsData';
 
@@ -195,15 +196,20 @@ export const IeltsWritingLab = ({ onSaveEssay, showToast }) => {
                         {/* Graph Preview if Task 1 */}
                         {activeTask.graphData && (
                             <div className="p-3.5 bg-white border border-brand-cerulean/20 space-y-2">
-                                <span className="text-xs font-serif-title font-bold text-brand-cerulean uppercase block">
-                                    📊 Biểu Đồ Dữ Liệu Tham Chiếu:
+                                <span className="text-xs font-serif-title font-bold text-brand-cerulean uppercase flex items-center gap-1.5">
+                                    <BarChart3 size={14} className="text-brand-cerulean shrink-0" />
+                                    <span>Biểu Đồ Dữ Liệu Tham Chiếu:</span>
                                 </span>
                                 <div className="space-y-2">
                                     {activeTask.graphData.countries.map((c, i) => (
                                         <div key={i} className="text-xs font-mono">
                                             <div className="flex justify-between text-gray-700 mb-1">
                                                 <span className="font-bold">{c.name}</span>
-                                                <span>1980: {c.data[0]}% ➔ 2020: {c.data[4]}%</span>
+                                                <span className="flex items-center gap-1">
+                                                    <span>1980: {c.data[0]}%</span>
+                                                    <ArrowRight size={11} className="text-gray-400 shrink-0" />
+                                                    <span>2020: {c.data[4]}%</span>
+                                                </span>
                                             </div>
                                             <div className="w-full h-1.5 bg-gray-100 overflow-hidden">
                                                 <div

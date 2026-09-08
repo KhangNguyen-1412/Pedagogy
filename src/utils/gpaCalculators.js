@@ -31,7 +31,7 @@ export const calculateOverallGPA = (modules, programs = [], selectedProgramFilte
     let totalGradedCredits = 0;
     let earnedCredits = 0;
 
-    let activePrograms = programs.filter(p => p.isEnrolled !== false && p.status !== 'completed');
+    let activePrograms = programs.filter(p => p.status === 'dang_hoc' || (p.isEnrolled !== false && p.status !== 'completed' && p.status !== 'da_hoc' && p.status !== 'chua_hoc'));
     if (selectedProgramFilter !== 'all') {
         activePrograms = programs.filter(p => p.id === selectedProgramFilter);
     }

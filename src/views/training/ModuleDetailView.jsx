@@ -15,9 +15,9 @@ import {
     Award
 } from 'lucide-react';
 import { EditorialSelect, Modal } from '../../components/common/EditorialWidgets';
-import { isModuleInProgram, getModuleProgramNames } from "../../utils/ruleValidators";
+import { isModuleInProgram, getModuleProgramNames, getProgramStatusLabel } from "../../utils/ruleValidators";
 import { calculateModuleFinal } from "../../utils/gpaCalculators";
-import { formatModuleName } from "../../utils/seoHelpers";
+import { formatModuleName, generateHcmueLecturerEmail } from "../../utils/seoHelpers";
 
 export const ModuleDetailView = ({ moduleId, programId, programs, modules, profile, onUpdateModule, onDeleteModule, navigate }) => {
     const moduleItem = modules.find(m => m.id === moduleId);
@@ -44,7 +44,14 @@ export const ModuleDetailView = ({ moduleId, programId, programs, modules, profi
         onUpdateModule({
             ...editingModule,
             code: (editingModule.code || '').toUpperCase().trim(),
-            credits: Number(editingModule.credits)
+            credits: Number(editingModule.credits),
+            instructor: (editingModule.instructor || '').trim(),
+            instructorEmail: (editingModule.instructorEmail || '').trim(),
+            syllabus: {
+                ...(editingModule.syllabus || {}),
+                instructor: (editingModule.instructor || '').trim(),
+                instructorEmail: (editingModule.instructorEmail || '').trim()
+            }
         });
         setIsEditModalOpen(false);
     };
@@ -217,6 +224,25 @@ export const ModuleDetailView = ({ moduleId, programId, programs, modules, profi
                         </button>
                     </div>
 
+                    {(moduleItem.instructor || moduleItem.syllabus?.instructor) && (
+                        <div className="p-3 bg-brand-cream/60 border border-brand-cerulean/20 flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-500 uppercase font-serif-title">Giảng viên:</span>
+                                <span className="font-serif-title font-bold text-brand-cerulean text-sm">
+                                    {moduleItem.instructor || moduleItem.syllabus?.instructor}
+                                </span>
+                            </div>
+                            {(moduleItem.instructorEmail || moduleItem.syllabus?.instructorEmail) && (
+                                <div className="text-xs text-gray-600 flex items-center gap-1 font-body">
+                                    <span>Liên hệ:</span>
+                                    <span className="text-brand-jasper font-semibold">
+                                        {moduleItem.instructorEmail || moduleItem.syllabus?.instructorEmail}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <div>
                         <h5 className="text-sm font-serif-title text-brand-cerulean font-bold mb-1">Mục tiêu môn học</h5>
                         <p className="text-gray-600 text-sm leading-relaxed">
@@ -294,7 +320,7 @@ export const ModuleDetailView = ({ moduleId, programId, programs, modules, profi
                                             {prog?.name || pId}
                                         </h5>
                                         <span className="text-xs text-gray-500">
-                                            {prog?.totalCreditsRequired || '?'} TC yêu cầu • {prog?.status === 'completed' ? 'Đã hoàn thành' : 'Đang học'}
+                                            {prog?.totalCreditsRequired || '?'} TC yêu cầu • {getProgramStatusLabel(prog)}
                                         </span>
                                     </div>
                                     {pId === programId && (
@@ -402,6 +428,40 @@ export const ModuleDetailView = ({ moduleId, programId, programs, modules, profi
                                 onChange={val => setEditingModule({ ...editingModule, status: val })}
                                 options={statusOptions}
                             />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Giảng viên phụ trách</label>
+                                <input
+                                    type="text"
+                                    className="input-editorial w-full"
+                                    value={editingModule.instructor || ''}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        const autoEmail = generateHcmueLecturerEmail(val);
+                                        setEditingModule(prev => {
+                                            const shouldAutoSync = !prev.instructorEmail || prev.instructorEmail.endsWith('@lecturer.hcmue.edu.vn');
+                                            return {
+                                                ...prev,
+                                                instructor: val,
+                                                instructorEmail: shouldAutoSync ? autoEmail : prev.instructorEmail
+                                            };
+                                        });
+                                    }}
+                                    placeholder="Ví dụ: PGS. TS. Nguyễn Văn An"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Email Giảng viên</label>
+                                <input
+                                    type="text"
+                                    className="input-editorial w-full font-mono text-sm"
+                                    value={editingModule.instructorEmail || ''}
+                                    onChange={e => setEditingModule({ ...editingModule, instructorEmail: e.target.value })}
+                                    placeholder="Tự động: [tên][họ lót]@lecturer.hcmue.edu.vn"
+                                />
+                            </div>
                         </div>
 
                         <div className="pt-4 flex justify-between items-center border-t border-brand-cerulean/20">

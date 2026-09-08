@@ -30,16 +30,40 @@ export const getCategoryPresets = (category) => {
     };
 };
 
+export const PROGRAM_STATUSES = {
+    CHUA_HOC: 'chua_hoc',
+    DANG_HOC: 'dang_hoc',
+    DA_HOC: 'da_hoc'
+};
+
+export const getProgramStatus = (prog) => {
+    if (!prog) return 'chua_hoc';
+    const s = prog.status;
+    if (s === 'chua_hoc' || s === 'planning' || prog.isEnrolled === false) return 'chua_hoc';
+    if (s === 'da_hoc' || s === 'completed') return 'da_hoc';
+    return 'dang_hoc';
+};
+
+export const getProgramStatusLabel = (progOrStatus) => {
+    const s = typeof progOrStatus === 'object' ? getProgramStatus(progOrStatus) : progOrStatus;
+    if (s === 'chua_hoc') return 'Chưa học';
+    if (s === 'da_hoc') return 'Đã học';
+    return 'Đang học';
+};
+
 export const normalizeProgram = (prog) => {
     if (!prog) return prog;
     const category = prog.category || (prog.rules?.general !== undefined ? 'dai_hoc' : prog.rules ? 'nhanh_a' : 'nhanh_b');
     let defaultEval = 'credits';
     if (category === 'nhanh_b') defaultEval = 'modules';
     else if (category === 'nhanh_c') defaultEval = 'hours';
+    const status = getProgramStatus(prog);
     return {
         ...prog,
         category,
-        evaluationType: prog.evaluationType || defaultEval
+        evaluationType: prog.evaluationType || defaultEval,
+        status,
+        isEnrolled: status !== 'chua_hoc'
     };
 };
 
@@ -205,7 +229,7 @@ export const getModuleProgramNames = (mod, programs) => {
 };
 
 export const getFilteredModules = (modules = [], programs = [], selectedProgramFilter = 'all') => {
-    let activePrograms = (programs || []).filter(p => p.isEnrolled !== false);
+    let activePrograms = (programs || []).filter(p => getProgramStatus(p) !== 'chua_hoc');
     if (selectedProgramFilter !== 'all') {
         activePrograms = (programs || []).filter(p => p.id === selectedProgramFilter);
     }
@@ -216,3 +240,40 @@ export const getFilteredModules = (modules = [], programs = [], selectedProgramF
     }
     return (modules || []).filter(m => activeIds.some(pId => isModuleInProgram(m, pId)));
 };
+
+// Lọc các học phần đã được chọn học:
+// 1. Thuộc chương trình đào tạo đang chọn học (không phải 'chua_hoc')
+// 2. Nếu là môn tự chọn (type === 'elective'): phải được đánh dấu chọn (isSelected === true) hoặc đang học/đã hoàn thành/đã có điểm
+// 3. Không bị đánh dấu huỷ chọn (isEnrolled !== false)
+export const getSelectedModules = (modules = [], programs = [], selectedProgramFilter = 'all') => {
+    const enrolledPrograms = (programs || []).filter(p => getProgramStatus(p) !== 'chua_hoc');
+    let targetPrograms = enrolledPrograms;
+    if (selectedProgramFilter !== 'all') {
+        targetPrograms = enrolledPrograms.filter(p => p.id === selectedProgramFilter);
+    }
+    const targetProgramIds = targetPrograms.map(p => p.id);
+    if (targetProgramIds.length === 0) {
+        return [];
+    }
+
+    return (modules || []).filter(m => {
+        // Phải thuộc ít nhất 1 chương trình mục tiêu đang chọn học
+        const inProgram = targetProgramIds.some(pId => isModuleInProgram(m, pId));
+        if (!inProgram) return false;
+
+        // Nếu học phần bị đánh dấu rõ ràng không chọn học
+        if (m.isEnrolled === false) return false;
+
+        // Nếu là học phần tự chọn, chỉ hiển thị nếu người học đã bấm "Chọn học" (isSelected === true)
+        // hoặc đã phát sinh điểm / đang học / hoàn thành
+        if (m.type === 'elective') {
+            const hasGrades = m.grades && (Number(m.grades.final) > 0 || Number(m.grades.midterm) > 0);
+            const isFinishedOrActive = m.status === 'in_progress' || m.status === 'completed';
+            return !!m.isSelected || hasGrades || isFinishedOrActive;
+        }
+
+        // Môn bắt buộc / thực hành trong chương trình đang chọn học
+        return true;
+    });
+};
+

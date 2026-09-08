@@ -19,15 +19,16 @@ import {
     Calendar,
     Award,
     ArrowLeft,
-    Check
+    Check,
+    Lightbulb
 } from 'lucide-react';
 import { EditorialSelect, Modal, AlertBox, ProgressBar } from '../../components/common/EditorialWidgets';
 import { RuleValidationPanel } from '../../components/training/RuleValidationPanel';
-import { isModuleInProgram, getModuleProgramNames, calculateRuleBreakdown, normalizeModuleProgramIds } from "../../utils/ruleValidators";
+import { isModuleInProgram, getModuleProgramNames, calculateRuleBreakdown, normalizeModuleProgramIds, getProgramStatus, getProgramStatusLabel } from "../../utils/ruleValidators";
 import { calculateModuleFinal } from "../../utils/gpaCalculators";
 import { formatModuleName } from "../../utils/seoHelpers";
 
-export const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule, onUpdateModule, onDeleteModule, onUpdateProgram, navigate }) => {
+export const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule, onUpdateModule, onDeleteModule, onUpdateProgram, onUpdateProgramStatus, onDeleteProgram, navigate }) => {
     const program = programs.find(p => p.id === programId) || (programs && programs.length > 0 ? programs[0] : null);
     const isDaiHoc = program?.category === 'dai_hoc' || program?.rules?.general !== undefined;
 
@@ -96,7 +97,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
 
     const semesterFilterOptions = [
         { label: 'Tất cả các học kỳ', value: 'all' },
-        ...(unassignedCount > 0 ? [{ label: `⚠️ Chưa xếp học kỳ (${unassignedCount})`, value: 'unassigned' }] : []),
+        ...(unassignedCount > 0 ? [{ label: `Chưa xếp học kỳ (${unassignedCount})`, value: 'unassigned' }] : []),
         ...semesterOptions.filter(opt => opt.value !== 'unassigned')
     ];
 
@@ -484,6 +485,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
     const handleOpenProgramEditModal = () => {
         setProgramFormData({
             ...program,
+            status: getProgramStatus(program),
             rules: isDaiHoc
                 ? {
                     general: program.rules?.general ?? 28,
@@ -513,8 +515,20 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
         setIsProgramEditModalOpen(false);
     };
 
+    const handleDeleteProgramClick = () => {
+        if (!program) return;
+        if (window.confirm(`Bạn có chắc chắn muốn xóa chương trình đào tạo "${program.name}" không?\n\nLưu ý: Thao tác này sẽ xóa chương trình và các học phần chỉ thuộc về chương trình này khỏi hệ thống.`)) {
+            if (onDeleteProgram) {
+                onDeleteProgram(program.id);
+            }
+            navigate('programs');
+        }
+    };
+
     // Total credits of all existing modules in this program curriculum
     const totalProgramCredits = programModules.reduce((sum, mod) => sum + Number(mod.credits || 0), 0);
+
+    const progStatus = getProgramStatus(program);
 
     return (
         <div className="max-w-6xl mx-auto space-y-8">
@@ -526,17 +540,81 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                     <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-3 flex-wrap">
                             <h1 className="text-4xl sm:text-5xl font-serif-title text-brand-cerulean">{program.name}</h1>
+                            {progStatus === 'chua_hoc' && (
+                                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold font-serif-title rounded border border-gray-300 flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                    Chưa học
+                                </span>
+                            )}
+                            {progStatus === 'dang_hoc' && (
+                                <span className="px-3 py-1 bg-emerald-50 text-emerald-800 text-xs font-bold font-serif-title rounded border border-emerald-300 flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    Đang học
+                                </span>
+                            )}
+                            {progStatus === 'da_hoc' && (
+                                <span className="px-3 py-1 bg-brand-cerulean/15 text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/40 flex items-center gap-1.5">
+                                    <CheckCircle2 size={13} className="text-brand-cerulean" />
+                                    Đã học
+                                </span>
+                            )}
                             {isDaiHoc && (
                                 <span className="px-3 py-1 bg-emerald-50 text-emerald-800 text-xs font-bold font-serif-title rounded border border-emerald-300">
                                     Bậc Đại học (4 năm &bull; 8 Học kỳ)
                                 </span>
                             )}
+                            {/* 3-State Quick Switcher in Header */}
+                            <div className="flex items-center p-0.5 bg-gray-100 border border-gray-200 rounded text-xs font-serif-title">
+                                <button
+                                    type="button"
+                                    title="Chuyển sang Chưa học"
+                                    onClick={() => onUpdateProgramStatus && onUpdateProgramStatus(program.id, 'chua_hoc')}
+                                    className={`px-2.5 py-1 rounded transition-all flex items-center gap-1 ${
+                                        progStatus === 'chua_hoc'
+                                            ? 'bg-white text-gray-800 font-bold shadow-xs border border-gray-300'
+                                            : 'text-gray-500 hover:text-gray-800'
+                                    }`}
+                                >
+                                    Chưa học
+                                </button>
+                                <button
+                                    type="button"
+                                    title="Chuyển sang Đang học"
+                                    onClick={() => onUpdateProgramStatus && onUpdateProgramStatus(program.id, 'dang_hoc')}
+                                    className={`px-2.5 py-1 rounded transition-all flex items-center gap-1 ${
+                                        progStatus === 'dang_hoc'
+                                            ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                                            : 'text-gray-500 hover:text-emerald-700'
+                                    }`}
+                                >
+                                    Đang học
+                                </button>
+                                <button
+                                    type="button"
+                                    title="Chuyển sang Đã học"
+                                    onClick={() => onUpdateProgramStatus && onUpdateProgramStatus(program.id, 'da_hoc')}
+                                    className={`px-2.5 py-1 rounded transition-all flex items-center gap-1 ${
+                                        progStatus === 'da_hoc'
+                                            ? 'bg-brand-cerulean text-white font-bold shadow-xs'
+                                            : 'text-gray-500 hover:text-brand-cerulean'
+                                    }`}
+                                >
+                                    Đã học
+                                </button>
+                            </div>
                             <button
                                 onClick={handleOpenProgramEditModal}
                                 className="p-2 text-brand-cerulean hover:text-brand-jasper hover:bg-brand-cerulean/10 border border-brand-cerulean/30 rounded transition-all shadow-sm"
                                 title="Chỉnh sửa thông tin chương trình đào tạo"
                             >
                                 <Pencil size={18} />
+                            </button>
+                            <button
+                                onClick={handleDeleteProgramClick}
+                                className="p-2 text-red-600 hover:text-white hover:bg-red-600 border border-red-200 hover:border-red-600 rounded transition-all shadow-sm"
+                                title="Xóa chương trình đào tạo này"
+                            >
+                                <Trash2 size={18} />
                             </button>
                         </div>
                         {program.description && (
@@ -688,7 +766,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                             <div>
                                                 <p className="font-bold">Danh sách học phần cần xếp học kỳ:</p>
                                                 <p className="font-sans text-amber-900 mt-0.5">
-                                                    Sử dụng ô chọn <strong>[⚠️ Chưa xếp kỳ ▾]</strong> trên từng thẻ môn học bên dưới để phân bổ trực tiếp môn học vào Học kỳ 1, 2, 3...
+                                                    Sử dụng ô chọn <strong>[Chưa xếp kỳ ▾]</strong> trên từng thẻ môn học bên dưới để phân bổ trực tiếp môn học vào Học kỳ 1, 2, 3...
                                                 </p>
                                             </div>
                                         </div>
@@ -731,7 +809,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                                                 : 'bg-blue-50 text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
                                                                         }`}
                                                                     >
-                                                                        <option value="unassigned">⚠️ Chưa xếp kỳ</option>
+                                                                        <option value="unassigned">Chưa xếp kỳ</option>
                                                                         <option value="1">Học kỳ 1</option>
                                                                         <option value="2">Học kỳ 2</option>
                                                                         <option value="3">Học kỳ 3</option>
@@ -862,7 +940,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                                                     : 'bg-blue-50 text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
                                                                             }`}
                                                                         >
-                                                                            <option value="unassigned">⚠️ Chưa xếp kỳ</option>
+                                                                            <option value="unassigned">Chưa xếp kỳ</option>
                                                                             <option value="1">Học kỳ 1</option>
                                                                             <option value="2">Học kỳ 2</option>
                                                                             <option value="3">Học kỳ 3</option>
@@ -1008,7 +1086,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                                                 : 'bg-blue-50 text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
                                                                         }`}
                                                                     >
-                                                                        <option value="unassigned">⚠️ Chưa xếp kỳ</option>
+                                                                        <option value="unassigned">Chưa xếp kỳ</option>
                                                                         <option value="1">Học kỳ 1</option>
                                                                         <option value="2">Học kỳ 2</option>
                                                                         <option value="3">Học kỳ 3</option>
@@ -1080,8 +1158,8 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                 II. Học phần Tự chọn ({electives.length})
                                             </h4>
                                             {selectedElectiveId && (
-                                                <span className="text-xs bg-brand-jasper text-white font-serif-title font-bold px-2.5 py-0.5 rounded-full shadow-sm">
-                                                    ✓ Đã đăng ký môn tự chọn
+                                                <span className="text-xs bg-brand-jasper text-white font-serif-title font-bold px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                                                    <Check size={12} className="stroke-[2.5]" /> Đã đăng ký môn tự chọn
                                                 </span>
                                             )}
                                         </div>
@@ -1144,7 +1222,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                                                     : 'bg-blue-50 text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
                                                                             }`}
                                                                         >
-                                                                            <option value="unassigned">⚠️ Chưa xếp kỳ</option>
+                                                                            <option value="unassigned">Chưa xếp kỳ</option>
                                                                             <option value="1">Học kỳ 1</option>
                                                                             <option value="2">Học kỳ 2</option>
                                                                             <option value="3">Học kỳ 3</option>
@@ -1414,7 +1492,10 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                 {modalTab === 'batch' && (
                     <form onSubmit={handleSaveBatchModules} className="space-y-5">
                         <div className="p-3.5 bg-blue-50/70 border border-brand-cerulean/30 rounded text-xs space-y-1 text-brand-cerulean">
-                            <p className="font-serif-title font-bold text-sm">💡 Nhập danh sách học phần hàng loạt (Xếp học kỳ sau)</p>
+                            <p className="font-serif-title font-bold text-sm flex items-center gap-1.5">
+                                <Lightbulb size={16} className="text-brand-cerulean shrink-0" />
+                                Nhập danh sách học phần hàng loạt (Xếp học kỳ sau)
+                            </p>
                             <p className="text-gray-700">
                                 Nhập hoặc dán danh sách tên học phần (mỗi dòng một môn). Hệ thống sẽ tự động gán mã môn, số tín chỉ và đặt trạng thái <strong>Chưa xếp học kỳ</strong> để bạn phân bổ sau.
                             </p>
@@ -1743,6 +1824,23 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                             ></textarea>
                         </div>
 
+                        <div>
+                            <EditorialSelect
+                                label="Trạng thái chương trình"
+                                value={programFormData.status || 'dang_hoc'}
+                                onChange={val => setProgramFormData({
+                                    ...programFormData,
+                                    status: val,
+                                    isEnrolled: val !== 'chua_hoc'
+                                })}
+                                options={[
+                                    { label: 'Chưa học (Lên kế hoạch / Chưa bắt đầu)', value: 'chua_hoc' },
+                                    { label: 'Đang học (Đang trong tiến trình đào tạo)', value: 'dang_hoc' },
+                                    { label: 'Đã học (Đã hoàn thành chương trình)', value: 'da_hoc' }
+                                ]}
+                            />
+                        </div>
+
                         <div className="border p-4 bg-brand-cream border-brand-cerulean/20 space-y-4">
                             <div className="flex justify-between items-center border-b border-brand-cerulean/20 pb-1">
                                 <h4 className="font-serif-title text-brand-cerulean text-lg">
@@ -1930,9 +2028,21 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                             })()}
                         </div>
 
-                        <div className="pt-4 flex justify-end gap-4 border-t border-brand-cerulean/20">
-                            <button type="button" onClick={() => setIsProgramEditModalOpen(false)} className="px-6 py-2 text-gray-500 font-serif-title">Hủy</button>
-                            <button type="submit" className="px-6 py-2 bg-brand-cerulean text-white font-serif-title shadow-editorial">Cập nhật Chương Trình</button>
+                        <div className="pt-4 flex justify-between items-center border-t border-brand-cerulean/20">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsProgramEditModalOpen(false);
+                                    handleDeleteProgramClick();
+                                }}
+                                className="px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-400 font-serif-title text-sm flex items-center gap-1.5 transition-colors"
+                            >
+                                <Trash2 size={16} /> Xóa chương trình
+                            </button>
+                            <div className="flex gap-4">
+                                <button type="button" onClick={() => setIsProgramEditModalOpen(false)} className="px-6 py-2 text-gray-500 font-serif-title">Hủy</button>
+                                <button type="submit" className="px-6 py-2 bg-brand-cerulean text-white font-serif-title shadow-editorial">Cập nhật Chương Trình</button>
+                            </div>
                         </div>
                     </form>
                 )}

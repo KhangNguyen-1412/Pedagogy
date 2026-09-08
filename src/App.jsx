@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
     AlertCircle,
-    CheckCircle2
+    CheckCircle2,
+    X
 } from 'lucide-react';
 import logoImg from './assets/logo.png';
 
@@ -35,15 +36,6 @@ import {
 
 // Datasets
 import { DEFAULT_PROGRAMS, DEFAULT_MODULES } from './data/trainingData';
-import {
-    DEFAULT_THPT_SUBJECTS,
-    DEFAULT_THPT_YEARS,
-    DEFAULT_THPT_EXAM_TYPES,
-    DEFAULT_THPT_EXAMS,
-    DEFAULT_THPT_PERSONAL_PROFILE,
-    DEFAULT_THPT_RESULTS
-} from './data/thptData';
-import { DEFAULT_TS10_PROFILE } from './data/ts10Data';
 import { DEFAULT_IELTS_PROFILE } from './data/ieltsData';
 
 // Utils
@@ -51,6 +43,8 @@ import { calculateOverallGPA, calculateModuleFinal } from './utils/gpaCalculator
 import {
     getCategoryPresets,
     normalizeProgram,
+    getProgramStatus,
+    getProgramStatusLabel,
     calculateRuleBreakdown,
     normalizeModuleProgramIds,
     isModuleInProgram,
@@ -71,7 +65,6 @@ import {
     ProgressBar
 } from './components/common/EditorialWidgets';
 import { CertificateModal } from './components/training/CertificateModal';
-import { ThptPersonalTestModal } from './components/thpt/ThptPersonalTestModal';
 
 // Training Suite Views
 import { DashboardView } from './views/training/DashboardView';
@@ -84,21 +77,7 @@ import { GradebookView } from './views/training/GradebookView';
 import { ResourcesStudyLogView } from './views/training/ResourcesStudyLogView';
 import { ProfileView } from './views/training/ProfileView';
 
-// THPT Suite Views
-import { ThptExamsView } from './views/thpt/ThptExamsView';
-import { ThptPersonalGoalView } from './views/thpt/ThptPersonalGoalView';
-import { ThptPersonalTrackingView } from './views/thpt/ThptPersonalTrackingView';
-import { ThptAdmissionView } from './views/thpt/ThptAdmissionView';
-import { AcademicTranscriptsView } from './views/thpt/AcademicTranscriptsView';
 
-// TS10 Suite Views
-import { Ts10HubView } from './views/ts10/Ts10HubView';
-import { Ts10MathView } from './views/ts10/Ts10MathView';
-import { Ts10LiteratureView } from './views/ts10/Ts10LiteratureView';
-import { Ts10EnglishView } from './views/ts10/Ts10EnglishView';
-import { Ts10ProvincialMatrixView } from './views/ts10/Ts10ProvincialMatrixView';
-import { Ts10CorrectionLab } from './views/ts10/Ts10CorrectionLab';
-import { Ts10RoadmapAnalyticsView } from './views/ts10/Ts10RoadmapAnalyticsView';
 
 // IELTS Suite Views
 import { IeltsHubView } from './views/ielts/IeltsHubView';
@@ -110,17 +89,57 @@ import { IeltsExamSimulator } from './views/ielts/IeltsExamSimulator';
 import { IeltsLanguageGym } from './views/ielts/IeltsLanguageGym';
 import { IeltsAnalyticsView } from './views/ielts/IeltsAnalyticsView';
 
-// MOS & IC3 International IT Suite Views
-import { MosIc3HubView } from './views/mos/MosIc3HubView';
+
 
 // Initialize storage cleanup
 initStorageCleanup();
+
+export const VALID_VIEWS = [
+    'dashboard',
+    'programs',
+    'program_detail',
+    'module_detail',
+    'syllabus',
+    'calendar',
+    'gradebook',
+    'resources',
+    'ielts_hub',
+    'ielts_methodology',
+    'ielts_drills',
+    'ielts_writing_lab',
+    'ielts_speaking_lab',
+    'ielts_simulator',
+    'ielts_gym',
+    'ielts_analytics',
+    'profile'
+];
+
+export const resolveViewString = (candidate) => {
+    if (!candidate) return null;
+    if (typeof candidate === 'string' && VALID_VIEWS.includes(candidate)) {
+        return candidate;
+    }
+    if (typeof candidate === 'object' && candidate.view && VALID_VIEWS.includes(candidate.view)) {
+        return candidate.view;
+    }
+    return null;
+};
 
 // ─── MAIN APP COMPONENT ───────────────────────────────────────────────────
 export default function App() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // Guest Mode: Mặc định cho phép người dùng vào xem hệ thống ngay khi truy cập trang
+    const [isGuestMode, setIsGuestMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const explicitLogout = localStorage.getItem('pedagogy_explicit_logout');
+            if (explicitLogout === 'true') return false;
+        }
+        return true;
+    });
+    const [showGuestBanner, setShowGuestBanner] = useState(true);
 
     const [toast, setToast] = useState(null);
 
@@ -131,12 +150,16 @@ export default function App() {
             setToast(prev => (prev?.id === id ? null : prev));
         }, duration);
     };
+
+    // Đảm bảo luôn trích xuất đúng string view hợp lệ và mặc định hiển thị Dashboard khi mới vào
     const [currentView, setCurrentView] = useState(() => {
         if (typeof window === 'undefined') return 'dashboard';
-        const fromPath = getViewFromPath(window.location.pathname);
+        const parsed = getViewFromPath(window.location.pathname);
+        const fromPath = resolveViewString(parsed);
         if (fromPath) return fromPath;
         const saved = localStorage.getItem('pedagogy_current_view');
-        if (saved) return saved;
+        const fromSaved = resolveViewString(saved);
+        if (fromSaved) return fromSaved;
         return 'dashboard';
     });
 
@@ -160,6 +183,10 @@ export default function App() {
                 localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(googleProfile));
                 setProfile(googleProfile);
             }
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('pedagogy_explicit_logout');
+            }
+            setIsGuestMode(true);
         } catch (error) {
             console.error("Lỗi đăng nhập Google:", error);
             setError("Không thể đăng nhập bằng Google. Vui lòng thử lại.");
@@ -201,7 +228,7 @@ export default function App() {
 
             // 3. Thực thi bắn dữ liệu lên mây
             await batch.commit();
-            alert("🎉 Đã đẩy toàn bộ dữ liệu thật lên Cloud thành công! Bây giờ bạn có thể lên web thật để kiểm tra.");
+            alert("Đã đẩy toàn bộ dữ liệu thật lên Cloud thành công! Bây giờ bạn có thể lên web thật để kiểm tra.");
             
         } catch (error) {
             console.error("Lỗi đồng bộ dữ liệu thật:", error);
@@ -211,12 +238,16 @@ export default function App() {
 
     const [activeProgramId, setActiveProgramId] = useState(() => {
         if (typeof window !== 'undefined') {
+            const parsed = getViewFromPath(window.location.pathname);
+            if (parsed?.programId) return parsed.programId;
             return localStorage.getItem('pedagogy_active_program_id') || null;
         }
         return null;
     });
     const [activeModuleId, setActiveModuleId] = useState(() => {
         if (typeof window !== 'undefined') {
+            const parsed = getViewFromPath(window.location.pathname);
+            if (parsed?.moduleId) return parsed.moduleId;
             return localStorage.getItem('pedagogy_active_module_id') || null;
         }
         return null;
@@ -263,87 +294,7 @@ export default function App() {
     const [studyLogs, setStudyLogs] = useState(() => []);
     const [resources, setResources] = useState(() => []);
 
-    // THPT Data States
-    const [thptSubjects, setThptSubjects] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.THPT_SUBJECTS);
-            if (local) {
-                try {
-                    const parsed = JSON.parse(local);
-                    if (Array.isArray(parsed)) {
-                        return parsed.map(s => ({ ...s, color: '#124874' }));
-                    }
-                } catch (e) {}
-            }
-        }
-        return DEFAULT_THPT_SUBJECTS;
-    });
 
-    const [thptYears, setThptYears] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.THPT_YEARS);
-            if (local) try { return JSON.parse(local); } catch (e) {}
-        }
-        return DEFAULT_THPT_YEARS;
-    });
-
-    const [thptExamTypes, setThptExamTypes] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.THPT_EXAM_TYPES);
-            if (local) try { return JSON.parse(local); } catch (e) {}
-        }
-        return DEFAULT_THPT_EXAM_TYPES;
-    });
-
-    const [thptExams, setThptExams] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.THPT_EXAMS);
-            if (local) {
-                try {
-                    const parsed = JSON.parse(local);
-                    return parsed.filter(e => !e.id.startsWith('exam_toan_') && !e.id.startsWith('exam_vatly_') && !e.id.startsWith('exam_hoahoc_') && !e.id.startsWith('exam_tienganh_'));
-                } catch (e) {}
-            }
-        }
-        return DEFAULT_THPT_EXAMS;
-    });
-
-    const [thptProfile, setThptProfile] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.THPT_PROFILE);
-            if (local) {
-                try {
-                    const parsed = JSON.parse(local);
-                    if (parsed.targetUniversity === 'Đại học Bách Khoa TP.HCM - Ngành Khoa học Máy tính' ||
-                        parsed.targetUniversity === 'Đại học Bách Khoa - Ngành Khoa học Máy tính' ||
-                        parsed.targetUniversity === 'Đại học Bách Khoa TP.HCM - Khoa học Máy tính') {
-                        parsed.targetUniversity = '';
-                        parsed.targetTotalScore = 0;
-                        parsed.combination = '';
-                        parsed.subjectTargets = [];
-                    }
-                    if (parsed.mistakeNotes) {
-                        parsed.mistakeNotes = parsed.mistakeNotes.filter(m => !m.id.startsWith('mis_00'));
-                    }
-                    return parsed;
-                } catch (e) {}
-            }
-        }
-        return DEFAULT_THPT_PERSONAL_PROFILE;
-    });
-
-    const [thptResults, setThptResults] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.THPT_RESULTS);
-            if (local) {
-                try {
-                    const parsed = JSON.parse(local);
-                    return parsed.filter(r => !r.id.startsWith('res_00'));
-                } catch (e) {}
-            }
-        }
-        return DEFAULT_THPT_RESULTS;
-    });
 
     // IELTS Academic Suite States
     const [ieltsProfile, setIeltsProfile] = useState(() => {
@@ -398,50 +349,17 @@ export default function App() {
         setIeltsMockResults(prev => [mockRecord, ...prev]);
     };
 
-    // TS10 Tuyển Sinh Lớp 10 States
-    const [ts10Profile, setTs10Profile] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.TS10_PROFILE);
-            if (local) try { return JSON.parse(local); } catch (e) {}
-        }
-        return DEFAULT_TS10_PROFILE;
-    });
-    const [ts10Submissions, setTs10Submissions] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.TS10_SUBMISSIONS);
-            if (local) try { return JSON.parse(local); } catch (e) {}
-        }
-        return [];
-    });
 
-    const handleUpdateTs10Profile = (newProfile) => {
-        setTs10Profile(newProfile);
-    };
-    const handleSaveTs10Submission = (submission) => {
-        setTs10Submissions(prev => [submission, ...prev]);
-    };
-
-    // TS10 LocalStorage Sync
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem(STORAGE_KEYS.TS10_PROFILE, JSON.stringify(ts10Profile));
-        }
-    }, [ts10Profile]);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem(STORAGE_KEYS.TS10_SUBMISSIONS, JSON.stringify(ts10Submissions));
-        }
-    }, [ts10Submissions]);
-
-    const [isGlobalTestEntryOpen, setIsGlobalTestEntryOpen] = useState(false);
-
-    const handleToggleEnrollProgram = async (programId) => {
+    const handleUpdateProgramStatus = async (programId, newStatus) => {
         let updatedProgram = null;
         
         const updated = programs.map(p => {
             if (p.id === programId) {
-                updatedProgram = { ...p, isEnrolled: p.isEnrolled === false ? true : false };
+                updatedProgram = {
+                    ...p,
+                    status: newStatus,
+                    isEnrolled: newStatus !== 'chua_hoc'
+                };
                 return updatedProgram;
             }
             return p;
@@ -450,7 +368,6 @@ export default function App() {
         // Cập nhật Local State & Firebase
         setPrograms(updated);
 
-        // Bổ sung đồng bộ lên Firebase
         if (updatedProgram) {
             const userId = getUserId(user);
             try { 
@@ -459,6 +376,14 @@ export default function App() {
                 console.error("Lỗi cập nhật trạng thái chương trình:", err);
             }
         }
+    };
+
+    const handleToggleEnrollProgram = async (programId) => {
+        const prog = programs.find(p => p.id === programId);
+        if (!prog) return;
+        const current = getProgramStatus(prog);
+        const next = current === 'chua_hoc' ? 'dang_hoc' : 'chua_hoc';
+        await handleUpdateProgramStatus(programId, next);
     };
 
     const filteredModules = getFilteredModules(modules, programs, selectedProgramFilter);
@@ -524,31 +449,19 @@ export default function App() {
             localStorage.setItem(`${STORAGE_KEYS.EVENTS}_${user.uid}`, JSON.stringify(events));
             localStorage.setItem(`${STORAGE_KEYS.STUDY_LOGS}_${user.uid}`, JSON.stringify(studyLogs));
             localStorage.setItem(`${STORAGE_KEYS.RESOURCES}_${user.uid}`, JSON.stringify(resources));
-            localStorage.setItem(`${STORAGE_KEYS.THPT_SUBJECTS}_${user.uid}`, JSON.stringify(thptSubjects));
-            localStorage.setItem(`${STORAGE_KEYS.THPT_YEARS}_${user.uid}`, JSON.stringify(thptYears));
-            localStorage.setItem(`${STORAGE_KEYS.THPT_EXAM_TYPES}_${user.uid}`, JSON.stringify(thptExamTypes));
-            localStorage.setItem(`${STORAGE_KEYS.THPT_EXAMS}_${user.uid}`, JSON.stringify(thptExams));
-            localStorage.setItem(`${STORAGE_KEYS.THPT_PROFILE}_${user.uid}`, JSON.stringify(thptProfile));
-            localStorage.setItem(`${STORAGE_KEYS.THPT_RESULTS}_${user.uid}`, JSON.stringify(thptResults));
             localStorage.setItem(`${STORAGE_KEYS.IELTS_PROFILE}_${user.uid}`, JSON.stringify(ieltsProfile));
             localStorage.setItem(`${STORAGE_KEYS.IELTS_DRILL_HISTORY}_${user.uid}`, JSON.stringify(ieltsDrillHistory));
             localStorage.setItem(`${STORAGE_KEYS.IELTS_WRITING_SUBMISSIONS}_${user.uid}`, JSON.stringify(ieltsWritingSubmissions));
             localStorage.setItem(`${STORAGE_KEYS.IELTS_SPEAKING_RECORDINGS}_${user.uid}`, JSON.stringify(ieltsSpeakingRecordings));
             localStorage.setItem(`${STORAGE_KEYS.IELTS_MOCK_RESULTS}_${user.uid}`, JSON.stringify(ieltsMockResults));
         } else {
-            localStorage.setItem(STORAGE_KEYS.THPT_SUBJECTS, JSON.stringify(thptSubjects));
-            localStorage.setItem(STORAGE_KEYS.THPT_YEARS, JSON.stringify(thptYears));
-            localStorage.setItem(STORAGE_KEYS.THPT_EXAM_TYPES, JSON.stringify(thptExamTypes));
-            localStorage.setItem(STORAGE_KEYS.THPT_EXAMS, JSON.stringify(thptExams));
-            localStorage.setItem(STORAGE_KEYS.THPT_PROFILE, JSON.stringify(thptProfile));
-            localStorage.setItem(STORAGE_KEYS.THPT_RESULTS, JSON.stringify(thptResults));
             localStorage.setItem(STORAGE_KEYS.IELTS_PROFILE, JSON.stringify(ieltsProfile));
             localStorage.setItem(STORAGE_KEYS.IELTS_DRILL_HISTORY, JSON.stringify(ieltsDrillHistory));
             localStorage.setItem(STORAGE_KEYS.IELTS_WRITING_SUBMISSIONS, JSON.stringify(ieltsWritingSubmissions));
             localStorage.setItem(STORAGE_KEYS.IELTS_SPEAKING_RECORDINGS, JSON.stringify(ieltsSpeakingRecordings));
             localStorage.setItem(STORAGE_KEYS.IELTS_MOCK_RESULTS, JSON.stringify(ieltsMockResults));
         }
-    }, [user, profile, programs, modules, events, studyLogs, resources, thptSubjects, thptYears, thptExamTypes, thptExams, thptProfile, thptResults, ieltsProfile, ieltsDrillHistory, ieltsWritingSubmissions, ieltsSpeakingRecordings, ieltsMockResults]);
+    }, [user, profile, programs, modules, events, studyLogs, resources, ieltsProfile, ieltsDrillHistory, ieltsWritingSubmissions, ieltsSpeakingRecordings, ieltsMockResults]);
 
     // Firestore Realtime Sync Logic (Strict per-account Cloud Sync)
     const syncFirestoreData = async (userId, googleUser) => {
@@ -586,11 +499,7 @@ export default function App() {
                 await setDoc(profileRef, initProfile);
             }
 
-            // Cleanup legacy mock docs from Firestore if present
-            const mockExams = ['exam_toan_2025_001', 'exam_vatly_2025_002', 'exam_hoahoc_2025_003', 'exam_tienganh_2025_004'];
-            mockExams.forEach(id => { deleteDoc(getDocRef(userId, 'thptExams', id)).catch(() => {}); });
-            const mockResults = ['res_001', 'res_002', 'res_003', 'res_004', 'res_005'];
-            mockResults.forEach(id => { deleteDoc(getDocRef(userId, 'thptResults', id)).catch(() => {}); });
+
 
             // Cleanup any active listeners before starting new ones
             if (firestoreSubscriptionsRef.current && firestoreSubscriptionsRef.current.length > 0) {
@@ -632,50 +541,7 @@ export default function App() {
                 }, (err) => handleFirestoreError('resources-sync', err))
             );
 
-            unsubs.push(
-                onSnapshot(getCollectionRef(userId, 'thptExams'), (snapshot) => {
-                    const cleanExams = snapshot.docs
-                        .map(d => ({ id: d.id, ...d.data() }))
-                        .filter(e => !e.id.startsWith('exam_toan_') && !e.id.startsWith('exam_vatly_') && !e.id.startsWith('exam_hoahoc_') && !e.id.startsWith('exam_tienganh_'));
-                    setThptExams(cleanExams);
-                }, (err) => handleFirestoreError('thptExams-sync', err))
-            );
 
-            unsubs.push(
-                onSnapshot(getDocRef(userId, 'thptProfile', 'main'), (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        let modified = false;
-                        if (data.targetUniversity === 'Đại học Bách Khoa TP.HCM - Ngành Khoa học Máy tính' ||
-                            data.targetUniversity === 'Đại học Bách Khoa - Ngành Khoa học Máy tính' ||
-                            data.targetUniversity === 'Đại học Bách Khoa TP.HCM - Khoa học Máy tính') {
-                            data.targetUniversity = '';
-                            data.targetTotalScore = 0;
-                            data.combination = '';
-                            data.subjectTargets = [];
-                            modified = true;
-                        }
-                        if (data.mistakeNotes) {
-                            const originalLen = data.mistakeNotes.length;
-                            data.mistakeNotes = data.mistakeNotes.filter(m => !m.id.startsWith('mis_00'));
-                            if (data.mistakeNotes.length !== originalLen) modified = true;
-                        }
-                        if (modified) {
-                            setDoc(getDocRef(userId, 'thptProfile', 'main'), data).catch(() => {});
-                        }
-                        setThptProfile(data);
-                    }
-                }, (err) => handleFirestoreError('thptProfile-sync', err))
-            );
-
-            unsubs.push(
-                onSnapshot(getCollectionRef(userId, 'thptResults'), (snapshot) => {
-                    const cleanResults = snapshot.docs
-                        .map(d => ({ id: d.id, ...d.data() }))
-                        .filter(r => !r.id.startsWith('res_00'));
-                    setThptResults(cleanResults);
-                }, (err) => handleFirestoreError('thptResults-sync', err))
-            );
 
             firestoreSubscriptionsRef.current = unsubs;
         } catch (err) {
@@ -697,18 +563,20 @@ export default function App() {
             setUser(null);
             setProfile(DEFAULT_PROFILE);
             setPrograms(DEFAULT_PROGRAMS);
-            setModules([]);
+            setModules(DEFAULT_MODULES);
             setEvents([]);
             setStudyLogs([]);
             setResources([]);
-            setThptExams(DEFAULT_THPT_EXAMS);
-            setThptProfile(DEFAULT_THPT_PERSONAL_PROFILE);
-            setThptResults(DEFAULT_THPT_RESULTS);
+
             Object.values(STORAGE_KEYS).forEach(key => {
                 localStorage.removeItem(key);
                 if (user?.uid) localStorage.removeItem(`${key}_${user.uid}`);
             });
             localStorage.removeItem('pedagogy_user_id');
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('pedagogy_explicit_logout', 'true');
+            }
+            setIsGuestMode(false);
         } catch (err) {
             console.error("Lỗi đăng xuất:", err);
         } finally {
@@ -724,9 +592,69 @@ export default function App() {
     };
 
     const handleUpdateProgram = async (updatedProg) => {
-        setPrograms(prev => prev.map(p => p.id === updatedProg.id ? updatedProg : p));
+        const normalized = {
+            ...updatedProg,
+            isEnrolled: updatedProg.status !== 'chua_hoc'
+        };
+        setPrograms(prev => prev.map(p => p.id === normalized.id ? normalized : p));
         const userId = getUserId(user);
-        try { await setDoc(getDocRef(userId, 'programs', updatedProg.id), updatedProg); } catch (err) {}
+        try { await setDoc(getDocRef(userId, 'programs', normalized.id), normalized); } catch (err) {}
+    };
+
+    const handleDeleteProgram = async (progId) => {
+        setPrograms(prev => prev.filter(p => p.id !== progId));
+        if (activeProgramId === progId) {
+            setActiveProgramId(null);
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('pedagogy_active_program_id');
+            }
+        }
+        if (selectedProgramFilter === progId) {
+            setSelectedProgramFilter('all');
+        }
+
+        const userId = getUserId(user);
+        try {
+            await deleteDoc(getDocRef(userId, 'programs', progId));
+        } catch (err) {}
+
+        // Dọn dẹp hoặc gỡ liên kết học phần thuộc CTĐT bị xóa
+        const modulesToKeep = [];
+        const modulesToDelete = [];
+        const modulesToUpdate = [];
+
+        modules.forEach(m => {
+            const pIds = (m.programIds && m.programIds.length > 0)
+                ? m.programIds
+                : (m.programId ? [m.programId] : []);
+
+            if (pIds.includes(progId)) {
+                const remaining = pIds.filter(id => id !== progId);
+                if (remaining.length === 0) {
+                    modulesToDelete.push(m);
+                } else {
+                    const updatedMod = {
+                        ...m,
+                        programIds: remaining,
+                        programId: remaining[0]
+                    };
+                    modulesToKeep.push(updatedMod);
+                    modulesToUpdate.push(updatedMod);
+                }
+            } else {
+                modulesToKeep.push(m);
+            }
+        });
+
+        if (modulesToDelete.length > 0 || modulesToUpdate.length > 0) {
+            setModules(modulesToKeep);
+            for (const m of modulesToDelete) {
+                try { await deleteDoc(getDocRef(userId, 'modules', m.id)); } catch (e) {}
+            }
+            for (const m of modulesToUpdate) {
+                try { await setDoc(getDocRef(userId, 'modules', m.id), m); } catch (e) {}
+            }
+        }
     };
 
     const handleAddModule = async (newMod) => {
@@ -797,78 +725,7 @@ export default function App() {
         try { await setDoc(getDocRef(userId, 'profile', 'main'), updatedProfile); } catch (err) {}
     };
 
-    // THPT Exam Mutators
-    const handleSaveThptExam = async (savedExam) => {
-        setThptExams(prev => {
-            const exists = prev.some(e => e.id === savedExam.id);
-            if (exists) return prev.map(e => e.id === savedExam.id ? savedExam : e);
-            return [savedExam, ...prev];
-        });
-        const userId = getUserId(user);
-        try { await setDoc(getDocRef(userId, 'thptExams', savedExam.id), savedExam); } catch (err) {}
-    };
 
-    const handleDeleteThptExam = async (examId) => {
-        setThptExams(prev => prev.filter(e => e.id !== examId));
-        const userId = getUserId(user);
-        try { await deleteDoc(getDocRef(userId, 'thptExams', examId)); } catch (err) {}
-    };
-
-    const handleDuplicateThptExam = async (exam) => {
-        const duplicated = {
-            ...JSON.parse(JSON.stringify(exam)),
-            id: 'exam_' + Date.now(),
-            code: (exam.code || 'DE') + '-COPY',
-            title: exam.title + ' (Bản sao)',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        handleSaveThptExam(duplicated);
-        showToast('Đã nhân bản đề thi thành công');
-    };
-
-    // THPT Personal Profile Mutator
-    const handleUpdateThptProfile = async (updatedProfile) => {
-        setThptProfile(updatedProfile);
-        const userId = getUserId(user);
-        try { await setDoc(getDocRef(userId, 'thptProfile', 'main'), updatedProfile); } catch (err) {}
-    };
-
-    // THPT Result Mutators
-    const handleSaveThptResult = async (savedResult) => {
-        setThptResults(prev => {
-            const exists = prev.some(r => r.id === savedResult.id);
-            if (exists) return prev.map(r => r.id === savedResult.id ? savedResult : r);
-            return [savedResult, ...prev];
-        });
-        const userId = getUserId(user);
-        try { await setDoc(getDocRef(userId, 'thptResults', savedResult.id), savedResult); } catch (err) {}
-    };
-
-    const handleDeleteThptResult = async (resultId) => {
-        setThptResults(prev => prev.filter(r => r.id !== resultId));
-        const userId = getUserId(user);
-        try { await deleteDoc(getDocRef(userId, 'thptResults', resultId)); } catch (err) {}
-    };
-
-    // THPT Metadata Mutators
-    const handleUpdateThptSubjects = async (updatedSubjects) => {
-        setThptSubjects(updatedSubjects);
-        const userId = getUserId(user);
-        try { await setDoc(getDocRef(userId, 'thptMetadata', 'subjects'), { list: updatedSubjects }); } catch (err) {}
-    };
-
-    const handleUpdateThptYears = async (updatedYears) => {
-        setThptYears(updatedYears);
-        const userId = getUserId(user);
-        try { await setDoc(getDocRef(userId, 'thptMetadata', 'years'), { list: updatedYears }); } catch (err) {}
-    };
-
-    const handleUpdateThptExamTypes = async (updatedTypes) => {
-        setThptExamTypes(updatedTypes);
-        const userId = getUserId(user);
-        try { await setDoc(getDocRef(userId, 'thptMetadata', 'examTypes'), { list: updatedTypes }); } catch (err) {}
-    };
 
     // SEO & Friendly URL Sync Effect
     useEffect(() => {
@@ -900,7 +757,8 @@ export default function App() {
 
         // Persist view and selection state to localStorage for reliable reload restoration
         if (typeof window !== 'undefined') {
-            localStorage.setItem('pedagogy_current_view', currentView);
+            const safeView = resolveViewString(currentView) || 'dashboard';
+            localStorage.setItem('pedagogy_current_view', safeView);
             if (activeProgramId) localStorage.setItem('pedagogy_active_program_id', activeProgramId);
             if (activeModuleId) localStorage.setItem('pedagogy_active_module_id', activeModuleId);
         }
@@ -910,16 +768,21 @@ export default function App() {
     useEffect(() => {
         const handlePopState = (e) => {
             if (e.state && e.state.currentView) {
-                setCurrentView(e.state.currentView);
+                const targetView = resolveViewString(e.state.currentView) || 'dashboard';
+                setCurrentView(targetView);
                 if (e.state.activeProgramId) setActiveProgramId(e.state.activeProgramId);
                 if (e.state.activeModuleId) setActiveModuleId(e.state.activeModuleId);
             } else {
-                const fromPath = getViewFromPath(window.location.pathname);
+                const parsed = getViewFromPath(window.location.pathname);
+                const fromPath = resolveViewString(parsed);
                 if (fromPath) {
                     setCurrentView(fromPath);
+                    if (parsed?.programId) setActiveProgramId(parsed.programId);
+                    if (parsed?.moduleId) setActiveModuleId(parsed.moduleId);
                 } else {
                     const saved = localStorage.getItem('pedagogy_current_view');
-                    setCurrentView(saved || 'dashboard');
+                    const target = resolveViewString(saved) || 'dashboard';
+                    setCurrentView(target);
                 }
             }
         };
@@ -928,13 +791,14 @@ export default function App() {
     }, []);
 
     const navigate = (view, data = {}) => {
-        setCurrentView(view);
+        const targetView = resolveViewString(view) || 'dashboard';
+        setCurrentView(targetView);
         if (data.programId) setActiveProgramId(data.programId);
         if (data.moduleId) setActiveModuleId(data.moduleId);
 
-        const seo = getSEOAndPath(view, data.programId || activeProgramId, data.moduleId || activeModuleId, programs, modules);
+        const seo = getSEOAndPath(targetView, data.programId || activeProgramId, data.moduleId || activeModuleId, programs, modules);
         if (typeof window !== 'undefined' && window.location.pathname !== seo.path) {
-            window.history.pushState({ currentView: view, activeProgramId: data.programId || activeProgramId, activeModuleId: data.moduleId || activeModuleId }, '', seo.path);
+            window.history.pushState({ currentView: targetView, activeProgramId: data.programId || activeProgramId, activeModuleId: data.moduleId || activeModuleId }, '', seo.path);
         }
     };
 
@@ -948,12 +812,12 @@ export default function App() {
         );
     }
 
-if (!user) {
+    if (!user && !isGuestMode) {
         return (
             <div className="min-h-screen flex flex-col lg:flex-row bg-brand-cream">
                 {/* CỘT TRÁI: HÌNH ẢNH & TRÍCH DẪN (Ẩn trên điện thoại) */}
                 <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-center items-center p-12 overflow-hidden shadow-2xl z-10">
-                    {/* Hình ảnh nền (Bạn có thể đổi URL ảnh khác nếu muốn) */}
+                    {/* Hình ảnh nền */}
                     <div 
                         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=2073&auto=format&fit=crop')" }}
@@ -1011,6 +875,25 @@ if (!user) {
                                     Tiếp tục với Google
                                 </span>
                             </button>
+
+                            <div className="relative flex py-4 items-center">
+                                <div className="flex-grow border-t border-gray-200"></div>
+                                <span className="shrink-0 mx-4 text-gray-400 text-xs uppercase font-sans">Hoặc</span>
+                                <div className="flex-grow border-t border-gray-200"></div>
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    setIsGuestMode(true);
+                                    if (typeof window !== 'undefined') {
+                                        localStorage.removeItem('pedagogy_explicit_logout');
+                                    }
+                                }}
+                                className="w-full flex items-center justify-center gap-2 px-6 py-3 border border-brand-cerulean/30 bg-brand-cream/60 hover:bg-brand-cerulean hover:text-white text-brand-cerulean font-sans font-bold transition-all text-sm group shadow-xs"
+                            >
+                                <span>Khám phá ngay (Chế độ Khách)</span>
+                                <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                            </button>
                             
                             {error && (
                                 <div className="mt-5 p-3 bg-red-50 border-l-4 border-brand-jasper text-brand-jasper text-sm font-bold flex items-center gap-2">
@@ -1050,22 +933,16 @@ if (!user) {
                 </div>
                 <div className="flex items-center gap-1.5 overflow-x-auto">
                     <button
-                        onClick={() => navigate('ts10_math')}
+                        onClick={() => navigate('dashboard')}
                         className="px-2 py-1 bg-emerald-800 text-white rounded text-xs font-bold shrink-0"
                     >
-                        Vào 10
+                        Nghiệp vụ SP
                     </button>
                     <button
-                        onClick={() => navigate('ielts_methodology')}
+                        onClick={() => navigate('ielts_hub')}
                         className="px-2 py-1 bg-brand-cerulean text-white rounded text-xs font-bold shrink-0"
                     >
-                        IELTS
-                    </button>
-                    <button
-                        onClick={() => navigate('thpt_goals')}
-                        className="px-2 py-1 bg-brand-jasper text-white rounded text-xs font-bold shrink-0"
-                    >
-                        THPT
+                        Luyện thi IELTS
                     </button>
                 </div>
             </div>
@@ -1074,17 +951,38 @@ if (!user) {
             <main key={currentView} className="flex-1 h-full overflow-y-auto p-6 md:p-12 mt-14 md:mt-0 animate-fade-in-up">
                 {error && <AlertBox type="error" message={error} onClose={() => setError(null)} />}
 
+                {/* Banner thông báo chế độ Khách */}
+                {!user && showGuestBanner && (
+                    <div className="mb-6 p-3.5 sm:p-4 bg-amber-50/95 border-l-4 border-amber-500 rounded-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-fade-in">
+                        <div className="flex items-center gap-2.5 text-amber-900 text-xs sm:text-sm">
+                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 animate-pulse"></span>
+                            <span>Bạn đang trải nghiệm <strong>Chế độ Khách</strong> (dữ liệu lưu trên máy). Hãy đăng nhập để đồng bộ và bảo lưu an toàn lên Cloud!</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <button
+                                onClick={handleGoogleLogin}
+                                className="px-3 py-1.5 bg-brand-cerulean text-white font-sans text-xs font-bold rounded-xs hover:bg-brand-cerulean/90 transition-colors shadow-xs"
+                            >
+                                Đăng nhập Google
+                            </button>
+                            <button
+                                onClick={() => setShowGuestBanner(false)}
+                                className="text-gray-400 hover:text-gray-600 p-1 flex items-center justify-center transition-colors"
+                                title="Đóng thông báo"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    </div>
+                )}
 
-                {currentView === 'dashboard' && (
+                {/* Trang Dashboard mặc định: Luôn hiển thị khi currentView === 'dashboard' HOẶC khi không khớp view nào */}
+                {(!VALID_VIEWS.includes(currentView) || currentView === 'dashboard') && (
                     <DashboardView
                         programs={programs}
                         modules={modules}
                         events={events}
                         studyLogs={studyLogs}
-                        thptProfile={thptProfile}
-                        thptExams={thptExams}
-                        thptResults={thptResults}
-                        thptSubjects={thptSubjects}
                         navigate={navigate}
                         onOpenCertificate={() => setIsCertModalOpen(true)}
                         selectedProgramFilter={selectedProgramFilter}
@@ -1096,7 +994,9 @@ if (!user) {
                         programs={programs}
                         modules={modules}
                         onAddProgram={handleAddProgram}
+                        onDeleteProgram={handleDeleteProgram}
                         onToggleEnrollProgram={handleToggleEnrollProgram}
+                        onUpdateProgramStatus={handleUpdateProgramStatus}
                         navigate={navigate}
                     />
                 )}
@@ -1110,6 +1010,8 @@ if (!user) {
                         onUpdateModule={handleUpdateModule}
                         onDeleteModule={handleDeleteModule}
                         onUpdateProgram={handleUpdateProgram}
+                        onUpdateProgramStatus={handleUpdateProgramStatus}
+                        onDeleteProgram={handleDeleteProgram}
                         navigate={navigate}
                     />
                 )}
@@ -1127,9 +1029,13 @@ if (!user) {
                 )}
                 {currentView === 'syllabus' && (
                     <SyllabusView
-                        modules={filteredModules.length > 0 ? filteredModules : modules}
+                        modules={modules}
+                        programs={programs}
+                        activeModuleId={activeModuleId}
+                        onSelectModule={(id) => setActiveModuleId(id)}
                         onUpdateModule={handleUpdateModule}
                         showToast={showToast}
+                        navigate={navigate}
                     />
                 )}
                 {currentView === 'calendar' && (
@@ -1159,70 +1065,7 @@ if (!user) {
                         onDeleteResource={handleDeleteResource}
                     />
                 )}
-                {currentView === 'thpt_exams' && (
-                    <ThptExamsView
-                        exams={thptExams}
-                        subjects={thptSubjects}
-                        years={thptYears}
-                        examTypes={thptExamTypes}
-                        onSaveExam={handleSaveThptExam}
-                        onDeleteExam={handleDeleteThptExam}
-                        onDuplicateExam={handleDuplicateThptExam}
-                        onUpdateSubjects={handleUpdateThptSubjects}
-                        onUpdateYears={handleUpdateThptYears}
-                        onUpdateExamTypes={handleUpdateThptExamTypes}
-                        onSaveResult={handleSaveThptResult}
-                        showToast={showToast}
-                    />
-                )}
-                {currentView === 'thpt_goals' && (
-                    <ThptPersonalGoalView
-                        profile={thptProfile}
-                        subjects={thptSubjects}
-                        results={thptResults}
-                        onUpdateProfile={handleUpdateThptProfile}
-                        navigate={navigate}
-                        showToast={showToast}
-                    />
-                )}
-                {currentView === 'thpt_tracking' && (
-                    <ThptPersonalTrackingView
-                        profile={thptProfile}
-                        exams={thptExams}
-                        results={thptResults}
-                        subjects={thptSubjects}
-                        onSaveResult={handleSaveThptResult}
-                        onDeleteResult={handleDeleteThptResult}
-                        onUpdateProfile={handleUpdateThptProfile}
-                        navigate={navigate}
-                        showToast={showToast}
-                    />
-                )}
-                {currentView === 'thpt_admission' && (
-                    <ThptAdmissionView
-                        profile={thptProfile}
-                        subjects={thptSubjects}
-                        onUpdateProfile={handleUpdateThptProfile}
-                        showToast={showToast}
-                    />
-                )}
-                {currentView === 'thpt_transcripts' && (
-                    <AcademicTranscriptsView
-                        profile={thptProfile}
-                        onUpdateProfile={handleUpdateThptProfile}
-                        showToast={showToast}
-                    />
-                )}
-                {['ts10_math', 'ts10_literature', 'ts10_english', 'ts10_matrix', 'ts10_correction', 'ts10_roadmap'].includes(currentView) && (
-                    <Ts10HubView
-                        currentSubView={currentView}
-                        navigate={navigate}
-                        profile={ts10Profile}
-                        submissions={ts10Submissions}
-                        onSaveSubmission={handleSaveTs10Submission}
-                        showToast={showToast}
-                    />
-                )}
+
                 {['ielts_hub', 'ielts_methodology', 'ielts_drills', 'ielts_writing_lab', 'ielts_speaking_lab', 'ielts_simulator', 'ielts_gym', 'ielts_analytics'].includes(currentView) && (
                     <IeltsHubView
                         currentSubView={currentView}
@@ -1240,34 +1083,17 @@ if (!user) {
                         showToast={showToast}
                     />
                 )}
-                {['mos_hub', 'mos_sandbox', 'mos_projects', 'ic3_lab', 'mos_analytics'].includes(currentView) && (
-                    <MosIc3HubView
-                        currentSubView={currentView}
-                        navigate={navigate}
-                        showToast={showToast}
-                    />
-                )}
+
                 {currentView === 'profile' && (
                     <ProfileView
                         profile={profile}
                         programs={programs}
-                        thptProfile={thptProfile}
                         navigate={navigate}
                         onUpdateProfile={handleUpdateProfile}
                         onOpenCertificate={() => setIsCertModalOpen(true)}
                     />
                 )}
             </main>
-
-            {/* Global Quick Test Entry Modal */}
-            <ThptPersonalTestModal
-                isOpen={isGlobalTestEntryOpen}
-                onClose={() => setIsGlobalTestEntryOpen(false)}
-                exams={thptExams}
-                subjects={thptSubjects}
-                onSaveResult={handleSaveThptResult}
-                showToast={showToast}
-            />
 
             {/* Auth Login / Logout Transition Overlay */}
             {authLoadingState && createPortal(

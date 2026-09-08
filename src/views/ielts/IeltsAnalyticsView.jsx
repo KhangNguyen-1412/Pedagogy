@@ -12,7 +12,8 @@ import {
     Clock,
     Sparkles,
     Trash2,
-    Play
+    Play,
+    Zap
 } from 'lucide-react';
 import { IELTS_DIAGNOSTIC_ITEMS, DEFAULT_IELTS_PROFILE } from '../../data/ieltsData';
 
@@ -176,14 +177,20 @@ export const IeltsAnalyticsView = ({
                                 >
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
-                                            <span className={`text-[10px] font-serif-title font-bold uppercase px-2 py-0.5 border ${
+                                            <span className={`text-[10px] font-serif-title font-bold uppercase px-2 py-0.5 border inline-flex items-center gap-1 ${
                                                 m.status === 'completed'
                                                     ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
                                                     : m.status === 'in_progress'
                                                         ? 'bg-brand-cerulean text-white border-brand-cerulean'
                                                         : 'bg-gray-100 text-gray-600 border-gray-300'
                                             }`}>
-                                                {m.status === 'completed' ? '✓ Đã Đạt' : m.status === 'in_progress' ? '⚡ Đang Thực Hiện' : '⏳ Sắp Tới'}
+                                                {m.status === 'completed' ? (
+                                                    <><CheckCircle2 size={11} /> Đã Đạt</>
+                                                ) : m.status === 'in_progress' ? (
+                                                    <><Zap size={11} /> Đang Thực Hiện</>
+                                                ) : (
+                                                    <><Clock size={11} /> Sắp Tới</>
+                                                )}
                                             </span>
                                             <span className="text-xs font-mono font-bold text-gray-500">Mốc {m.month}</span>
                                         </div>

@@ -12,7 +12,9 @@ import {
     ChevronLeft,
     ChevronRight,
     Grid,
-    List
+    List,
+    FileText,
+    GraduationCap
 } from 'lucide-react';
 import {
     EditorialSelect,
@@ -25,6 +27,7 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
     const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingEventId, setEditingEventId] = useState(null);
     const [eventForm, setEventForm] = useState({
         moduleId: modules[0]?.id || '',
         title: '',
@@ -37,17 +40,12 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
         notes: ''
     });
 
-    const handleCreateEvent = (e) => {
-        e.preventDefault();
-        onAddEvent({
-            id: 'evt_' + Date.now(),
-            ...eventForm
-        });
-        setIsModalOpen(false);
+    const handleOpenAdd = (defaultDate = null) => {
+        setEditingEventId(null);
         setEventForm({
             moduleId: modules[0]?.id || '',
             title: '',
-            date: new Date().toISOString().split('T')[0],
+            date: defaultDate || new Date().toISOString().split('T')[0],
             startTime: '08:00',
             endTime: '11:30',
             location: '',
@@ -55,6 +53,40 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
             attendanceStatus: 'planned',
             notes: ''
         });
+        setIsModalOpen(true);
+    };
+
+    const handleOpenEdit = (evt) => {
+        setEditingEventId(evt.id);
+        setEventForm({
+            moduleId: evt.moduleId || modules[0]?.id || '',
+            title: evt.title || '',
+            date: evt.date || new Date().toISOString().split('T')[0],
+            startTime: evt.startTime || '08:00',
+            endTime: evt.endTime || '11:30',
+            location: evt.location || '',
+            meetLink: evt.meetLink || '',
+            attendanceStatus: evt.attendanceStatus || 'planned',
+            notes: evt.notes || ''
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleSaveEvent = (e) => {
+        e.preventDefault();
+        if (editingEventId) {
+            onUpdateEvent({
+                id: editingEventId,
+                ...eventForm
+            });
+        } else {
+            onAddEvent({
+                id: 'evt_' + Date.now(),
+                ...eventForm
+            });
+        }
+        setIsModalOpen(false);
+        setEditingEventId(null);
     };
 
     const handleCheckin = (evt, newStatus) => {
@@ -86,11 +118,7 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
     const todayStr = new Date().toISOString().split('T')[0];
 
     const openAddForDate = (dateString) => {
-        setEventForm({
-            ...eventForm,
-            date: dateString
-        });
-        setIsModalOpen(true);
+        handleOpenAdd(dateString);
     };
 
     return (
@@ -113,7 +141,7 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
                             <List size={18} className="group-hover:scale-110 transition-transform" />
                         )}
                     </button>
-                    <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-brand-jasper text-white font-serif-title shadow-editorial whitespace-nowrap">
+                    <button onClick={() => handleOpenAdd()} className="flex items-center gap-2 px-4 py-2 bg-brand-jasper text-white font-serif-title shadow-editorial whitespace-nowrap hover:bg-brand-jasper/90 transition-colors">
                         <Plus size={18} /> Thêm Buổi học / Thi
                     </button>
                 </div>
@@ -187,12 +215,13 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
                                                     key={evt.id}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        alert(`Buổi học: ${evt.title}\nGiờ: ${evt.startTime} - ${evt.endTime}\nĐịa điểm: ${evt.location || 'N/A'}`);
+                                                        handleOpenEdit(evt);
                                                     }}
-                                                    className={`p-1 text-[11px] font-sans truncate rounded flex items-center justify-between ${statusBg}`}
-                                                    title={`${evt.startTime} ${evt.title}`}
+                                                    className={`p-1 text-[11px] font-sans truncate rounded flex items-center justify-between cursor-pointer hover:opacity-90 hover:ring-1 hover:ring-white/80 transition-all ${statusBg}`}
+                                                    title={`Bấm để xem và sửa: ${evt.startTime} ${evt.title}`}
                                                 >
                                                     <span className="truncate">{mod?.code || ''} {evt.title}</span>
+                                                    <Pencil size={10} className="opacity-70 shrink-0 ml-1" />
                                                 </div>
                                             );
                                         })}
@@ -221,8 +250,17 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
                                         <span className="text-sm font-sans text-gray-500 font-bold">{evt.date} ({evt.startTime} - {evt.endTime})</span>
                                     </div>
                                     <h4 className="text-2xl font-serif-title text-brand-cerulean">{evt.title}</h4>
-                                    <div className="flex gap-4 text-sm font-body text-gray-600">
-                                        <span>📍 {evt.location || 'Chưa cập nhật địa điểm'}</span>
+                                    <div className="flex flex-wrap gap-4 text-sm font-body text-gray-600 items-center">
+                                        <span className="flex items-center gap-1.5">
+                                            <MapPin size={14} className="text-brand-jasper shrink-0" />
+                                            {evt.location || 'Chưa cập nhật địa điểm'}
+                                        </span>
+                                        {mod?.instructor && (
+                                            <span className="flex items-center gap-1.5 text-brand-cerulean font-serif-title font-semibold">
+                                                <GraduationCap size={14} className="text-brand-cerulean shrink-0" />
+                                                GV: {mod.instructor}
+                                            </span>
+                                        )}
                                         {evt.meetLink && (
                                             <a href={evt.meetLink} target="_blank" rel="noreferrer" className="text-brand-jasper flex items-center gap-1 hover:underline font-bold">
                                                 <ExternalLink size={14} /> Link Google Meet / Zoom
@@ -230,15 +268,24 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
                                         )}
                                     </div>
                                     {evt.notes && (
-                                        <p className="text-xs bg-yellow-50 text-yellow-800 p-2 border-l-2 border-yellow-500 italic">
-                                            📝 Ghi chú: {evt.notes}
+                                        <p className="text-xs bg-yellow-50 text-yellow-800 p-2 border-l-2 border-yellow-500 italic flex items-start gap-1.5">
+                                            <FileText size={13} className="text-yellow-700 shrink-0 mt-0.5" />
+                                            <span>Ghi chú: {evt.notes}</span>
                                         </p>
                                     )}
                                 </div>
 
                                 <div className="flex flex-col items-end gap-2">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs font-serif-title text-gray-400 uppercase tracking-widest">Điểm danh</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-serif-title text-gray-400 uppercase tracking-widest mr-1">Thao tác</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleOpenEdit(evt)}
+                                            className="px-2.5 py-1 text-xs font-serif-title font-semibold text-brand-cerulean border border-brand-cerulean/30 hover:bg-brand-cerulean hover:text-white rounded transition-all flex items-center gap-1"
+                                            title="Chỉnh sửa buổi học"
+                                        >
+                                            <Pencil size={12} /> Sửa
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -246,10 +293,10 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
                                                     onDeleteEvent(evt.id);
                                                 }
                                             }}
-                                            className="text-gray-400 hover:text-red-600 transition-colors"
+                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                             title="Xóa sự kiện"
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2 size={15} />
                                         </button>
                                     </div>
                                     <div className="flex gap-1 bg-brand-cream p-1 border border-brand-cerulean/20">
@@ -285,8 +332,15 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
                 </div>
             )}
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Thêm Sự kiện Lịch học / Lịch thi">
-                <form onSubmit={handleCreateEvent} className="space-y-6">
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setEditingEventId(null);
+                }}
+                title={editingEventId ? "Chỉnh sửa Lịch học / Lịch thi" : "Thêm Sự kiện Lịch học / Lịch thi"}
+            >
+                <form onSubmit={handleSaveEvent} className="space-y-6">
                     <div>
                         <EditorialSelect
                             label="Môn học liên quan"
@@ -301,7 +355,7 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
                         <input required type="text" className="input-editorial w-full" value={eventForm.title} onChange={e => setEventForm({ ...eventForm, title: e.target.value })} placeholder="VD: Buổi 3 - Thảo luận nhóm..." />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <EditorialDatePicker
                                 label="Ngày học"
@@ -325,7 +379,7 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Địa điểm / Phòng học</label>
                             <input type="text" className="input-editorial w-full" value={eventForm.location} onChange={e => setEventForm({ ...eventForm, location: e.target.value })} placeholder="VD: Phòng A3.02" />
@@ -336,14 +390,59 @@ export const CalendarAttendanceView = ({ modules, events, onAddEvent, onUpdateEv
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Ghi chú dặn dò</label>
-                        <input type="text" className="input-editorial w-full" value={eventForm.notes} onChange={e => setEventForm({ ...eventForm, notes: e.target.value })} placeholder="Ví dụ: Mang theo máy tính cá nhân..." />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <EditorialSelect
+                                label="Trạng thái Điểm danh"
+                                value={eventForm.attendanceStatus || 'planned'}
+                                onChange={val => setEventForm({ ...eventForm, attendanceStatus: val })}
+                                options={[
+                                    { label: 'Lên kế hoạch / Chưa diễn ra', value: 'planned' },
+                                    { label: 'Có mặt', value: 'present' },
+                                    { label: 'Đi trễ', value: 'late' },
+                                    { label: 'Vắng mặt', value: 'absent' }
+                                ]}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-serif-title text-brand-cerulean mb-1">Ghi chú dặn dò</label>
+                            <input type="text" className="input-editorial w-full" value={eventForm.notes} onChange={e => setEventForm({ ...eventForm, notes: e.target.value })} placeholder="Ví dụ: Mang theo máy tính cá nhân..." />
+                        </div>
                     </div>
 
-                    <div className="pt-4 flex justify-end gap-4 border-t border-brand-cerulean/20">
-                        <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 text-gray-500 font-serif-title">Hủy</button>
-                        <button type="submit" className="px-6 py-2 bg-brand-cerulean text-white font-serif-title shadow-editorial">Lưu Sự Kiện</button>
+                    <div className="pt-4 flex justify-between items-center border-t border-brand-cerulean/20">
+                        {editingEventId ? (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (window.confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) {
+                                        onDeleteEvent(editingEventId);
+                                        setIsModalOpen(false);
+                                        setEditingEventId(null);
+                                    }
+                                }}
+                                className="text-xs text-red-600 hover:text-red-800 font-serif-title flex items-center gap-1 font-bold"
+                            >
+                                <Trash2 size={14} /> Xóa sự kiện
+                            </button>
+                        ) : (
+                            <div></div>
+                        )}
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsModalOpen(false);
+                                    setEditingEventId(null);
+                                }}
+                                className="px-5 py-2 text-gray-500 font-serif-title"
+                            >
+                                Hủy
+                            </button>
+                            <button type="submit" className="px-6 py-2 bg-brand-cerulean text-white font-serif-title shadow-editorial hover:bg-brand-jasper transition-colors">
+                                {editingEventId ? 'Lưu Thay Đổi' : 'Lưu Sự Kiện'}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </Modal>

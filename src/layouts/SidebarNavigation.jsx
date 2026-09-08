@@ -6,30 +6,18 @@ import {
     Calendar,
     Award,
     FolderOpen,
-    Calculator,
-    GitBranch,
-    Languages,
-    MapPin,
-    FileCheck2,
-    Compass,
     Target,
     TrendingUp,
     GraduationCap,
-    BookMarked,
     PenTool,
     Mic,
     Clock,
     Dumbbell,
     User,
     LogOut,
+    LogIn,
     ChevronLeft,
     ChevronRight,
-    LogIn,
-    Laptop,
-    FileSpreadsheet,
-    Presentation,
-    ShieldCheck,
-    Layers
 } from 'lucide-react';
 import logoImg from '../assets/logo.png';
 
@@ -147,93 +135,6 @@ export const SidebarNavigation = ({
                     })}
                 </div>
 
-                {/* TUYỂN SINH LỚP 10 SUITE */}
-                <div className={`pt-2 border-t border-brand-cerulean/15 space-y-1.5 ${isSidebarCollapsed ? 'mt-2' : ''}`}>
-                    {!isSidebarCollapsed ? (
-                        <span className="px-1 text-[10px] font-serif-title uppercase tracking-widest text-brand-cerulean/70 font-bold block mb-1">
-                            Luyện Thi Vào 10
-                        </span>
-                    ) : (
-                        <div className="w-full flex justify-center py-1" title="Khối Luyện Thi Vào 10">
-                            <div className="w-6 h-0.5 bg-brand-cerulean/20 rounded-full" />
-                        </div>
-                    )}
-
-                    {[
-                        { id: 'ts10_math', label: 'Toán 10 & Barem Bước', icon: Calculator },
-                        { id: 'ts10_literature', label: 'Ngữ Văn & Sơ Đồ Tư Duy', icon: GitBranch },
-                        { id: 'ts10_english', label: 'Tiếng Anh & Phân Tích Lỗi', icon: Languages },
-                        { id: 'ts10_matrix', label: 'Ma Trận Đề Tỉnh/Thành', icon: MapPin },
-                        { id: 'ts10_correction', label: 'Chấm Bài Tự Luận (0.25đ)', icon: FileCheck2 },
-                        { id: 'ts10_roadmap', label: 'Lộ Trình & Phong Độ', icon: Compass },
-                    ].map(item => {
-                        const Icon = item.icon;
-                        const isActive = currentView === item.id;
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => navigate(item.id)}
-                                title={isSidebarCollapsed ? item.label : undefined}
-                                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-lg' : 'gap-3 py-2 px-1 text-left border-b'} transition-all ${
-                                    isActive
-                                        ? isSidebarCollapsed 
-                                            ? 'bg-brand-jasper text-white font-bold shadow-xs' 
-                                            : 'text-brand-jasper font-bold border-brand-jasper'
-                                        : isSidebarCollapsed
-                                            ? 'text-brand-cerulean hover:bg-brand-cerulean/10'
-                                            : 'text-brand-cerulean border-transparent hover:border-brand-jasper hover:text-brand-jasper'
-                                }`}
-                            >
-                                <Icon size={isSidebarCollapsed ? 20 : 18} className="shrink-0" />
-                                {!isSidebarCollapsed && <span className="text-base truncate">{item.label}</span>}
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* THPT Personal Examination Suite */}
-                <div className={`pt-2 border-t border-brand-cerulean/15 space-y-1.5 ${isSidebarCollapsed ? 'mt-2' : ''}`}>
-                    {!isSidebarCollapsed ? (
-                        <span className="px-1 text-[10px] font-serif-title uppercase tracking-widest text-brand-cerulean/70 font-bold block mb-1">
-                            Luyện Thi THPT
-                        </span>
-                    ) : (
-                        <div className="w-full flex justify-center py-1" title="Khối Luyện Thi THPT">
-                            <div className="w-6 h-0.5 bg-brand-cerulean/20 rounded-full" />
-                        </div>
-                    )}
-
-                    {[
-                        { id: 'thpt_exams', label: 'Đề thi & Đáp án', icon: FileText },
-                        { id: 'thpt_goals', label: 'Mục tiêu & Kế hoạch', icon: Target },
-                        { id: 'thpt_tracking', label: 'Nhật ký & Tiến độ', icon: TrendingUp },
-                        { id: 'thpt_admission', label: 'Trúng tuyển & Nguyện vọng', icon: GraduationCap },
-                        { id: 'thpt_transcripts', label: 'Học bạ 3 cấp', icon: BookMarked },
-                    ].map(item => {
-                        const Icon = item.icon;
-                        const isActive = currentView === item.id;
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => navigate(item.id)}
-                                title={isSidebarCollapsed ? item.label : undefined}
-                                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-lg' : 'gap-3 py-2 px-1 text-left border-b'} transition-all ${
-                                    isActive
-                                        ? isSidebarCollapsed 
-                                            ? 'bg-brand-jasper text-white font-bold shadow-xs' 
-                                            : 'text-brand-jasper font-bold border-brand-jasper'
-                                        : isSidebarCollapsed
-                                            ? 'text-brand-cerulean hover:bg-brand-cerulean/10'
-                                            : 'text-brand-cerulean border-transparent hover:border-brand-jasper hover:text-brand-jasper'
-                                }`}
-                            >
-                                <Icon size={isSidebarCollapsed ? 20 : 18} className="shrink-0" />
-                                {!isSidebarCollapsed && <span className="text-base truncate">{item.label}</span>}
-                            </button>
-                        );
-                    })}
-                </div>
-
                 {/* IELTS Academic Preparation Suite */}
                 <div className={`pt-2 border-t border-brand-cerulean/15 space-y-1.5 ${isSidebarCollapsed ? 'mt-2' : ''}`}>
                     {!isSidebarCollapsed ? (
@@ -279,47 +180,7 @@ export const SidebarNavigation = ({
                     })}
                 </div>
 
-                {/* Tin Học Quốc Tế (MOS & IC3) Suite */}
-                <div className={`pt-2 border-t border-brand-cerulean/15 space-y-1.5 ${isSidebarCollapsed ? 'mt-2' : ''}`}>
-                    {!isSidebarCollapsed ? (
-                        <span className="px-1 text-[10px] font-serif-title uppercase tracking-widest text-brand-cerulean/70 font-bold block mb-1">
-                            Tin Học MOS & IC3
-                        </span>
-                    ) : (
-                        <div className="w-full flex justify-center py-1" title="Khối Tin Học Quốc Tế (MOS / IC3)">
-                            <div className="w-6 h-0.5 bg-brand-cerulean/20 rounded-full" />
-                        </div>
-                    )}
 
-                    {[
-                        { id: 'mos_sandbox', label: 'Phòng Lab ảo Sandbox', icon: FileSpreadsheet },
-                        { id: 'mos_projects', label: 'Kho Multi-Projects', icon: Layers },
-                        { id: 'ic3_lab', label: 'Lab An toàn số IC3', icon: ShieldCheck },
-                        { id: 'mos_analytics', label: 'Báo cáo & Huy hiệu', icon: Award },
-                    ].map(item => {
-                        const Icon = item.icon;
-                        const isActive = currentView === item.id;
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => navigate(item.id)}
-                                title={isSidebarCollapsed ? item.label : undefined}
-                                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-lg' : 'gap-3 py-2 px-1 text-left border-b'} transition-all ${
-                                    isActive
-                                        ? isSidebarCollapsed 
-                                            ? 'bg-brand-jasper text-white font-bold shadow-xs' 
-                                            : 'text-brand-jasper font-bold border-brand-jasper'
-                                        : isSidebarCollapsed
-                                            ? 'text-brand-cerulean hover:bg-brand-cerulean/10'
-                                            : 'text-brand-cerulean border-transparent hover:border-brand-jasper hover:text-brand-jasper'
-                                }`}
-                            >
-                                <Icon size={isSidebarCollapsed ? 20 : 18} className="shrink-0" />
-                                {!isSidebarCollapsed && <span className="text-base truncate">{item.label}</span>}
-                            </button>
-                        );
-                    })}
-                </div>
 
                 {/* Profile Link */}
                 <div className="pt-2 border-t border-brand-cerulean/15">

@@ -15,7 +15,9 @@ import {
     Save,
     Trash2,
     Square,
-    Radio
+    Radio,
+    Lightbulb,
+    Star
 } from 'lucide-react';
 import { IELTS_SPEAKING_TOPICS } from '../../data/ieltsData';
 
@@ -265,8 +267,9 @@ export const IeltsSpeakingLab = ({ onSaveRecording, showToast }) => {
                                                     <span className="font-bold">{qText}</span>
                                                 </div>
                                                 {qTip && (
-                                                    <div className="pl-6 text-[11px] text-gray-600 italic">
-                                                        💡 {qTip}
+                                                    <div className="pl-6 text-[11px] text-gray-600 italic flex items-center gap-1.5">
+                                                        <Lightbulb size={12} className="text-amber-600 shrink-0" />
+                                                        <span>{qTip}</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -395,7 +398,8 @@ export const IeltsSpeakingLab = ({ onSaveRecording, showToast }) => {
                                     const meaningStr = typeof voc === 'object' ? voc.meaning : null;
                                     return (
                                         <div key={i} className="px-2.5 py-1 bg-white border border-brand-cerulean/20 text-xs font-mono text-brand-jasper font-bold inline-flex items-center gap-1.5">
-                                            <span>★ {wordStr}</span>
+                                            <Star size={11} className="fill-brand-jasper text-brand-jasper shrink-0" />
+                                            <span>{wordStr}</span>
                                             {meaningStr && <span className="text-[11px] font-newsreader text-gray-500 font-normal">({meaningStr})</span>}
                                         </div>
                                     );
