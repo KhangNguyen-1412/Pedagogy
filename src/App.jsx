@@ -61,7 +61,10 @@ import {
     Modal,
     ToastNotification,
     AlertBox,
-    ProgressBar
+    ProgressBar,
+    Skeleton,
+    AppLayoutSkeleton,
+    ViewSkeleton
 } from './components/common/EditorialWidgets';
 import { CertificateModal } from './components/training/CertificateModal';
 
@@ -85,7 +88,14 @@ import { CompetenciesView } from './views/training/CompetenciesView';
 import { GraduationAuditView } from './views/training/GraduationAuditView';
 import { PortfolioExportView } from './views/training/PortfolioExportView';
 
-
+// Public Marketing & Information Suite
+import { PublicLayout } from './views/public/PublicLayout';
+import { LandingPageView } from './views/public/LandingPageView';
+import { AboutView } from './views/public/AboutView';
+import { FeaturesView } from './views/public/FeaturesView';
+import { HistoryView } from './views/public/HistoryView';
+import { ContactView } from './views/public/ContactView';
+import { LoginPageView } from './views/public/LoginPageView';
 
 // Initialize storage cleanup
 initStorageCleanup();
@@ -104,7 +114,13 @@ export const VALID_VIEWS = [
     'competencies',
     'graduation',
     'portfolio_export',
-    'profile'
+    'profile',
+    'landing',
+    'about',
+    'features',
+    'history',
+    'contact',
+    'login'
 ];
 
 export const resolveViewString = (candidate) => {
@@ -124,16 +140,6 @@ export default function App() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Guest Mode: Mặc định cho phép người dùng vào xem hệ thống ngay khi truy cập trang
-    const [isGuestMode, setIsGuestMode] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const explicitLogout = localStorage.getItem('pedagogy_explicit_logout');
-            if (explicitLogout === 'true') return false;
-        }
-        return true;
-    });
-    const [showGuestBanner, setShowGuestBanner] = useState(true);
-
     const [toast, setToast] = useState(null);
 
     const showToast = (message, type = 'success', duration = 3500) => {
@@ -144,19 +150,24 @@ export default function App() {
         }, duration);
     };
 
-    // Đảm bảo luôn trích xuất đúng string view hợp lệ và mặc định hiển thị Dashboard khi mới vào
+    // Đảm bảo luôn trích xuất đúng string view hợp lệ và mặc định hiển thị Trang chủ Giới thiệu khi mới vào web
     const [currentView, setCurrentView] = useState(() => {
-        if (typeof window === 'undefined') return 'dashboard';
+        if (typeof window === 'undefined') return 'landing';
+        // Khi mới vào web ở địa chỉ gốc '/', lập tức vào ngay Trang chủ Giới thiệu
+        if (window.location.pathname === '/' || window.location.pathname === '' || window.location.pathname === '/trang-chu') {
+            return 'landing';
+        }
         const parsed = getViewFromPath(window.location.pathname);
         const fromPath = resolveViewString(parsed);
         if (fromPath) return fromPath;
         const saved = localStorage.getItem('pedagogy_current_view');
         const fromSaved = resolveViewString(saved);
         if (fromSaved) return fromSaved;
-        return 'dashboard';
+        return 'landing';
     });
 
     const [authLoadingState, setAuthLoadingState] = useState(null); // 'logging_in' | 'logging_out' | null
+    const [isViewTransitioning, setIsViewTransitioning] = useState(false);
 
     const handleGoogleLogin = async () => {
         setAuthLoadingState('logging_in');
@@ -179,7 +190,7 @@ export default function App() {
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('pedagogy_explicit_logout');
             }
-            setIsGuestMode(true);
+            navigate('dashboard');
         } catch (error) {
             console.error("Lỗi đăng nhập Google:", error);
             setError("Không thể đăng nhập bằng Google. Vui lòng thử lại.");
@@ -514,7 +525,7 @@ export default function App() {
             if (typeof window !== 'undefined') {
                 localStorage.setItem('pedagogy_explicit_logout', 'true');
             }
-            setIsGuestMode(false);
+            navigate('landing');
         } catch (err) {
             console.error("Lỗi đăng xuất:", err);
         } finally {
@@ -712,7 +723,7 @@ export default function App() {
     useEffect(() => {
         const handlePopState = (e) => {
             if (e.state && e.state.currentView) {
-                const targetView = resolveViewString(e.state.currentView) || 'dashboard';
+                const targetView = resolveViewString(e.state.currentView) || 'landing';
                 setCurrentView(targetView);
                 if (e.state.activeProgramId) setActiveProgramId(e.state.activeProgramId);
                 if (e.state.activeModuleId) setActiveModuleId(e.state.activeModuleId);
@@ -725,7 +736,7 @@ export default function App() {
                     if (parsed?.moduleId) setActiveModuleId(parsed.moduleId);
                 } else {
                     const saved = localStorage.getItem('pedagogy_current_view');
-                    const target = resolveViewString(saved) || 'dashboard';
+                    const target = resolveViewString(saved) || 'landing';
                     setCurrentView(target);
                 }
             }
@@ -736,6 +747,13 @@ export default function App() {
 
     const navigate = (view, data = {}) => {
         const targetView = resolveViewString(view) || 'dashboard';
+        if (targetView !== currentView) {
+            setIsViewTransitioning(true);
+            setTimeout(() => setIsViewTransitioning(false), 280);
+            if (typeof window !== 'undefined') {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+            }
+        }
         setCurrentView(targetView);
         if (data.programId) setActiveProgramId(data.programId);
         if (data.moduleId) setActiveModuleId(data.moduleId);
@@ -747,116 +765,85 @@ export default function App() {
     };
 
     if (loading) {
+        return <AppLayoutSkeleton currentView={currentView} />;
+    }
+
+    const handleEnterLMS = (targetView = 'dashboard') => {
+        if (!user) {
+            handleGoogleLogin();
+            return;
+        }
+        navigate(typeof targetView === 'string' ? targetView : 'dashboard');
+    };
+
+    const PUBLIC_VIEWS = ['landing', 'about', 'features', 'history', 'contact'];
+    if (PUBLIC_VIEWS.includes(currentView)) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-brand-cream">
-                <div className="text-center font-serif-title text-brand-cerulean text-2xl animate-pulse">
-                    Đang chuẩn bị không gian học tập...
-                </div>
-            </div>
+            <>
+                {isViewTransitioning && (
+                    <div className="fixed top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-brand-cerulean via-brand-jasper to-brand-cerulean z-50 animate-route-progress pointer-events-none" />
+                )}
+                <PublicLayout
+                    currentView={currentView}
+                    navigate={navigate}
+                    currentUser={user}
+                    handleGoogleSignIn={handleGoogleLogin}
+                    handleSignOut={handleSignOut}
+                    handleEnterLMS={handleEnterLMS}
+                >
+                    {currentView === 'landing' && (
+                        <LandingPageView
+                            navigate={navigate}
+                            currentUser={user}
+                            handleGoogleSignIn={handleGoogleLogin}
+                        />
+                    )}
+                    {currentView === 'about' && <AboutView navigate={navigate} />}
+                    {currentView === 'features' && (
+                        <FeaturesView
+                            navigate={navigate}
+                            currentUser={user}
+                            handleGoogleSignIn={handleGoogleLogin}
+                        />
+                    )}
+                    {currentView === 'history' && <HistoryView navigate={navigate} />}
+                    {currentView === 'contact' && <ContactView navigate={navigate} />}
+                </PublicLayout>
+            </>
         );
     }
 
-    if (!user && !isGuestMode) {
+    // Nếu người dùng đã đăng nhập mà vẫn ở view 'login' -> tự động vào 'dashboard'
+    if (user && currentView === 'login') {
+        navigate('dashboard');
+        return null;
+    }
+
+    // TRANG ĐĂNG NHẬP DÀNH RIÊNG & RÀO CHẮN XÁC THỰC QUẢN TRỊ
+    if (currentView === 'login' || !user) {
         return (
-            <div className="min-h-screen flex flex-col lg:flex-row bg-brand-cream">
-                {/* CỘT TRÁI: HÌNH ẢNH & TRÍCH DẪN (Ẩn trên điện thoại) */}
-                <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-center items-center p-12 overflow-hidden shadow-2xl z-10">
-                    {/* Hình ảnh nền */}
-                    <div 
-                        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=2073&auto=format&fit=crop')" }}
-                    ></div>
-                    
-                    {/* Lớp phủ màu Xanh Cerulean giúp chữ dễ đọc và giữ tone màu thương hiệu */}
-                    <div className="absolute inset-0 bg-brand-cerulean/85 mix-blend-multiply"></div>
-                    
-                    {/* Nội dung câu trích dẫn */}
-                    <div className="relative z-10 text-white max-w-lg text-center px-4">
-                        <p className="text-4xl font-serif-title leading-tight mb-8">
-                            "Giáo dục không phải là việc đổ đầy một cái bình, mà là thắp sáng một ngọn lửa."
-                        </p>
-                        <div className="w-16 h-1.5 bg-brand-jasper mx-auto mb-6 rounded-full"></div>
-                        <p className="text-lg font-sans font-bold tracking-[0.2em] uppercase opacity-90 text-brand-cream">
-                            William Butler Yeats
-                        </p>
-                    </div>
+            <>
+                {isViewTransitioning && (
+                    <div className="fixed top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-brand-cerulean via-brand-jasper to-brand-cerulean z-50 animate-route-progress pointer-events-none" />
+                )}
+                <div key="login" className="animate-page-enter">
+                    <LoginPageView
+                        navigate={navigate}
+                        handleGoogleSignIn={handleGoogleLogin}
+                        authLoadingState={authLoadingState}
+                        error={error}
+                        setError={setError}
+                    />
                 </div>
-
-                {/* CỘT PHẢI: LOGO & FORM ĐĂNG NHẬP */}
-                <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12">
-                    <div className="w-full max-w-md animate-auth-in">
-                        {/* Logo & Tiêu đề nằm trên form đăng nhập */}
-                        <div className="text-center mb-10 flex flex-col items-center">
-                            <img 
-                                src={logoImg} 
-                                alt="Pedagogy Logo" 
-                                className="w-36 h-36 rounded-full shadow-lg border-4 border-brand-cerulean/10 mb-5" 
-                            />
-                            <h1 className="font-serif-title text-5xl text-brand-cerulean tracking-tight mb-2">Pedagogy.</h1>
-                            <p className="text-base italic text-gray-600 font-body">Personal Learning Management</p>
-                        </div>
-
-                        {/* Box Đăng nhập */}
-                        <div className="bg-white p-10 border-editorial shadow-editorial w-full relative">
-                            {/* Accent line màu Đỏ Jasper */}
-                            <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-jasper"></div>
-
-                            <div className="mb-8 text-center">
-                                <h2 className="text-2xl font-serif-title text-brand-cerulean mb-2">Chào mừng trở lại</h2>
-                                <p className="text-gray-500 font-body text-sm">Vui lòng đăng nhập để truy cập vào hệ thống.</p>
-                            </div>
-
-                            <button 
-                                onClick={handleGoogleLogin} 
-                                className="w-full flex items-center justify-center gap-3 px-6 py-3.5 border border-gray-300 shadow-sm hover:shadow-editorial-hover hover:border-brand-cerulean transition-all bg-white group"
-                            >
-                                <img 
-                                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                                    alt="Google Logo" 
-                                    className="w-6 h-6 group-hover:scale-110 transition-transform" 
-                                />
-                                <span className="font-sans font-bold text-gray-700 group-hover:text-brand-cerulean transition-colors">
-                                    Tiếp tục với Google
-                                </span>
-                            </button>
-
-                            <div className="relative flex py-4 items-center">
-                                <div className="flex-grow border-t border-gray-200"></div>
-                                <span className="shrink-0 mx-4 text-gray-400 text-xs uppercase font-sans">Hoặc</span>
-                                <div className="flex-grow border-t border-gray-200"></div>
-                            </div>
-
-                            <button
-                                onClick={() => {
-                                    setIsGuestMode(true);
-                                    if (typeof window !== 'undefined') {
-                                        localStorage.removeItem('pedagogy_explicit_logout');
-                                    }
-                                }}
-                                className="w-full flex items-center justify-center gap-2 px-6 py-3 border border-brand-cerulean/30 bg-brand-cream/60 hover:bg-brand-cerulean hover:text-white text-brand-cerulean font-sans font-bold transition-all text-sm group shadow-xs"
-                            >
-                                <span>Khám phá ngay (Chế độ Khách)</span>
-                                <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
-                            </button>
-                            
-                            {error && (
-                                <div className="mt-5 p-3 bg-red-50 border-l-4 border-brand-jasper text-brand-jasper text-sm font-bold flex items-center gap-2">
-                                    <AlertCircle size={16} className="shrink-0 text-brand-jasper" /> {error}
-                                </div>
-                            )}
-                        </div>
-                        
-                        <div className="mt-8 text-center text-xs text-gray-400 font-body">
-                            &copy; {new Date().getFullYear()} Pedagogy. Khóa luận Tốt nghiệp 2026.
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </>
         );
     }
 
     return (
-        <div className="flex h-screen overflow-hidden bg-brand-cream">
+        <div className="flex h-screen overflow-hidden bg-brand-cream relative">
+            {isViewTransitioning && (
+                <div className="fixed top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-brand-cerulean via-brand-jasper to-brand-cerulean z-50 animate-route-progress pointer-events-none" />
+            )}
             {/* Sidebar (Stationary / Fixed with Collapsible Support) */}
             <SidebarNavigation
                 currentView={currentView}
@@ -897,154 +884,135 @@ export default function App() {
                 </div>
             </div>
 
-            {/* Main Content Area (Independent Vertical Scroll with Fade Up Animation) */}
-            <main key={currentView} className="flex-1 h-full overflow-y-auto p-6 md:p-12 mt-14 md:mt-0 animate-fade-in-up">
+            {/* Main Content Area (Independent Vertical Scroll with Page Transition Animation) */}
+            <main key={currentView} className="flex-1 h-full overflow-y-auto p-6 md:p-12 mt-14 md:mt-0 animate-page-enter">
                 {error && <AlertBox type="error" message={error} onClose={() => setError(null)} />}
 
-                {/* Banner thông báo chế độ Khách */}
-                {!user && showGuestBanner && (
-                    <div className="mb-6 p-3.5 sm:p-4 bg-amber-50/95 border-l-4 border-amber-500 rounded-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-fade-in">
-                        <div className="flex items-center gap-2.5 text-amber-900 text-xs sm:text-sm">
-                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 animate-pulse"></span>
-                            <span>Bạn đang trải nghiệm <strong>Chế độ Khách</strong> (dữ liệu lưu trên máy). Hãy đăng nhập để đồng bộ và bảo lưu an toàn lên Cloud!</span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                            <button
-                                onClick={handleGoogleLogin}
-                                className="px-3 py-1.5 bg-brand-cerulean text-white font-sans text-xs font-bold rounded-xs hover:bg-brand-cerulean/90 transition-colors shadow-xs"
-                            >
-                                Đăng nhập Google
-                            </button>
-                            <button
-                                onClick={() => setShowGuestBanner(false)}
-                                className="text-gray-400 hover:text-gray-600 p-1 flex items-center justify-center transition-colors"
-                                title="Đóng thông báo"
-                            >
-                                <X size={14} />
-                            </button>
-                        </div>
-                    </div>
-                )}
+                {isViewTransitioning ? (
+                    <ViewSkeleton currentView={currentView} />
+                ) : (
+                    <>
+                        {/* Trang Dashboard mặc định: Luôn hiển thị khi currentView === 'dashboard' HOẶC khi không khớp view nào */}
+                        {(!VALID_VIEWS.includes(currentView) || currentView === 'dashboard') && (
+                            <DashboardView
+                                programs={programs}
+                                modules={modules}
+                                events={events}
+                                studyLogs={studyLogs}
+                                navigate={navigate}
+                                onOpenCertificate={() => setIsCertModalOpen(true)}
+                                selectedProgramFilter={selectedProgramFilter}
+                                setSelectedProgramFilter={setSelectedProgramFilter}
+                            />
+                        )}
+                        {currentView === 'programs' && (
+                            <ProgramsView
+                                programs={programs}
+                                modules={modules}
+                                onAddProgram={handleAddProgram}
+                                onDeleteProgram={handleDeleteProgram}
+                                onToggleEnrollProgram={handleToggleEnrollProgram}
+                                onUpdateProgramStatus={handleUpdateProgramStatus}
+                                navigate={navigate}
+                            />
+                        )}
+                        {currentView === 'program_detail' && (
+                            <ProgramDetailView
+                                programId={activeProgramId || (programs[0] && programs[0].id)}
+                                programs={programs}
+                                modules={modules}
+                                profile={profile}
+                                onAddModule={handleAddModule}
+                                onUpdateModule={handleUpdateModule}
+                                onDeleteModule={handleDeleteModule}
+                                onUpdateProgram={handleUpdateProgram}
+                                onUpdateProgramStatus={handleUpdateProgramStatus}
+                                onDeleteProgram={handleDeleteProgram}
+                                navigate={navigate}
+                            />
+                        )}
+                        {currentView === 'module_detail' && (
+                            <ModuleDetailView
+                                moduleId={activeModuleId || (modules[0] && modules[0].id)}
+                                programId={activeProgramId || (programs[0] && programs[0].id)}
+                                programs={programs}
+                                modules={modules}
+                                profile={profile}
+                                onUpdateModule={handleUpdateModule}
+                                onDeleteModule={handleDeleteModule}
+                                navigate={navigate}
+                            />
+                        )}
+                        {currentView === 'syllabus' && (
+                            <SyllabusView
+                                modules={modules}
+                                programs={programs}
+                                activeModuleId={activeModuleId}
+                                onSelectModule={(id) => setActiveModuleId(id)}
+                                onUpdateModule={handleUpdateModule}
+                                showToast={showToast}
+                                navigate={navigate}
+                            />
+                        )}
+                        {currentView === 'calendar' && (
+                            <CalendarAttendanceView
+                                modules={filteredModules.length > 0 ? filteredModules : modules}
+                                events={events}
+                                studyLogs={studyLogs}
+                                navigate={navigate}
+                                onAddEvent={handleAddEvent}
+                                onUpdateEvent={handleUpdateEvent}
+                                onDeleteEvent={handleDeleteEvent}
+                            />
+                        )}
+                        {currentView === 'gradebook' && (
+                            <GradebookView
+                                modules={modules}
+                                programs={programs}
+                                onUpdateModule={handleUpdateModule}
+                            />
+                        )}
+                        {currentView === 'resources' && (
+                            <ResourcesStudyLogView
+                                modules={filteredModules.length > 0 ? filteredModules : modules}
+                                studyLogs={studyLogs}
+                                resources={resources}
+                                events={events}
+                                onAddStudyLog={handleAddStudyLog}
+                                onUpdateStudyLog={handleUpdateStudyLog}
+                                onDeleteStudyLog={handleDeleteStudyLog}
+                                onAddResource={handleAddResource}
+                                onDeleteResource={handleDeleteResource}
+                                navigate={navigate}
+                            />
+                        )}
 
-                {/* Trang Dashboard mặc định: Luôn hiển thị khi currentView === 'dashboard' HOẶC khi không khớp view nào */}
-                {(!VALID_VIEWS.includes(currentView) || currentView === 'dashboard') && (
-                    <DashboardView
-                        programs={programs}
-                        modules={modules}
-                        events={events}
-                        studyLogs={studyLogs}
-                        navigate={navigate}
-                        onOpenCertificate={() => setIsCertModalOpen(true)}
-                        selectedProgramFilter={selectedProgramFilter}
-                        setSelectedProgramFilter={setSelectedProgramFilter}
-                    />
-                )}
-                {currentView === 'programs' && (
-                    <ProgramsView
-                        programs={programs}
-                        modules={modules}
-                        onAddProgram={handleAddProgram}
-                        onDeleteProgram={handleDeleteProgram}
-                        onToggleEnrollProgram={handleToggleEnrollProgram}
-                        onUpdateProgramStatus={handleUpdateProgramStatus}
-                        navigate={navigate}
-                    />
-                )}
-                {currentView === 'program_detail' && (
-                    <ProgramDetailView
-                        programId={activeProgramId || (programs[0] && programs[0].id)}
-                        programs={programs}
-                        modules={modules}
-                        profile={profile}
-                        onAddModule={handleAddModule}
-                        onUpdateModule={handleUpdateModule}
-                        onDeleteModule={handleDeleteModule}
-                        onUpdateProgram={handleUpdateProgram}
-                        onUpdateProgramStatus={handleUpdateProgramStatus}
-                        onDeleteProgram={handleDeleteProgram}
-                        navigate={navigate}
-                    />
-                )}
-                {currentView === 'module_detail' && (
-                    <ModuleDetailView
-                        moduleId={activeModuleId || (modules[0] && modules[0].id)}
-                        programId={activeProgramId || (programs[0] && programs[0].id)}
-                        programs={programs}
-                        modules={modules}
-                        profile={profile}
-                        onUpdateModule={handleUpdateModule}
-                        onDeleteModule={handleDeleteModule}
-                        navigate={navigate}
-                    />
-                )}
-                {currentView === 'syllabus' && (
-                    <SyllabusView
-                        modules={modules}
-                        programs={programs}
-                        activeModuleId={activeModuleId}
-                        onSelectModule={(id) => setActiveModuleId(id)}
-                        onUpdateModule={handleUpdateModule}
-                        showToast={showToast}
-                        navigate={navigate}
-                    />
-                )}
-                {currentView === 'calendar' && (
-                    <CalendarAttendanceView
-                        modules={filteredModules.length > 0 ? filteredModules : modules}
-                        events={events}
-                        studyLogs={studyLogs}
-                        navigate={navigate}
-                        onAddEvent={handleAddEvent}
-                        onUpdateEvent={handleUpdateEvent}
-                        onDeleteEvent={handleDeleteEvent}
-                    />
-                )}
-                {currentView === 'gradebook' && (
-                    <GradebookView
-                        modules={modules}
-                        programs={programs}
-                        onUpdateModule={handleUpdateModule}
-                    />
-                )}
-                {currentView === 'resources' && (
-                    <ResourcesStudyLogView
-                        modules={filteredModules.length > 0 ? filteredModules : modules}
-                        studyLogs={studyLogs}
-                        resources={resources}
-                        events={events}
-                        onAddStudyLog={handleAddStudyLog}
-                        onUpdateStudyLog={handleUpdateStudyLog}
-                        onDeleteStudyLog={handleDeleteStudyLog}
-                        onAddResource={handleAddResource}
-                        onDeleteResource={handleDeleteResource}
-                        navigate={navigate}
-                    />
-                )}
+                        {currentView === 'practicum' && (
+                            <PracticumView />
+                        )}
+                        {currentView === 'lesson_plans' && (
+                            <LessonPlansView profile={profile} />
+                        )}
+                        {currentView === 'competencies' && (
+                            <CompetenciesView />
+                        )}
+                        {currentView === 'graduation' && (
+                            <GraduationAuditView profile={profile} />
+                        )}
+                        {currentView === 'portfolio_export' && (
+                            <PortfolioExportView profile={profile} modules={modules} />
+                        )}
 
-                {currentView === 'practicum' && (
-                    <PracticumView />
-                )}
-                {currentView === 'lesson_plans' && (
-                    <LessonPlansView profile={profile} />
-                )}
-                {currentView === 'competencies' && (
-                    <CompetenciesView />
-                )}
-                {currentView === 'graduation' && (
-                    <GraduationAuditView profile={profile} />
-                )}
-                {currentView === 'portfolio_export' && (
-                    <PortfolioExportView profile={profile} modules={modules} />
-                )}
-
-                {currentView === 'profile' && (
-                    <ProfileView
-                        profile={profile}
-                        programs={programs}
-                        navigate={navigate}
-                        onUpdateProfile={handleUpdateProfile}
-                        onOpenCertificate={() => setIsCertModalOpen(true)}
-                    />
+                        {currentView === 'profile' && (
+                            <ProfileView
+                                profile={profile}
+                                programs={programs}
+                                navigate={navigate}
+                                onUpdateProfile={handleUpdateProfile}
+                                onOpenCertificate={() => setIsCertModalOpen(true)}
+                            />
+                        )}
+                    </>
                 )}
             </main>
 

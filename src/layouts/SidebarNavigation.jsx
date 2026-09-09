@@ -45,19 +45,25 @@ export const SidebarNavigation = ({
                 {isSidebarCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
             </button>
 
-            {/* Header / Logo */}
-            <div className={`mb-6 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
+            {/* Header / Logo -> Click to open Landing & About Page */}
+            <div 
+                onClick={() => navigate('landing')}
+                className={`mb-6 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'} cursor-pointer group select-none`}
+                title="Xem trang giới thiệu & thông tin chương trình"
+            >
                 <img 
                     src={logoImg} 
                     alt="Pedagogy Logo" 
-                    className={`${isSidebarCollapsed ? 'w-10 h-10' : 'w-12 h-12'} rounded-full shadow-sm transition-all cursor-pointer hover:scale-105 shrink-0`}
-                    onClick={() => { if (isSidebarCollapsed) toggleSidebar(); }}
-                    title={isSidebarCollapsed ? "Bấm để mở rộng thanh điều hướng" : "Pedagogy"}
+                    className={`${isSidebarCollapsed ? 'w-10 h-10' : 'w-12 h-12'} rounded-full shadow-sm transition-all group-hover:scale-105 group-hover:shadow-md shrink-0 border border-brand-cerulean/10`}
                 />
                 {!isSidebarCollapsed && (
                     <div className="min-w-0">
-                        <h1 className="font-serif-title text-3xl text-brand-cerulean tracking-tight truncate">Pedagogy.</h1>
-                        <p className="text-xs italic text-gray-500 mt-0.5 font-body truncate">Personal Learning Management</p>
+                        <h1 className="font-serif-title text-3xl text-brand-cerulean tracking-tight truncate group-hover:text-brand-jasper transition-colors font-bold">
+                            Pedagogy.
+                        </h1>
+                        <p className="text-xs italic text-gray-500 mt-0.5 font-body truncate group-hover:text-gray-700 transition-colors">
+                            Personal Learning Management
+                        </p>
                     </div>
                 )}
             </div>

@@ -169,3 +169,74 @@ select.input-editorial option {
 .animate-spin-slow {
     animation: spinSlow 2s linear infinite;
 }
+
+/* --- SKELETON SHIMMER & PULSE ANIMATIONS --- */
+@keyframes skeletonShimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(18, 72, 116, 0.04) 0%,
+        rgba(18, 72, 116, 0.10) 35%,
+        rgba(207, 55, 61, 0.07) 50%,
+        rgba(18, 72, 116, 0.10) 65%,
+        rgba(18, 72, 116, 0.04) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* --- ACCORDION SLIDE-DOWN & ROLL-UP ANIMATION --- */
+.accordion-collapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.accordion-collapse.open {
+    grid-template-rows: 1fr;
+}
+
+/* --- PAGE TRANSITION & ROUTE PROGRESS ANIMATIONS --- */
+@keyframes pageEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-page-enter {
+    animation: pageEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: opacity, transform;
+}
+
+@keyframes routeProgress {
+    0% {
+        transform: scaleX(0);
+        opacity: 1;
+    }
+    50% {
+        transform: scaleX(0.7);
+        opacity: 1;
+    }
+    100% {
+        transform: scaleX(1);
+        opacity: 0;
+    }
+}
+
+.animate-route-progress {
+    transform-origin: left;
+    animation: routeProgress 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

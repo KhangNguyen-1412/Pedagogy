@@ -71,7 +71,7 @@ export const getSEOAndPath = (currentView, activeProgramId, activeModuleId, prog
             return {
                 title: 'Tổng Quan Tiến Độ & GPA | Pedagogy - Hệ Thống Quản Lý Giáo Dục Cá Nhân',
                 description: 'Trang tổng quan cá nhân theo dõi tín chỉ tích lũy, GPA hệ 4.0, xếp loại học lực và lịch học sắp tới.',
-                path: '/'
+                path: '/bang-dieu-khien'
             };
         case 'programs':
             return {
@@ -160,6 +160,43 @@ export const getSEOAndPath = (currentView, activeProgramId, activeModuleId, prog
                 path: '/xuat-ho-so-bang-diem'
             };
 
+        case 'landing':
+            return {
+                title: 'Pedagogy - Nền Tảng Quản Trị & Đào Tạo Nghiệp Vụ Sư Phạm',
+                description: 'Hệ thống cá nhân hóa học tập, quản lý chương trình đào tạo nghiệp vụ sư phạm, thực tập giảng dạy và cấp chứng chỉ chuẩn quốc gia.',
+                path: '/'
+            };
+        case 'about':
+            return {
+                title: 'Giới Thiệu Chương Trình Bồi Dưỡng Nghiệp Vụ Sư Phạm | Pedagogy',
+                description: 'Tìm hiểu sứ mệnh, triết lý giáo dục khai phóng và chuẩn đào tạo nghiệp vụ sư phạm theo Thông tư 11 & 12 của Bộ GD&ĐT.',
+                path: '/gioi-thieu'
+            };
+        case 'features':
+            return {
+                title: 'Đặc Điểm & 10 Phân Hệ Chức Năng Cốt Lõi | Pedagogy',
+                description: 'Khám phá 10 công cụ số hóa hỗ trợ toàn trình khóa bồi dưỡng: Syllabus, Auto-save Notebook, KHBD CV 5512, Thực tập sư phạm, Khung năng lực TT20.',
+                path: '/dac-diem-chuc-nang'
+            };
+        case 'history':
+            return {
+                title: 'Lịch Sử & Căn Cứ Pháp Lý Chứng Chỉ Nghiệp Vụ Sư Phạm | Pedagogy',
+                description: 'Hành trình 30 năm phát triển chứng chỉ sư phạm tại Việt Nam, từ bậc 1 & 2 đến mốc son Thông tư 11 & 12/2021 và Điều 72 Luật Giáo dục 2019.',
+                path: '/lich-su-chung-chi'
+            };
+        case 'contact':
+            return {
+                title: 'Liên Hệ Tuyển Sinh & Tư Vấn Học Vụ | Pedagogy',
+                description: 'Đầu mối liên hệ, hotline tư vấn tuyển sinh nghiệp vụ sư phạm và giải đáp các câu hỏi thường gặp FAQ.',
+                path: '/lien-he'
+            };
+        case 'login':
+            return {
+                title: 'Đăng Nhập Quản Trị | Pedagogy - Hệ Thống Nghiệp Vụ Sư Phạm',
+                description: 'Đăng nhập vào bảng điều khiển quản lý học tập và rèn nghề sư phạm cá nhân Pedagogy.',
+                path: '/dang-nhap'
+            };
+
         default:
             return {
                 title: 'Pedagogy - Nền Tảng Quản Trị & Đào Tạo Nghiệp Vụ Sư Phạm',
@@ -171,7 +208,13 @@ export const getSEOAndPath = (currentView, activeProgramId, activeModuleId, prog
 
 export const getViewFromPath = (pathname, programs = [], modules = []) => {
     const cleanPath = pathname ? pathname.replace(/\/$/, '') : '';
-    if (cleanPath === '' || cleanPath === '/' || cleanPath === '/index.html') return { view: 'dashboard' };
+    if (cleanPath === '' || cleanPath === '/' || cleanPath === '/index.html' || cleanPath === '/trang-chu') return { view: 'landing' };
+    if (cleanPath === '/dang-nhap' || cleanPath === '/login') return { view: 'login' };
+    if (cleanPath === '/bang-dieu-khien' || cleanPath === '/tong-quan') return { view: 'dashboard' };
+    if (cleanPath === '/gioi-thieu') return { view: 'about' };
+    if (cleanPath === '/dac-diem-chuc-nang') return { view: 'features' };
+    if (cleanPath === '/lich-su-chung-chi') return { view: 'history' };
+    if (cleanPath === '/lien-he') return { view: 'contact' };
     if (cleanPath === '/chuong-trinh-dao-tao') return { view: 'programs' };
     if (cleanPath === '/de-cuong-hoc-phan') return { view: 'syllabus' };
     if (cleanPath === '/lich-bieu-diem-danh') return { view: 'calendar' };
@@ -206,5 +249,5 @@ export const getViewFromPath = (pathname, programs = [], modules = []) => {
         return { view: 'programs' };
     }
 
-    return { view: 'dashboard' };
+    return { view: 'landing' };
 };

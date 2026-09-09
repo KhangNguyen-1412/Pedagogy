@@ -663,3 +663,26 @@ export const ProgressBar = ({ current, total, label }) => {
         </div>
     );
 };
+
+// --- RE-EXPORT SKELETON COMPONENTS ---
+export {
+    Skeleton,
+    SkeletonText,
+    SkeletonCard,
+    DashboardSkeleton,
+    ProgramsSkeleton,
+    CalendarSkeleton,
+    ResourcesSkeleton,
+    GradebookSkeleton,
+    ModuleDetailSkeleton,
+    SyllabusSkeleton,
+    PracticumSkeleton,
+    LessonPlansSkeleton,
+    CompetenciesSkeleton,
+    GraduationAuditSkeleton,
+    PortfolioExportSkeleton,
+    ProfileSkeleton,
+    ViewSkeleton,
+    AppLayoutSkeleton
+} from './Skeleton';
+
