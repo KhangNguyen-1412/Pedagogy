@@ -19,6 +19,7 @@ import {
     CheckSquare
 } from 'lucide-react';
 import { EditorialSelect, EditorialDatePicker, Modal } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 import { initialLessonPlans, initialMicroTeachingSessions } from '../../data/trainingData';
 
 export const LessonPlansView = ({ profile }) => {
@@ -232,56 +233,56 @@ export const LessonPlansView = ({ profile }) => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
-            {/* Sticky Editorial Header */}
-            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div>
-                    <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-brand-cream border border-brand-cerulean/30 text-brand-cerulean text-xs font-serif-title font-bold uppercase tracking-wider mb-2">
+        <div className="max-w-6xl mx-auto space-y-6 md:space-y-8">
+            <CollapsiblePageHeader
+                badge={
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-brand-cream border border-brand-cerulean/30 text-brand-cerulean text-[11px] sm:text-xs font-serif-title font-bold uppercase tracking-wider mb-1">
                         <FileText className="w-3.5 h-3.5 text-brand-cerulean" />
                         Nghiệp vụ Sư phạm • Kế hoạch Bài dạy (CV 5555)
                     </div>
-                    <h1 className="text-4xl sm:text-5xl font-serif-title text-brand-cerulean tracking-tight">
-                        Soạn KHBD Chuẩn 5555 & Phòng Tập Giảng
-                    </h1>
-                    <p className="text-sm font-sans text-stone-600 mt-2 max-w-3xl">
-                        Hệ thống biên soạn giáo án điện tử theo Công văn 5555/BGDĐT-GDTrH với 4 hoạt động học tập, kết hợp phòng ghi âm - đánh giá tập giảng Micro-teaching theo phiếu tiêu chí sư phạm.
-                    </p>
-                </div>
-
-                {/* Counters & Reset */}
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-6 bg-white border border-stone-200 px-4 py-2 shadow-xs">
-                        <div className="text-right">
-                            <div className="text-[10px] font-serif-title uppercase tracking-wider text-stone-500">KHBD Đã duyệt</div>
-                            <div className="text-3xl font-serif-title font-bold text-brand-cerulean leading-none mt-1">
-                                {approvedPlansCount}<span className="text-stone-400 text-lg">/{lessonPlans.length}</span>
-                            </div>
+                }
+                title="Soạn KHBD Chuẩn 5555 & Phòng Tập Giảng"
+                subtitle="Hệ thống biên soạn giáo án điện tử theo Công văn 5555/BGDĐT-GDTrH với 4 hoạt động học tập, kết hợp phòng ghi âm - đánh giá tập giảng Micro-teaching theo phiếu tiêu chí sư phạm."
+                actions={({ isScrolled }) => (
+                    <div className="flex items-center gap-2 sm:gap-3 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]">
+                        <div className={`bg-white border border-stone-200 text-center shadow-xs flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                            isScrolled ? 'px-2.5 py-1 gap-1.5' : 'p-1.5 sm:p-2 flex-col min-w-[75px]'
+                        }`}>
+                            <span className={`uppercase font-serif-title text-stone-500 transition-all duration-300 ${
+                                isScrolled ? 'text-[10px]' : 'text-[9px] block'
+                            }`}>
+                                {isScrolled ? 'Đã duyệt:' : 'KHBD duyệt'}
+                            </span>
+                            <span className={`font-serif-title font-bold text-brand-cerulean transition-all duration-300 leading-tight ${
+                                isScrolled ? 'text-xs sm:text-sm' : 'text-base sm:text-xl'
+                            }`}>
+                                {approvedPlansCount}/{lessonPlans.length}
+                            </span>
                         </div>
-                        <div className="border-l border-stone-200 pl-4 text-left">
-                            <div className="text-[10px] font-serif-title uppercase tracking-wider text-stone-500">Điểm Giảng thử</div>
-                            <div className="text-3xl font-serif-title font-bold text-brand-jasper leading-none mt-1">
-                                {avgMicroScore}<span className="text-stone-400 text-lg">/10</span>
-                            </div>
+                        <div className={`bg-white border border-stone-200 text-center shadow-xs flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                            isScrolled ? 'px-2.5 py-1 gap-1.5' : 'p-1.5 sm:p-2 flex-col min-w-[75px]'
+                        }`}>
+                            <span className={`uppercase font-serif-title text-stone-500 transition-all duration-300 ${
+                                isScrolled ? 'text-[10px]' : 'text-[9px] block'
+                            }`}>
+                                {isScrolled ? 'Giảng thử:' : 'Điểm giảng'}
+                            </span>
+                            <span className={`font-serif-title font-bold text-brand-jasper transition-all duration-300 leading-tight ${
+                                isScrolled ? 'text-xs sm:text-sm' : 'text-base sm:text-xl'
+                            }`}>
+                                {avgMicroScore}/10
+                            </span>
                         </div>
                     </div>
-
-                    <button
-                        type="button"
-                        onClick={handleResetPlans}
-                        className="px-3 py-2 bg-white hover:bg-rose-50 text-stone-600 hover:text-rose-700 border border-stone-200 text-xs font-serif-title font-bold flex items-center gap-1.5 transition-all shadow-xs shrink-0"
-                        title="Xóa toàn bộ giáo án mẫu và ca tập giảng"
-                    >
-                        <Trash2 className="w-3.5 h-3.5" /> Xóa mẫu
-                    </button>
-                </div>
-            </header>
+                )}
+            />
 
             {/* Segmented Pill Tab Switcher */}
-            <div className="inline-flex p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs flex-wrap gap-1">
+            <div className="flex w-full p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs overflow-x-auto gap-1">
                 {[
-                    { id: 'plans', label: 'Kế hoạch bài dạy (KHBD - 5555)', count: lessonPlans.length, icon: BookOpen },
-                    { id: 'microteaching', label: 'Phòng Tập giảng (Micro-teaching)', count: `${microSessions.length} ca`, icon: Video },
-                    { id: 'templates', label: 'Khung Tiêu chí CV 5555 & Biểu mẫu', icon: Sliders }
+                    { id: 'plans', label: 'KHBD (5555)', count: lessonPlans.length, icon: BookOpen },
+                    { id: 'microteaching', label: 'Tập giảng (Micro)', count: `${microSessions.length} ca`, icon: Video },
+                    { id: 'templates', label: 'Khung Tiêu chí & Mẫu', icon: Sliders }
                 ].map(tab => {
                     const TabIcon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -290,13 +291,13 @@ export const LessonPlansView = ({ profile }) => {
                             key={tab.id}
                             type="button"
                             onClick={() => setActiveTab(tab.id)}
-                            className={`px-4 py-2 font-serif-title text-xs font-bold rounded transition-all flex items-center gap-2 whitespace-nowrap ${
+                            className={`flex-1 justify-center px-2.5 sm:px-4 py-2 font-serif-title text-[11px] sm:text-xs font-bold rounded transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${
                                 isActive
                                     ? 'bg-brand-cerulean text-white shadow-xs'
                                     : 'text-brand-cerulean hover:bg-brand-cerulean/10'
                             }`}
                         >
-                            <TabIcon className="w-4 h-4" />
+                            <TabIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             <span>{tab.label}</span>
                             {tab.count !== undefined && (
                                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-sans ${isActive ? 'bg-white/20 text-white' : 'bg-brand-cerulean/15 text-brand-cerulean'}`}>
@@ -310,7 +311,7 @@ export const LessonPlansView = ({ profile }) => {
 
             {/* TAB 1: KẾ HOẠCH BÀI DẠY (KHBD) */}
             {activeTab === 'plans' && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
                     {/* Left column: List of lesson plans */}
                     <div className="lg:col-span-4 space-y-4">
                         <div className="flex items-center justify-between pb-2 border-b border-stone-200">

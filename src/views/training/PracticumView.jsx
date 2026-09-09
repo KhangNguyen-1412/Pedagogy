@@ -19,6 +19,7 @@ import {
     CheckSquare
 } from 'lucide-react';
 import { EditorialSelect, EditorialDatePicker, Modal } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 import { initialPracticumData } from '../../data/trainingData';
 
 export const PracticumView = () => {
@@ -226,57 +227,70 @@ export const PracticumView = () => {
     const obsLogsCount = practicumData.observationLogs?.length || 0;
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
-            {/* Sticky Editorial Header */}
-            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div>
-                    <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-brand-cream border border-brand-cerulean/30 text-brand-cerulean text-xs font-serif-title font-bold uppercase tracking-wider mb-2">
+        <div className="max-w-6xl mx-auto space-y-6 md:space-y-8">
+            <CollapsiblePageHeader
+                badge={
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-brand-cream border border-brand-cerulean/30 text-brand-cerulean text-[11px] sm:text-xs font-serif-title font-bold uppercase tracking-wider mb-1">
                         <School className="w-3.5 h-3.5 text-brand-cerulean" />
                         Hồ sơ Thực địa Sư phạm • Trường THPT Liên kết
                     </div>
-                    <h1 className="text-4xl sm:text-5xl font-serif-title text-brand-cerulean tracking-tight">
-                        Thực tập & Kiến tập Sư phạm
-                    </h1>
-                    <p className="text-sm font-sans text-stone-600 mt-2 max-w-3xl">
-                        Hồ sơ trường phổ thông tiếp nhận, sổ dự giờ theo Công văn 5555, công tác chủ nhiệm & đánh giá đợt TTSP.
-                    </p>
-                </div>
+                }
+                title="Thực tập & Kiến tập Sư phạm"
+                subtitle="Hồ sơ trường phổ thông tiếp nhận, sổ dự giờ theo Công văn 5555, công tác chủ nhiệm & đánh giá đợt TTSP."
+                actions={({ isScrolled }) => (
+                    <div className="flex items-center gap-2 sm:gap-3 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]">
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                            <div className={`bg-white border border-stone-200 text-center shadow-xs flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                                isScrolled ? 'px-2.5 py-1 gap-1.5' : 'p-1.5 sm:p-2 flex-col min-w-[75px]'
+                            }`}>
+                                <span className={`uppercase font-serif-title text-stone-500 transition-all duration-300 ${
+                                    isScrolled ? 'text-[10px]' : 'text-[9px] block'
+                                }`}>
+                                    {isScrolled ? 'TTSP:' : 'Điểm TTSP'}
+                                </span>
+                                <span className={`font-serif-title font-bold text-brand-jasper transition-all duration-300 leading-tight ${
+                                    isScrolled ? 'text-xs sm:text-sm' : 'text-base sm:text-xl'
+                                }`}>
+                                    {overallPracticumScore}/10
+                                </span>
+                            </div>
+                            <div className={`bg-white border border-stone-200 text-center shadow-xs flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                                isScrolled ? 'px-2.5 py-1 gap-1.5' : 'p-1.5 sm:p-2 flex-col min-w-[75px]'
+                            }`}>
+                                <span className={`uppercase font-serif-title text-stone-500 transition-all duration-300 ${
+                                    isScrolled ? 'text-[10px]' : 'text-[9px] block'
+                                }`}>
+                                    {isScrolled ? 'Dự giờ:' : 'Tiết dự giờ'}
+                                </span>
+                                <span className={`font-serif-title font-bold text-brand-cerulean transition-all duration-300 leading-tight ${
+                                    isScrolled ? 'text-xs sm:text-sm' : 'text-base sm:text-xl'
+                                }`}>
+                                    {obsLogsCount} tiết
+                                </span>
+                            </div>
+                        </div>
 
-                {/* Stat Counters & Reset */}
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-6 bg-white border border-stone-200 px-4 py-2 shadow-xs">
-                        <div className="text-right">
-                            <div className="text-[10px] font-serif-title uppercase tracking-wider text-stone-500">Điểm Tổng TTSP</div>
-                            <div className="text-3xl font-serif-title font-bold text-brand-jasper leading-none mt-1">
-                                {overallPracticumScore}<span className="text-stone-400 text-lg">/10</span>
-                            </div>
-                        </div>
-                        <div className="border-l border-stone-200 pl-4 text-left">
-                            <div className="text-[10px] font-serif-title uppercase tracking-wider text-stone-500">Tiết Dự giờ</div>
-                            <div className="text-3xl font-serif-title font-bold text-brand-cerulean leading-none mt-1">
-                                {obsLogsCount}<span className="text-stone-400 text-lg"> tiết</span>
-                            </div>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={handleResetToBlank}
+                            className={`justify-center bg-white hover:bg-rose-50 text-stone-600 hover:text-rose-700 border border-stone-200 text-xs font-serif-title font-bold flex items-center gap-1.5 transition-all duration-300 shadow-xs shrink-0 ${
+                                isScrolled ? 'px-2 py-1 text-[11px]' : 'px-3 py-1.5 sm:py-2'
+                            }`}
+                            title="Xóa dữ liệu mẫu và nhập mới từ đầu"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" /> Xóa mẫu
+                        </button>
                     </div>
-
-                    <button
-                        type="button"
-                        onClick={handleResetToBlank}
-                        className="px-3 py-2 bg-white hover:bg-rose-50 text-stone-600 hover:text-rose-700 border border-stone-200 text-xs font-serif-title font-bold flex items-center gap-1.5 transition-all shadow-xs shrink-0"
-                        title="Xóa dữ liệu mẫu và nhập mới từ đầu"
-                    >
-                        <Trash2 className="w-3.5 h-3.5" /> Xóa mẫu
-                    </button>
-                </div>
-            </header>
+                )}
+            />
 
             {/* Segmented Pill Tab Switcher */}
-            <div className="inline-flex p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs flex-wrap gap-1">
+            <div className="flex w-full p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs overflow-x-auto gap-1">
                 {[
-                    { id: 'overview', label: 'Tổng quan đợt TTSP', icon: School },
-                    { id: 'observation', label: `Sổ dự giờ (${obsLogsCount})`, icon: ClipboardCheck },
-                    { id: 'homeroom', label: 'Công tác chủ nhiệm', icon: Users },
-                    { id: 'evaluation', label: 'Đánh giá & Bảng điểm', icon: Award }
+                    { id: 'overview', label: 'Tổng quan', icon: School },
+                    { id: 'observation', label: `Dự giờ (${obsLogsCount})`, icon: ClipboardCheck },
+                    { id: 'homeroom', label: 'Chủ nhiệm', icon: Users },
+                    { id: 'evaluation', label: 'Đánh giá & Điểm', icon: Award }
                 ].map(tab => {
                     const TabIcon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -285,13 +299,13 @@ export const PracticumView = () => {
                             key={tab.id}
                             type="button"
                             onClick={() => setActiveTab(tab.id)}
-                            className={`px-4 py-2 font-serif-title text-xs font-bold rounded transition-all flex items-center gap-2 whitespace-nowrap ${
+                            className={`flex-1 justify-center px-2.5 sm:px-4 py-2 font-serif-title text-[11px] sm:text-xs font-bold rounded transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${
                                 isActive
                                     ? 'bg-brand-cerulean text-white shadow-xs'
                                     : 'text-brand-cerulean hover:bg-brand-cerulean/10'
                             }`}
                         >
-                            <TabIcon className="w-4 h-4" />
+                            <TabIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             <span>{tab.label}</span>
                         </button>
                     );
@@ -302,7 +316,7 @@ export const PracticumView = () => {
             {activeTab === 'overview' && (
                 <div className="space-y-6">
                     {/* Trường Tiếp Nhận Banner */}
-                    <div className="bg-white border-editorial shadow-editorial p-6 border-l-4 border-l-brand-cerulean space-y-4">
+                    <div className="bg-white border-editorial shadow-editorial p-4 sm:p-6 border-l-4 border-l-brand-cerulean space-y-4">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 pb-3">
                             <div>
                                 <span className="px-2 py-0.5 text-xs font-bold bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 rounded-xs uppercase tracking-wider">

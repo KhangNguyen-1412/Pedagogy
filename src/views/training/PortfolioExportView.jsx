@@ -21,6 +21,7 @@ import {
     ArrowLeft
 } from 'lucide-react';
 import { EditorialSelect, Modal } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 import {
     initialPracticumData,
     initialLessonPlans,
@@ -234,56 +235,52 @@ export const PortfolioExportView = ({ profile, modules = [] }) => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
-            {/* Sticky Editorial Header (Hidden on print) */}
-            <header className="print:hidden sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div>
-                    <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-brand-cream border border-brand-cerulean/30 text-brand-cerulean text-xs font-serif-title font-bold uppercase tracking-wider mb-2">
+        <div className="max-w-6xl mx-auto space-y-6 md:space-y-8">
+            <CollapsiblePageHeader
+                className="print:hidden"
+                badge={
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-brand-cream border border-brand-cerulean/30 text-brand-cerulean text-[11px] sm:text-xs font-serif-title font-bold uppercase tracking-wider mb-1">
                         <Printer className="w-3.5 h-3.5 text-brand-cerulean" />
                         Trung tâm Hồ sơ • Bảng điểm & Chứng chỉ Sư phạm
                     </div>
-                    <h1 className="text-4xl sm:text-5xl font-serif-title text-brand-cerulean tracking-tight">
-                        Xuất Bản Hồ Sơ & Bảng Điểm
-                    </h1>
-                    <p className="text-sm font-sans text-stone-600 mt-2 max-w-3xl">
-                        Trích xuất bảng điểm học tập chính thức (Official Academic Transcript) và Hồ sơ Sư phạm tổng hợp (Teaching Dossier) theo chuẩn biểu mẫu quốc gia, hỗ trợ in ấn A4 sắc nét hoặc xuất tệp số.
-                    </p>
-                </div>
-
-                {/* Print & Export Actions */}
-                <div className="flex flex-wrap items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={handleResetTranscript}
-                        className="px-3 py-2 bg-white hover:bg-rose-50 text-stone-600 hover:text-rose-700 border border-stone-200 text-xs font-serif-title font-bold flex items-center gap-1.5 transition-all shadow-xs shrink-0"
-                        title="Xóa mẫu thông tin bản in và làm sạch dữ liệu"
-                    >
-                        <Trash2 className="w-3.5 h-3.5" /> Xóa mẫu
-                    </button>
-                    <button
-                        onClick={handlePrint}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-brand-cerulean text-white font-serif-title font-bold text-xs hover:bg-brand-cerulean/90 shadow-editorial"
-                    >
-                        <Printer className="w-3.5 h-3.5" />
-                        In Hồ Sơ (A4)
-                    </button>
-                    <button
-                        onClick={() => alert('Đang tạo file PDF bản in chính thức...')}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-stone-100 border border-stone-300 text-stone-800 font-serif-title font-bold text-xs hover:bg-stone-200"
-                    >
-                        <Download className="w-3.5 h-3.5" />
-                        Xuất PDF
-                    </button>
-                </div>
-            </header>
+                }
+                title="Xuất Bản Hồ Sơ & Bảng Điểm"
+                subtitle="Trích xuất bảng điểm học tập chính thức (Official Academic Transcript) và Hồ sơ Sư phạm tổng hợp (Teaching Dossier) theo chuẩn biểu mẫu quốc gia, hỗ trợ in ấn A4 sắc nét hoặc xuất tệp số."
+                actions={
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
+                        <button
+                            type="button"
+                            onClick={handleResetTranscript}
+                            className="w-full sm:w-auto justify-center px-3 py-1.5 sm:py-2 bg-white hover:bg-rose-50 text-stone-600 hover:text-rose-700 border border-stone-200 text-xs font-serif-title font-bold flex items-center gap-1.5 transition-all shadow-xs shrink-0"
+                            title="Xóa mẫu thông tin bản in và làm sạch dữ liệu"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" /> Xóa mẫu
+                        </button>
+                        <button
+                            onClick={handlePrint}
+                            className="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 bg-brand-cerulean text-white font-serif-title font-bold text-xs hover:bg-brand-cerulean/90 shadow-editorial"
+                        >
+                            <Printer className="w-3.5 h-3.5" />
+                            In Hồ Sơ (A4)
+                        </button>
+                        <button
+                            onClick={() => alert('Đang tạo file PDF bản in chính thức...')}
+                            className="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 bg-stone-100 border border-stone-300 text-stone-800 font-serif-title font-bold text-xs hover:bg-stone-200"
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            Xuất PDF
+                        </button>
+                    </div>
+                }
+            />
 
             {/* Document Controls Bar (Hidden on print) */}
-            <div className="print:hidden flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border-editorial shadow-editorial p-4">
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="inline-flex p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs flex-wrap gap-1">
+            <div className="print:hidden flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 bg-white border-editorial shadow-editorial p-3.5 sm:p-4">
+                <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3 w-full md:w-auto">
+                    <div className="flex w-full sm:w-auto p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs overflow-x-auto gap-1">
                         {[
-                            { id: 'transcript', label: 'Bảng điểm Sư phạm (Transcript)', icon: FileText },
-                            { id: 'dossier', label: 'Hồ sơ Năng lực Sư phạm (Teaching Dossier)', icon: Award }
+                            { id: 'transcript', label: 'Bảng điểm (Transcript)', icon: FileText },
+                            { id: 'dossier', label: 'Hồ sơ Năng lực (Dossier)', icon: Award }
                         ].map(tab => {
                             const TabIcon = tab.icon;
                             const isActive = exportType === tab.id;
@@ -292,13 +289,13 @@ export const PortfolioExportView = ({ profile, modules = [] }) => {
                                     key={tab.id}
                                     type="button"
                                     onClick={() => setExportType(tab.id)}
-                                    className={`px-3 py-1.5 font-serif-title text-xs font-bold rounded transition-all flex items-center gap-2 whitespace-nowrap ${
+                                    className={`flex-1 sm:flex-none justify-center px-2.5 sm:px-3 py-1.5 font-serif-title text-[11px] sm:text-xs font-bold rounded transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${
                                         isActive
                                             ? 'bg-brand-cerulean text-white shadow-xs'
                                             : 'text-brand-cerulean hover:bg-brand-cerulean/10'
                                     }`}
                                 >
-                                    <TabIcon className="w-4 h-4" />
+                                    <TabIcon className="w-3.5 h-3.5" />
                                     <span>{tab.label}</span>
                                 </button>
                             );
@@ -306,26 +303,28 @@ export const PortfolioExportView = ({ profile, modules = [] }) => {
                     </div>
 
                     {exportType === 'transcript' && (
-                        <div className="flex items-center gap-2 text-xs font-sans">
-                            <span className="font-serif-title font-bold text-stone-700">Lọc học phần:</span>
-                            <EditorialSelect
-                                value={filterCourseType}
-                                onChange={(val) => setFilterCourseType(val)}
-                                options={[
-                                    { value: 'all', label: `Tất cả học phần (${totalCredits} TC)` },
-                                    { value: 'mandatory', label: 'Chỉ học phần Bắt buộc (Khối A)' },
-                                    { value: 'elective', label: 'Chỉ học phần Tự chọn (Khối C)' }
-                                ]}
-                            />
+                        <div className="flex items-center gap-2 text-xs font-sans w-full sm:w-auto">
+                            <span className="font-serif-title font-bold text-stone-700 shrink-0">Lọc:</span>
+                            <div className="flex-1 sm:w-60">
+                                <EditorialSelect
+                                    value={filterCourseType}
+                                    onChange={(val) => setFilterCourseType(val)}
+                                    options={[
+                                        { value: 'all', label: `Tất cả học phần (${totalCredits} TC)` },
+                                        { value: 'mandatory', label: 'Chỉ Bắt buộc (Khối A)' },
+                                        { value: 'elective', label: 'Chỉ Tự chọn (Khối C)' }
+                                    ]}
+                                />
+                            </div>
                         </div>
                     )}
                 </div>
 
-                <div className="flex items-center gap-4 text-xs">
+                <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-4 text-xs pt-2 sm:pt-0 border-t sm:border-t-0 border-stone-200">
                     <button
                         type="button"
                         onClick={() => setIsEditInfoModalOpen(true)}
-                        className="px-3 py-1.5 bg-brand-cerulean text-white font-serif-title font-bold text-xs hover:bg-brand-cerulean/90 shadow-xs flex items-center gap-1.5"
+                        className="flex-1 sm:flex-none justify-center px-3 py-1.5 bg-brand-cerulean text-white font-serif-title font-bold text-xs hover:bg-brand-cerulean/90 shadow-xs flex items-center gap-1.5"
                     >
                         <Pencil className="w-3.5 h-3.5" /> Sửa thông tin bản in
                     </button>
@@ -336,7 +335,7 @@ export const PortfolioExportView = ({ profile, modules = [] }) => {
                             onChange={(e) => setIncludeSignatures(e.target.checked)}
                             className="rounded border-stone-300 text-brand-cerulean focus:ring-brand-cerulean"
                         />
-                        <span className="text-stone-700 font-serif-title font-bold">Khung chữ ký & mộc</span>
+                        <span className="text-stone-700 font-serif-title font-bold">Khung chữ ký</span>
                     </label>
                 </div>
             </div>
@@ -446,9 +445,9 @@ export const PortfolioExportView = ({ profile, modules = [] }) => {
             {/* OFFICIAL PRINT CANVAS (A4 DOCUMENT PAPER SHEETS) */}
             {/* ============================================================ */}
             {exportType === 'transcript' && (
-                <div className="space-y-8 print:space-y-0">
+                <div className="space-y-8 print:space-y-0 overflow-x-auto pb-4 max-w-full">
                     {/* ----------------- TRANSCRIPT PAGE 1 ----------------- */}
-                    <div className={`${pageViewMode === 'paged' && currentPage !== 1 ? 'hidden print:flex' : 'flex'} max-w-[794px] w-full min-h-[1080px] mx-auto bg-white border-editorial shadow-editorial p-8 sm:p-12 text-stone-900 relative flex-col justify-between print:min-h-0 print:shadow-none print:border-none print:p-0 print:m-0 print:w-full print:max-w-full print:break-after-page`}>
+                    <div className={`${pageViewMode === 'paged' && currentPage !== 1 ? 'hidden print:flex' : 'flex'} max-w-[794px] w-full min-h-[1080px] mx-auto bg-white border-editorial shadow-editorial p-4 sm:p-12 text-stone-900 relative flex-col justify-between print:min-h-0 print:shadow-none print:border-none print:p-0 print:m-0 print:w-full print:max-w-full print:break-after-page`}>
                         <div className="space-y-5">
                             {/* Header University & National Emblem */}
                             <div className="grid grid-cols-2 gap-4 pb-4 border-b-2 border-stone-800">
@@ -654,7 +653,7 @@ export const PortfolioExportView = ({ profile, modules = [] }) => {
                     )}
 
                     {/* ----------------- TRANSCRIPT PAGE 2 ----------------- */}
-                    <div className={`${pageViewMode === 'paged' && currentPage !== 2 ? 'hidden print:flex' : 'flex'} max-w-[794px] w-full min-h-[1080px] mx-auto bg-white border-editorial shadow-editorial p-8 sm:p-12 text-stone-900 relative flex-col justify-between print:min-h-0 print:shadow-none print:border-none print:p-0 print:m-0 print:w-full print:max-w-full`}>
+                    <div className={`${pageViewMode === 'paged' && currentPage !== 2 ? 'hidden print:flex' : 'flex'} max-w-[794px] w-full min-h-[1080px] mx-auto bg-white border-editorial shadow-editorial p-4 sm:p-12 text-stone-900 relative flex-col justify-between print:min-h-0 print:shadow-none print:border-none print:p-0 print:m-0 print:w-full print:max-w-full`}>
                         <div className="space-y-6">
                             {/* Page 2 Top Banner */}
                             <div className="pb-3 border-b-2 border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-serif">
@@ -886,9 +885,9 @@ export const PortfolioExportView = ({ profile, modules = [] }) => {
             {/* 2. TEACHING DOSSIER / PORTFOLIO SƯ PHẠM TỔNG THỂ */}
             {/* ============================================================ */}
             {exportType === 'dossier' && (
-                <div className="space-y-8 print:space-y-0">
+                <div className="space-y-8 print:space-y-0 overflow-x-auto pb-4 max-w-full">
                     {/* ----------------- DOSSIER PAGE 1 ----------------- */}
-                    <div className={`${pageViewMode === 'paged' && currentPage !== 1 ? 'hidden print:flex' : 'flex'} max-w-[794px] w-full min-h-[1080px] mx-auto bg-white border-editorial shadow-editorial p-8 sm:p-12 text-stone-900 relative flex-col justify-between print:min-h-0 print:shadow-none print:border-none print:p-0 print:m-0 print:w-full print:max-w-full print:break-after-page`}>
+                    <div className={`${pageViewMode === 'paged' && currentPage !== 1 ? 'hidden print:flex' : 'flex'} max-w-[794px] w-full min-h-[1080px] mx-auto bg-white border-editorial shadow-editorial p-4 sm:p-12 text-stone-900 relative flex-col justify-between print:min-h-0 print:shadow-none print:border-none print:p-0 print:m-0 print:w-full print:max-w-full print:break-after-page`}>
                         <div className="space-y-6">
                             {/* Dossier Header */}
                             <div className="text-center pb-4 border-b-2 border-stone-800 space-y-1">

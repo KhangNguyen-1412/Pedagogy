@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import vietnamLocations from '../../data/vietnamLocations.json';
 import { EditorialSelect, EditorialDatePicker } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 
 export const ProfileView = ({ profile, programs, navigate, onUpdateProfile, onOpenCertificate }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -159,47 +160,47 @@ export const ProfileView = ({ profile, programs, navigate, onUpdateProfile, onOp
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8">
-            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Hồ sơ cá nhân</h2>
-                    <p className="text-gray-500 font-body mt-1">Thông tin cá nhân, chương trình đào tạo & liên lạc cá nhân hóa.</p>
-                </div>
-                <div className="flex gap-3 items-center flex-wrap">
-                    <button
-                        type="button"
-                        onClick={onOpenCertificate}
-                        className="px-4 py-2 bg-brand-jasper hover:bg-brand-cerulean text-white font-serif-title shadow-editorial transition-colors flex items-center gap-2"
-                    >
-                        <Award size={16} /> Xem Chứng chỉ mẫu
-                    </button>
-                    {!isEditing && (
+        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+            <CollapsiblePageHeader
+                title="Hồ sơ cá nhân"
+                subtitle="Thông tin cá nhân, chương trình đào tạo & liên lạc cá nhân hóa."
+                actions={
+                    <div className="flex gap-2 sm:gap-3 items-center w-full sm:w-auto">
                         <button
                             type="button"
-                            onClick={() => setIsEditing(true)}
-                            className="px-5 py-2 bg-brand-cerulean text-white font-serif-title shadow-editorial hover:bg-brand-jasper transition-colors flex items-center gap-2"
+                            onClick={onOpenCertificate}
+                            className="flex-1 sm:flex-none justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-brand-jasper hover:bg-brand-cerulean text-white font-serif-title text-xs sm:text-sm shadow-editorial transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
                         >
-                            <Pencil size={16} /> Chỉnh sửa hồ sơ
+                            <Award size={16} /> Xem Chứng chỉ mẫu
                         </button>
-                    )}
-                </div>
-            </header>
+                        {!isEditing && (
+                            <button
+                                type="button"
+                                onClick={() => setIsEditing(true)}
+                                className="flex-1 sm:flex-none justify-center px-3.5 sm:px-5 py-1.5 sm:py-2 bg-brand-cerulean text-white font-serif-title text-xs sm:text-sm shadow-editorial hover:bg-brand-jasper transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
+                            >
+                                <Pencil size={16} /> Chỉnh sửa
+                            </button>
+                        )}
+                    </div>
+                }
+            />
 
-            <form onSubmit={handleSave} className="bg-white p-8 border-editorial shadow-editorial space-y-8">
+            <form onSubmit={handleSave} className="bg-white p-4 sm:p-8 border-editorial shadow-editorial space-y-6 sm:space-y-8">
                 {/* GROUP 1: THÔNG TIN ĐỊNH DANH & CÁ NHÂN */}
                 <div className="space-y-4">
-                    <h3 className="text-lg font-serif-title text-brand-cerulean font-bold flex items-center gap-2 border-b border-brand-cerulean/20 pb-2">
+                    <h3 className="text-base sm:text-lg font-serif-title text-brand-cerulean font-bold flex items-center gap-2 border-b border-brand-cerulean/20 pb-2">
                         <span className="w-2.5 h-2.5 rounded-full bg-brand-cerulean"></span>
                         1. Thông tin Định danh & Cá nhân
                     </h3>
 
                     {isEditing ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
                             {/* Avatar Link Input */}
-                            <div className="md:col-span-2 space-y-3 p-4 bg-brand-cream/30 border border-brand-cerulean/20">
+                            <div className="p-3.5 sm:p-4 bg-brand-cream/60 border border-brand-cerulean/20 rounded-xs space-y-2">
                                 <label className="block text-xs font-serif-title text-brand-cerulean font-bold">Link Ảnh đại diện (URL Avatar)</label>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-full border-2 border-brand-cerulean overflow-hidden bg-brand-cream flex items-center justify-center shrink-0 shadow-sm">
+                                <div className="flex items-center gap-3 sm:gap-4">
+                                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-brand-cerulean overflow-hidden bg-brand-cream flex items-center justify-center shrink-0 shadow-sm">
                                         {formData.avatarUrl ? (
                                             <img
                                                 src={formData.avatarUrl}
@@ -208,26 +209,26 @@ export const ProfileView = ({ profile, programs, navigate, onUpdateProfile, onOp
                                                 onError={(e) => { e.target.style.display = 'none'; }}
                                             />
                                         ) : (
-                                            <User size={32} className="text-brand-cerulean" />
+                                            <User size={28} className="text-brand-cerulean" />
                                         )}
                                     </div>
                                     <input
                                         type="url"
-                                        className="input-editorial flex-1"
+                                        className="input-editorial flex-1 text-xs sm:text-sm"
                                         value={formData.avatarUrl || ''}
                                         onChange={e => setFormData({ ...formData, avatarUrl: e.target.value })}
-                                        placeholder="https://images.unsplash.com/... hoặc dán link ảnh từ internet"
+                                        placeholder="https://images.unsplash.com/... hoặc dán link ảnh"
                                     />
                                 </div>
                             </div>
 
                             <div>
                                 <label className="block text-xs font-serif-title text-brand-cerulean mb-1">Họ và Tên đầy đủ</label>
-                                <input required type="text" className="input-editorial w-full font-serif-title text-lg font-bold" value={formData.fullName || ''} onChange={e => setFormData({ ...formData, fullName: e.target.value })} />
+                                <input required type="text" className="input-editorial w-full font-serif-title text-base sm:text-lg font-bold" value={formData.fullName || ''} onChange={e => setFormData({ ...formData, fullName: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-xs font-serif-title text-brand-cerulean mb-1">Mã số học viên</label>
-                                <input required type="text" className="input-editorial w-full font-bold" value={formData.studentId || ''} onChange={e => setFormData({ ...formData, studentId: e.target.value })} />
+                                <input required type="text" className="input-editorial w-full font-bold text-sm sm:text-base" value={formData.studentId || ''} onChange={e => setFormData({ ...formData, studentId: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-xs font-serif-title text-brand-cerulean mb-1">Ngày sinh</label>
@@ -236,7 +237,7 @@ export const ProfileView = ({ profile, programs, navigate, onUpdateProfile, onOp
                                     onChange={val => setFormData({ ...formData, dob: val })}
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <EditorialSelect
                                         label="Giới tính"
@@ -247,13 +248,13 @@ export const ProfileView = ({ profile, programs, navigate, onUpdateProfile, onOp
                                 </div>
                                 <div>
                                     <label className="block text-xs font-serif-title text-brand-cerulean mb-1">Số CCCD / CMND</label>
-                                    <input type="text" className="input-editorial w-full" value={formData.idCard || ''} onChange={e => setFormData({ ...formData, idCard: e.target.value })} placeholder="079200..." />
+                                    <input type="text" className="input-editorial w-full text-xs sm:text-sm" value={formData.idCard || ''} onChange={e => setFormData({ ...formData, idCard: e.target.value })} placeholder="079200..." />
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-brand-cream/40 p-6 border border-brand-cerulean/20 flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                            <div className="w-24 h-24 rounded-full border-4 border-white shadow-editorial overflow-hidden bg-brand-cream flex items-center justify-center shrink-0">
+                        <div className="bg-brand-cream/40 p-4 sm:p-6 border border-brand-cerulean/20 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-editorial overflow-hidden bg-brand-cream flex items-center justify-center shrink-0">
                                 {profile.avatarUrl ? (
                                     <img
                                         src={profile.avatarUrl}

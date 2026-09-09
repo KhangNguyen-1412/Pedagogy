@@ -119,12 +119,12 @@ export const IeltsWritingLab = ({ onSaveEssay, showToast }) => {
     return (
         <div className="max-w-5xl mx-auto space-y-6 animate-fade-in pb-16">
             {/* Header Banner - Identical layout to ProgramsView (Sticky Header) */}
-            <div className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
+            <div className="static md:sticky md:-top-12 z-30 bg-brand-cream/95 md:backdrop-blur-md pt-2 md:pt-12 pb-3 md:pb-4 mb-4 md:mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row sm:items-end justify-between gap-3 md:gap-4">
+                <div className="hidden md:block">
                     <h2 className="text-4xl font-serif-title text-brand-cerulean font-bold">Phòng Writing Lab</h2>
                     <p className="text-lg text-gray-600 mt-2 font-body">Giao diện Split-Screen, đếm từ real-time, đồng hồ 20/40p và dàn ý PEEL chuẩn giám khảo.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
                     <div className={`flex items-center gap-2 px-3.5 py-2 border font-mono font-bold text-sm bg-white shadow-editorial ${
                         timerSeconds < 300 ? 'text-brand-jasper border-brand-jasper animate-pulse' : 'text-brand-cerulean border-brand-cerulean'
                     }`}>

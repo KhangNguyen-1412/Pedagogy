@@ -15,11 +15,11 @@ import {
     CheckSquare,
     Sparkles,
     ChevronRight,
-    Pencil,
-    Trash2
+    Pencil
 } from 'lucide-react';
 import { initialGraduationCriteria } from '../../data/trainingData';
 import { Modal, EditorialSelect } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 
 export const GraduationAuditView = ({ profile }) => {
     const [activeTab, setActiveTab] = useState('audit'); // 'audit' | 'certificate' | 'procedure'
@@ -59,14 +59,6 @@ export const GraduationAuditView = ({ profile }) => {
         reviewDate: auditData.predictedOutcome?.reviewDate || ''
     });
 
-    const handleResetAudit = () => {
-        if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ thẩm định mẫu để bắt đầu đối soát thực tế?')) {
-            setAuditData(initialGraduationCriteria);
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('pedagogy_graduation_audit', JSON.stringify(initialGraduationCriteria));
-            }
-        }
-    };
 
     const handleOpenEditReq = (req) => {
         setEditingReqId(req.id);
@@ -142,57 +134,61 @@ export const GraduationAuditView = ({ profile }) => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
-            {/* Sticky Editorial Header */}
-            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div>
-                    <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-brand-cream border border-brand-cerulean/30 text-brand-cerulean text-xs font-serif-title font-bold uppercase tracking-wider mb-2">
+        <div className="max-w-6xl mx-auto space-y-6 md:space-y-8">
+            <CollapsiblePageHeader
+                badge={
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-brand-cream border border-brand-cerulean/30 text-brand-cerulean text-[11px] sm:text-xs font-serif-title font-bold uppercase tracking-wider mb-1">
                         <GraduationCap className="w-3.5 h-3.5 text-brand-cerulean" />
                         Hội đồng Đào tạo • Cấp Chứng chỉ Nghiệp vụ Sư phạm
                     </div>
-                    <h1 className="text-4xl sm:text-5xl font-serif-title text-brand-cerulean tracking-tight">
-                        Thẩm Định Điều Kiện Tốt Nghiệp
-                    </h1>
-                    <p className="text-sm font-sans text-stone-600 mt-2 max-w-3xl">
-                        Đối soát 5 tiêu chuẩn pháp lý theo {auditData.targetProgram.legalBasis}, chuẩn hóa dữ liệu tín chỉ, GPA, kết quả thực tập sư phạm và ngoại ngữ - tin học trước khi Hội đồng ra quyết định công nhận tốt nghiệp.
-                    </p>
-                </div>
-
-                {/* Stat Counters & Reset */}
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-6 bg-white border border-stone-200 px-4 py-2 shadow-xs">
-                        <div className="text-right">
-                            <div className="text-[10px] font-serif-title uppercase tracking-wider text-stone-500">Tiến độ Thẩm định</div>
-                            <div className="text-3xl font-serif-title font-bold text-brand-cerulean flex items-center justify-end gap-1.5 leading-none mt-1">
-                                <CheckCircle2 className={`w-5 h-5 ${isAllPassed ? 'text-emerald-600' : 'text-amber-500'}`} />
-                                {clearancePercent}%
+                }
+                title="Thẩm Định Điều Kiện Tốt Nghiệp"
+                subtitle={`Đối soát 5 tiêu chuẩn pháp lý theo ${auditData.targetProgram.legalBasis}, chuẩn hóa dữ liệu tín chỉ, GPA, kết quả thực tập sư phạm và ngoại ngữ - tin học trước khi Hội đồng ra quyết định công nhận tốt nghiệp.`}
+                actions={({ isScrolled }) => (
+                    <div className="flex items-center gap-2 sm:gap-3 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]">
+                        <div className={`bg-white border border-stone-200 text-center shadow-xs flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                            isScrolled ? 'px-2.5 py-1 gap-1.5' : 'p-1.5 sm:p-2 flex-col min-w-[75px]'
+                        }`}>
+                            <span className={`uppercase font-serif-title text-stone-500 transition-all duration-300 ${
+                                isScrolled ? 'hidden' : 'text-[9px] block'
+                            }`}>
+                                Tiến độ
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                                <CheckCircle2 className={`w-4 h-4 transition-all duration-300 ${isAllPassed ? 'text-emerald-600' : 'text-amber-500'}`} />
+                                <span className={`font-serif-title font-bold text-brand-cerulean transition-all duration-300 leading-tight ${
+                                    isScrolled ? 'text-xs sm:text-sm' : 'text-base sm:text-xl'
+                                }`}>
+                                    {clearancePercent}%
+                                </span>
                             </div>
                         </div>
-                        <div className="border-l border-stone-200 pl-4 text-left">
-                            <div className="text-[10px] font-serif-title uppercase tracking-wider text-stone-500">Trạng thái</div>
-                            <div className={`text-xs font-serif-title font-bold mt-1 ${isAllPassed ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        <div className={`bg-white border border-stone-200 text-center shadow-xs transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                            isScrolled ? 'px-2.5 py-1' : 'p-1.5 sm:p-2 min-w-[85px]'
+                        }`}>
+                            <span className={`uppercase font-serif-title text-stone-500 transition-all duration-300 ${
+                                isScrolled ? 'hidden' : 'text-[9px] block'
+                            }`}>
+                                Trạng thái
+                            </span>
+                            <span className={`font-serif-title font-bold transition-all duration-300 ${
+                                isScrolled ? 'text-xs' : 'text-xs sm:text-sm block'
+                            } ${isAllPassed ? 'text-emerald-700' : 'text-amber-700'}`}>
                                 {isAllPassed ? 'Đủ điều kiện' : 'Đang đối soát'}
-                            </div>
+                            </span>
                         </div>
-                    </div>
 
-                    <button
-                        type="button"
-                        onClick={handleResetAudit}
-                        className="px-3 py-2 bg-white hover:bg-rose-50 text-stone-600 hover:text-rose-700 border border-stone-200 text-xs font-serif-title font-bold flex items-center gap-1.5 transition-all shadow-xs shrink-0"
-                        title="Xóa thẩm định mẫu và nhập mới từ đầu"
-                    >
-                        <Trash2 className="w-3.5 h-3.5" /> Xóa mẫu
-                    </button>
-                </div>
-            </header>
+
+                    </div>
+                )}
+            />
 
             {/* Segmented Pill Tab Switcher */}
-            <div className="inline-flex p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs flex-wrap gap-1">
+            <div className="flex w-full p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs overflow-x-auto gap-1">
                 {[
-                    { id: 'audit', label: 'Thẩm định 5 Trụ Cột Điều Kiện', count: `${passedCount}/${totalCount} Đạt`, icon: ShieldCheck },
-                    { id: 'certificate', label: 'Bản Phác Thảo Phôi Chứng Chỉ', icon: Award },
-                    { id: 'procedure', label: 'Quy Trình Xét Duyệt & Cấp Phát', icon: FileText }
+                    { id: 'audit', label: '5 Trụ Cột', count: `${passedCount}/${totalCount}`, icon: ShieldCheck },
+                    { id: 'certificate', label: 'Phôi Chứng Chỉ', icon: Award },
+                    { id: 'procedure', label: 'Quy Trình Xét Cấp', icon: FileText }
                 ].map(tab => {
                     const TabIcon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -201,13 +197,13 @@ export const GraduationAuditView = ({ profile }) => {
                             key={tab.id}
                             type="button"
                             onClick={() => setActiveTab(tab.id)}
-                            className={`px-4 py-2 font-serif-title text-xs font-bold rounded transition-all flex items-center gap-2 whitespace-nowrap ${
+                            className={`flex-1 justify-center px-2.5 sm:px-4 py-2 font-serif-title text-[11px] sm:text-xs font-bold rounded transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${
                                 isActive
                                     ? 'bg-brand-cerulean text-white shadow-xs'
                                     : 'text-brand-cerulean hover:bg-brand-cerulean/10'
                             }`}
                         >
-                            <TabIcon className="w-4 h-4" />
+                            <TabIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             <span>{tab.label}</span>
                             {tab.count && (
                                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-sans ${isActive ? 'bg-white/20 text-white' : 'bg-brand-cerulean/15 text-brand-cerulean'}`}>
@@ -223,24 +219,24 @@ export const GraduationAuditView = ({ profile }) => {
             {activeTab === 'audit' && (
                 <div className="space-y-6">
                     {/* Summary Outcome Box */}
-                    <div className="bg-white border-editorial shadow-editorial p-6 border-l-4 border-l-brand-cerulean">
+                    <div className="bg-white border-editorial shadow-editorial p-4 sm:p-6 border-l-4 border-l-brand-cerulean">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-1">
-                                <span className="text-xs font-serif-title font-bold text-brand-cerulean uppercase tracking-wider">
+                                <span className="text-[11px] sm:text-xs font-serif-title font-bold text-brand-cerulean uppercase tracking-wider">
                                     Dự thảo Kết luận của Hội đồng Đào tạo:
                                 </span>
-                                <h3 className="font-serif-title font-bold text-stone-900 text-lg">
+                                <h3 className="font-serif-title font-bold text-stone-900 text-base sm:text-lg">
                                     {isAllPassed
                                         ? 'ĐỦ ĐIỀU KIỆN TỐT NGHIỆP & ĐỀ NGHỊ CẤP CHỨNG CHỈ NVSP'
                                         : 'CHƯA ĐỦ ĐIỀU KIỆN TỐT NGHIỆP & ĐANG THẨM ĐỊNH HỒ SƠ'}
                                 </h3>
                                 <p className="text-xs text-stone-600 font-sans">
-                                    Dự kiến xếp loại tốt nghiệp: <strong className="text-stone-900 font-serif-title font-bold text-brand-jasper">{auditData.predictedOutcome?.projectedRank || 'Chưa xếp loại'}</strong> • Số hiệu dự thảo: <strong className="font-mono text-stone-800">{auditData.predictedOutcome?.certificateSerial || 'Chưa cấp số'}</strong>
+                                    Dự kiến xếp loại: <strong className="text-stone-900 font-serif-title font-bold text-brand-jasper">{auditData.predictedOutcome?.projectedRank || 'Chưa xếp loại'}</strong> • Số hiệu: <strong className="font-mono text-stone-800">{auditData.predictedOutcome?.certificateSerial || 'Chưa cấp số'}</strong>
                                 </p>
                             </div>
                             <button
                                 onClick={() => setActiveTab('certificate')}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-cerulean text-white font-serif-title font-bold text-xs hover:bg-brand-cerulean/90 shadow-editorial self-start md:self-auto"
+                                className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-5 py-2.5 bg-brand-cerulean text-white font-serif-title font-bold text-xs hover:bg-brand-cerulean/90 shadow-editorial self-start md:self-auto"
                             >
                                 <Eye className="w-4 h-4" />
                                 Xem Phôi Chứng Chỉ
@@ -254,7 +250,7 @@ export const GraduationAuditView = ({ profile }) => {
                             return (
                                 <div
                                     key={req.id}
-                                    className={`bg-white border-editorial shadow-editorial p-6 border-l-4 transition-colors ${
+                                    className={`bg-white border-editorial shadow-editorial p-3.5 sm:p-6 border-l-4 transition-colors ${
                                         req.status === 'passed'
                                             ? 'border-l-emerald-600'
                                             : req.status === 'pending'
@@ -264,15 +260,15 @@ export const GraduationAuditView = ({ profile }) => {
                                 >
                                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-2">
                                         <div className="flex items-center gap-2.5">
-                                            <div className="w-7 h-7 rounded-none bg-brand-cerulean/10 text-brand-cerulean font-mono text-xs font-bold flex items-center justify-center border border-brand-cerulean/20">
+                                            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-none bg-brand-cerulean/10 text-brand-cerulean font-mono text-xs font-bold flex items-center justify-center border border-brand-cerulean/20 shrink-0">
                                                 {idx + 1}
                                             </div>
-                                            <h4 className="font-serif-title font-bold text-stone-900 text-lg">
+                                            <h4 className="font-serif-title font-bold text-stone-900 text-base sm:text-lg">
                                                 {req.title}
                                             </h4>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 self-start sm:self-auto">
                                             {renderReqStatusBadge(req.status)}
                                             <button
                                                 type="button"
@@ -285,11 +281,11 @@ export const GraduationAuditView = ({ profile }) => {
                                         </div>
                                     </div>
 
-                                    <p className="text-xs text-stone-600 font-sans mb-4 pl-9">
+                                    <p className="text-xs text-stone-600 font-sans mb-3 sm:mb-4 pl-0 sm:pl-9">
                                         {req.desc}
                                     </p>
 
-                                    <div className="pl-9 grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-stone-200 text-xs font-sans">
+                                    <div className="pl-0 sm:pl-9 grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-stone-200 text-xs font-sans">
                                         <div className="bg-stone-50 p-3 border border-stone-200">
                                             <span className="font-serif-title font-bold text-stone-500 block mb-1">
                                                 Chuẩn yêu cầu tối thiểu:

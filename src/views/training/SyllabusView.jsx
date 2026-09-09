@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BookOpen, Plus, PlusCircle, Trash2, CheckCircle2, Check, ArrowRight, GraduationCap, Mail, RefreshCw, Sparkles } from 'lucide-react';
 import { EditorialSelect } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 import { getSelectedModules, getProgramStatus } from '../../utils/ruleValidators';
 import { generateHcmueLecturerEmail } from '../../utils/seoHelpers';
 
@@ -227,76 +228,80 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
     const totalWeight = att + mid + fin;
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8">
-            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className="text-3xl md:text-4xl font-serif-title text-brand-cerulean">Quản lý Đề cương chi tiết</h2>
-                    <p className="text-sm md:text-base text-gray-600 mt-1">
-                        Hiển thị các học phần đã chọn học ({selectedModules.length} môn). Cấu hình CLOs, khung bài học & trọng số.
-                    </p>
-                </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-                    {enrolledPrograms.length > 1 && (
-                        <div className="w-full sm:w-60">
-                            <EditorialSelect
-                                label="Lọc theo CTĐT"
-                                value={selectedProgramFilter}
-                                onChange={setSelectedProgramFilter}
-                                options={[
-                                    { label: `Tất cả CTĐT đang học (${enrolledPrograms.length})`, value: 'all' },
-                                    ...enrolledPrograms.map(p => ({
-                                        label: p.name,
-                                        value: p.id
-                                    }))
-                                ]}
-                            />
+        <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
+            <CollapsiblePageHeader
+                title="Quản lý Đề cương chi tiết"
+                subtitle={`Hiển thị các học phần đã chọn (${selectedModules.length} môn). Cấu hình CLOs, khung bài học & trọng số.`}
+                actions={({ isScrolled }) => (
+                    isScrolled ? (
+                        <div className="text-xs font-serif-title font-bold text-brand-cerulean bg-brand-cream px-2.5 py-1 rounded border border-brand-cerulean/20 truncate max-w-[200px] sm:max-w-none shadow-xs">
+                            {selectedModules.find(m => m.id === selectedModuleId)?.name || `${selectedModules.length} học phần`}
                         </div>
-                    )}
-                    <div className="w-full sm:w-80">
-                        <EditorialSelect
-                            label={`Học phần đã chọn (${selectedModules.length} môn)`}
-                            value={selectedModuleId}
-                            onChange={handleModuleChange}
-                            options={selectedModules.map(m => ({
-                                label: `${(m.code || '').toUpperCase()} - ${m.name} (${m.credits} TC)${m.type === 'elective' ? ' [Tự chọn]' : ''}`,
-                                value: m.id
-                            }))}
-                        />
-                    </div>
-                </div>
-            </header>
+                    ) : (
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
+                            {enrolledPrograms.length > 1 && (
+                                <div className="w-full sm:w-52">
+                                    <EditorialSelect
+                                        label="Lọc theo CTĐT"
+                                        value={selectedProgramFilter}
+                                        onChange={setSelectedProgramFilter}
+                                        options={[
+                                            { label: `Tất cả CTĐT (${enrolledPrograms.length})`, value: 'all' },
+                                            ...enrolledPrograms.map(p => ({
+                                                label: p.name,
+                                                value: p.id
+                                            }))
+                                        ]}
+                                    />
+                                </div>
+                            )}
+                            <div className="w-full sm:w-72">
+                                <EditorialSelect
+                                    label={`Học phần (${selectedModules.length} môn)`}
+                                    value={selectedModuleId}
+                                    onChange={handleModuleChange}
+                                    options={selectedModules.map(m => ({
+                                        label: `${(m.code || '').toUpperCase()} - ${m.name} (${m.credits} TC)`,
+                                        value: m.id
+                                    }))}
+                                />
+                            </div>
+                        </div>
+                    )
+                )}
+            />
 
 
-            <form onSubmit={handleSaveSyllabus} className="bg-white border-editorial p-8 shadow-editorial space-y-8">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-brand-cerulean/20 pb-4">
-                    <div className="space-y-1.5">
-                        <div className="flex items-center gap-2.5 flex-wrap">
+            <form onSubmit={handleSaveSyllabus} className="bg-white border-editorial p-4 sm:p-8 shadow-editorial space-y-6 sm:space-y-8">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 border-b border-brand-cerulean/20 pb-4">
+                    <div className="space-y-1.5 w-full md:w-auto">
+                        <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-bold text-white bg-brand-cerulean px-2.5 py-0.5 rounded font-sans tracking-wide">
                                 {(currentModule.code || '').toUpperCase()}
                             </span>
                             {(syllabusData.instructor || currentModule.instructor) && (
-                                <span className="text-xs font-serif-title text-brand-cerulean bg-brand-cream px-2.5 py-0.5 rounded border border-brand-cerulean/30 flex items-center gap-1.5 font-semibold">
+                                <span className="text-xs font-serif-title text-brand-cerulean bg-brand-cream px-2 py-0.5 rounded border border-brand-cerulean/30 flex items-center gap-1.5 font-semibold">
                                     <GraduationCap size={13} className="text-brand-jasper" />
                                     GV: {syllabusData.instructor || currentModule.instructor}
                                 </span>
                             )}
                         </div>
-                        <h3 className="text-2xl md:text-3xl font-serif-title text-brand-cerulean font-bold">
+                        <h3 className="text-xl sm:text-2xl md:text-3xl font-serif-title text-brand-cerulean font-bold">
                             {currentModule.name}
                         </h3>
                     </div>
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2 w-full md:w-auto">
                         {navigate && (
                             <button
                                 type="button"
                                 onClick={() => navigate('module_detail', { moduleId: currentModule.id })}
-                                className="px-3 py-2 border border-brand-cerulean text-brand-cerulean font-serif-title text-xs hover:bg-brand-cerulean hover:text-white transition-colors"
+                                className="flex-1 sm:flex-none text-center px-3 py-2 border border-brand-cerulean text-brand-cerulean font-serif-title text-xs hover:bg-brand-cerulean hover:text-white transition-colors"
                             >
                                 Xem Học Phần &rarr;
                             </button>
                         )}
-                        <button type="submit" className="px-6 py-2.5 bg-brand-cerulean text-white font-serif-title shadow-editorial hover:bg-brand-jasper transition-colors">
-                            Lưu Đề Cương Chi Tiết
+                        <button type="submit" className="flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 bg-brand-cerulean text-white font-serif-title text-xs sm:text-base shadow-editorial hover:bg-brand-jasper transition-colors">
+                            Lưu Đề Cương
                         </button>
                     </div>
                 </div>
@@ -388,16 +393,16 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
 
                     <div className="space-y-3">
                         {(syllabusData.clos || []).map((clo, idx) => (
-                            <div key={idx} className="flex items-center gap-3">
-                                <span className="text-xs font-bold text-gray-500 w-16 font-serif-title">CLO {idx + 1}:</span>
+                            <div key={idx} className="flex items-center gap-2 sm:gap-3">
+                                <span className="text-xs font-bold text-gray-500 w-12 sm:w-16 font-serif-title shrink-0">CLO {idx + 1}:</span>
                                 <input
                                     type="text"
-                                    className="input-editorial flex-1"
+                                    className="input-editorial flex-1 text-xs sm:text-sm"
                                     value={clo}
                                     onChange={e => handleCLOChange(idx, e.target.value)}
                                     placeholder="Ví dụ: Phân tích được các quy luật tâm lý học lứa tuổi..."
                                 />
-                                <button type="button" onClick={() => handleRemoveCLO(idx)} className="p-1 text-red-500 hover:text-red-700 transition-colors" title="Xóa dòng này">
+                                <button type="button" onClick={() => handleRemoveCLO(idx)} className="p-1 text-red-500 hover:text-red-700 transition-colors shrink-0" title="Xóa dòng này">
                                     <Trash2 size={16} />
                                 </button>
                             </div>
@@ -411,51 +416,66 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
                 {/* SECTION 3: KHUNG BÀI HỌC (SẮP XẾP THEO TUẦN HOẶC BUỔI) */}
                 <div className="space-y-4">
                     <div className="flex justify-between items-center border-b border-brand-cerulean/20 pb-1">
-                        <h4 className="text-lg font-serif-title text-brand-cerulean font-bold flex items-center gap-2">
+                        <h4 className="text-base sm:text-lg font-serif-title text-brand-cerulean font-bold flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-brand-cerulean"></span>
-                            Khung bài học (Sắp xếp theo Tuần hoặc Buổi học)
+                            Khung bài học (Theo Tuần/Buổi)
                         </h4>
                         <button type="button" onClick={handleAddScheduleRow} className="text-xs font-serif-title text-brand-jasper flex items-center gap-1 hover:underline font-bold">
-                            <PlusCircle size={15} /> Thêm Buổi / Tuần học
+                            <PlusCircle size={15} /> Thêm Buổi học
                         </button>
                     </div>
 
-                    <div className="space-y-3 max-h-[360px] overflow-y-auto pr-2 border border-brand-cerulean/15 p-2.5 bg-brand-cream/20 rounded-sm">
+                    <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1 sm:pr-2 border border-brand-cerulean/15 p-2 sm:p-2.5 bg-brand-cream/20 rounded-sm">
                         {(syllabusData.schedule || []).map((item, idx) => (
-                            <div key={idx} className="p-4 border border-brand-cerulean/20 bg-white space-y-3 relative group shadow-xs">
-                                <div className="flex justify-between items-center gap-4">
-                                    <div className="flex items-center gap-2 w-36">
-                                        <span className="text-xs font-bold text-brand-cerulean font-serif-title">Tuần/Buổi:</span>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            className="input-editorial w-16 text-center font-bold"
-                                            value={item.week || idx + 1}
-                                            onChange={e => handleScheduleChange(idx, 'week', Number(e.target.value))}
-                                        />
+                            <div key={idx} className="p-3 sm:p-4 border border-brand-cerulean/20 bg-white space-y-2.5 sm:space-y-3 relative group shadow-xs">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                    <div className="flex items-center justify-between sm:justify-start gap-2">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-xs font-bold text-brand-cerulean font-serif-title shrink-0">Tuần/Buổi:</span>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                className="input-editorial w-14 sm:w-16 text-center font-bold text-xs sm:text-sm"
+                                                value={item.week || idx + 1}
+                                                onChange={e => handleScheduleChange(idx, 'week', Number(e.target.value))}
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-1.5 sm:hidden">
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                className="input-editorial w-12 text-center text-xs"
+                                                value={item.hours || 3}
+                                                onChange={e => handleScheduleChange(idx, 'hours', Number(e.target.value))}
+                                            />
+                                            <span className="text-xs text-gray-500 font-bold">tiết</span>
+                                            <button type="button" onClick={() => handleRemoveScheduleRow(idx)} className="p-1 text-red-500 hover:text-red-700 transition-colors ml-1" title="Xóa buổi học này">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="flex-1">
+                                    <div className="flex-1 min-w-0">
                                         <input
                                             type="text"
-                                            className="input-editorial w-full font-serif-title font-bold text-brand-cerulean"
+                                            className="input-editorial w-full font-serif-title font-bold text-brand-cerulean text-xs sm:text-sm"
                                             value={item.title || ''}
                                             onChange={e => handleScheduleChange(idx, 'title', e.target.value)}
                                             placeholder="Tên bài học / Tiêu đề buổi học..."
                                         />
                                     </div>
-                                    <div className="flex items-center gap-2 w-28">
+                                    <div className="hidden sm:flex items-center gap-2 shrink-0">
                                         <input
                                             type="number"
                                             min="1"
-                                            className="input-editorial w-14 text-center"
+                                            className="input-editorial w-14 text-center text-sm"
                                             value={item.hours || 3}
                                             onChange={e => handleScheduleChange(idx, 'hours', Number(e.target.value))}
                                         />
                                         <span className="text-xs text-gray-500 font-bold">tiết</span>
+                                        <button type="button" onClick={() => handleRemoveScheduleRow(idx)} className="p-1 text-red-500 hover:text-red-700 transition-colors ml-1" title="Xóa buổi học này">
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
-                                    <button type="button" onClick={() => handleRemoveScheduleRow(idx)} className="p-1 text-red-500 hover:text-red-700 transition-colors" title="Xóa buổi học này">
-                                        <Trash2 size={16} />
-                                    </button>
                                 </div>
                                 <div>
                                     <input
@@ -476,8 +496,8 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
 
                 {/* SECTION 4: ĐÁNH GIÁ & TRỌNG SỐ */}
                 <div className="space-y-4">
-                    <div className="flex justify-between items-center border-b border-brand-cerulean/20 pb-1">
-                        <h4 className="text-lg font-serif-title text-brand-cerulean font-bold flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-brand-cerulean/20 pb-1">
+                        <h4 className="text-base sm:text-lg font-serif-title text-brand-cerulean font-bold flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-brand-cerulean"></span>
                             Đánh giá & Trọng số điểm (%)
                         </h4>
@@ -494,14 +514,14 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
                         </div>
                     </div>
 
-                    <div className="p-4 bg-brand-cream border border-brand-cerulean/20 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="p-3 sm:p-4 bg-brand-cream border border-brand-cerulean/20 grid grid-cols-3 gap-2.5 sm:gap-6">
                         <div>
-                            <label className="block text-xs font-bold text-gray-600 mb-1">Chuyên cần / Thái độ (%)</label>
+                            <label className="block text-[11px] sm:text-xs font-bold text-gray-600 mb-1">Chuyên cần (%)</label>
                             <input
                                 type="number"
                                 min="0"
                                 max="100"
-                                className="input-editorial w-full font-bold"
+                                className="input-editorial w-full font-bold text-center sm:text-left text-xs sm:text-sm"
                                 value={syllabusData.weights?.attendance ?? 10}
                                 onChange={e => setSyllabusData({
                                     ...syllabusData,
@@ -510,12 +530,12 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-600 mb-1">Giữa kỳ / Thảo luận (%)</label>
+                            <label className="block text-[11px] sm:text-xs font-bold text-gray-600 mb-1">Giữa kỳ (%)</label>
                             <input
                                 type="number"
                                 min="0"
                                 max="100"
-                                className="input-editorial w-full font-bold"
+                                className="input-editorial w-full font-bold text-center sm:text-left text-xs sm:text-sm"
                                 value={syllabusData.weights?.midterm ?? 30}
                                 onChange={e => setSyllabusData({
                                     ...syllabusData,
@@ -524,12 +544,12 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-600 mb-1">Cuối kỳ / Đồ án (%)</label>
+                            <label className="block text-[11px] sm:text-xs font-bold text-gray-600 mb-1">Cuối kỳ (%)</label>
                             <input
                                 type="number"
                                 min="0"
                                 max="100"
-                                className="input-editorial w-full font-bold"
+                                className="input-editorial w-full font-bold text-center sm:text-left text-xs sm:text-sm"
                                 value={syllabusData.weights?.final ?? 60}
                                 onChange={e => setSyllabusData({
                                     ...syllabusData,
@@ -541,7 +561,7 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
                 </div>
 
                 <div className="pt-4 flex justify-end gap-4 border-t border-brand-cerulean/20">
-                    <button type="submit" className="px-8 py-3 bg-brand-cerulean text-white font-serif-title shadow-editorial hover:bg-brand-jasper transition-colors text-lg">
+                    <button type="submit" className="w-full sm:w-auto px-8 py-3 bg-brand-cerulean text-white font-serif-title shadow-editorial hover:bg-brand-jasper transition-colors text-base sm:text-lg text-center">
                         Lưu Đề Cương Chi Tiết
                     </button>
                 </div>

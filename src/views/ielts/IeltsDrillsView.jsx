@@ -96,16 +96,16 @@ export const IeltsDrillsView = ({ onCompleteDrill, showToast }) => {
     return (
         <div className="max-w-5xl mx-auto space-y-6 animate-fade-in pb-16">
             {/* Header Banner - Identical layout to ProgramsView (Sticky Header) */}
-            <div className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
+            <div className="static md:sticky md:-top-12 z-30 bg-brand-cream/95 md:backdrop-blur-md pt-2 md:pt-12 pb-3 md:pb-4 mb-4 md:mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row sm:items-end justify-between gap-3 md:gap-4">
+                <div className="hidden md:block">
                     <h2 className="text-4xl font-serif-title text-brand-cerulean font-bold">Kho Drills Chuyên Sâu IELTS</h2>
                     <p className="text-lg text-gray-600 mt-2 font-body">Bài tập ngắn 3-5 phút theo từng dạng câu hỏi với giải thích bẫy chi tiết và bảng từ đồng nghĩa.</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                     <select
                         value={selectedSkill}
                         onChange={(e) => setSelectedSkill(e.target.value)}
-                        className="px-3.5 py-2 bg-white border border-brand-cerulean text-xs font-serif-title font-bold text-brand-cerulean shadow-editorial"
+                        className="w-full sm:w-auto px-3.5 py-2 bg-white border border-brand-cerulean text-xs font-serif-title font-bold text-brand-cerulean shadow-editorial"
                     >
                         <option value="all">Tất cả Kỹ Năng ({IELTS_DRILLS.length})</option>
                         <option value="listening">Nghe (Listening)</option>

@@ -15,6 +15,7 @@ import {
     Award
 } from 'lucide-react';
 import { EditorialSelect, Modal } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 import { isModuleInProgram, getModuleProgramNames, getProgramStatusLabel } from "../../utils/ruleValidators";
 import { calculateModuleFinal } from "../../utils/gpaCalculators";
 import { formatModuleName, generateHcmueLecturerEmail } from "../../utils/seoHelpers";
@@ -118,65 +119,60 @@ export const ModuleDetailView = ({ moduleId, programId, programs, modules, profi
     ];
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8">
-            {/* Sticky Header Container */}
-            <div className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean space-y-3">
-                <button
-                    onClick={() => navigate('program_detail', { programId: programId || (moduleItem.programIds && moduleItem.programIds[0]) })}
-                    className="flex items-center gap-2 text-brand-cerulean hover:text-brand-jasper font-serif-title text-sm font-bold transition-colors"
-                >
-                    <ArrowLeft size={16} /> Quay lại danh sách học phần
-                </button>
-
-                <header className="bg-white border-editorial p-6 shadow-editorial flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="space-y-2 flex-1">
-                    <div className="flex items-center gap-3 flex-wrap">
-                        <span className="px-2.5 py-1 bg-brand-cerulean text-white font-sans font-bold text-xs rounded">
+        <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
+            <CollapsiblePageHeader
+                backButton={{
+                    label: 'Quay lại danh sách học phần',
+                    onClick: () => navigate('program_detail', { programId: programId || (moduleItem.programIds && moduleItem.programIds[0]) })
+                }}
+                badge={
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                        <span className="px-2.5 py-0.5 sm:py-1 bg-brand-cerulean text-white font-sans font-bold text-xs rounded">
                             {(moduleItem.code || '').toUpperCase()}
                         </span>
-                        <span className="px-2.5 py-1 bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 font-serif-title text-xs font-bold">
+                        <span className="px-2.5 py-0.5 sm:py-1 bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 font-serif-title text-xs font-bold">
                             Nhánh {moduleItem.category || 'A'}
                         </span>
-                        <span className="px-2.5 py-1 bg-brand-cream text-brand-jasper border border-brand-jasper/30 font-sans text-xs font-bold">
+                        <span className="px-2.5 py-0.5 sm:py-1 bg-brand-cream text-brand-jasper border border-brand-jasper/30 font-sans text-xs font-bold">
                             {moduleItem.credits} Tín chỉ
                         </span>
-                        <span className="px-2.5 py-1 bg-gray-100 text-gray-700 font-sans text-xs">
+                        <span className="px-2.5 py-0.5 sm:py-1 bg-gray-100 text-gray-700 font-sans text-xs">
                             {moduleItem.type === 'mandatory' ? 'Bắt buộc' : moduleItem.type === 'practice' ? 'Thực hành' : 'Tự chọn'}
                         </span>
                         {moduleItem.programIds && moduleItem.programIds.length > 1 && (
-                            <span className="px-2.5 py-1 bg-brand-cerulean/10 text-brand-cerulean border border-brand-cerulean/20 font-serif-title text-xs font-bold flex items-center gap-1">
+                            <span className="px-2.5 py-0.5 sm:py-1 bg-brand-cerulean/10 text-brand-cerulean border border-brand-cerulean/20 font-serif-title text-xs font-bold flex items-center gap-1">
                                 <Link2 size={12} /> Dùng chung ({moduleItem.programIds.length} CT)
                             </span>
                         )}
                     </div>
-                    <h1 className="text-4xl font-serif-title text-brand-cerulean">{formatModuleName(moduleItem.name, profile?.teachingSubject || profile?.major)}</h1>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => {
-                            setEditingModule({ ...moduleItem });
-                            setIsEditModalOpen(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-brand-cream text-brand-cerulean border border-brand-cerulean font-serif-title shadow-sm hover:border-brand-jasper hover:text-brand-jasper transition-all"
-                    >
-                        <Pencil size={16} /> Chỉnh sửa
-                    </button>
-                    <button
-                        onClick={handleDelete}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                        title="Xóa học phần"
-                    >
-                        <Trash2 size={18} />
-                    </button>
-                </div>
-            </header>
-            </div>
+                }
+                title={formatModuleName(moduleItem.name, profile?.teachingSubject || profile?.major)}
+                actions={
+                    <div className="flex items-center gap-2 sm:gap-3 w-full md:w-auto justify-end">
+                        <button
+                            onClick={() => {
+                                setEditingModule({ ...moduleItem });
+                                setIsEditModalOpen(true);
+                            }}
+                            className="flex-1 sm:flex-none justify-center flex items-center gap-1.5 sm:gap-2 px-3.5 py-1.5 sm:py-2 bg-brand-cream text-brand-cerulean border border-brand-cerulean font-serif-title text-xs sm:text-sm shadow-xs hover:border-brand-jasper hover:text-brand-jasper transition-all"
+                        >
+                            <Pencil size={15} /> Chỉnh sửa
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            className="p-1.5 sm:p-2 text-gray-400 hover:text-red-600 transition-colors"
+                            title="Xóa học phần"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    </div>
+                }
+            />
 
             {/* Main Content Breakdown */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                 {/* Score Summary Card */}
-                <div className="bg-white border-editorial p-6 shadow-editorial space-y-4">
+                <div className="bg-white border-editorial p-4 sm:p-6 shadow-editorial space-y-4">
                     <h3 className="text-2xl font-serif-title text-brand-cerulean border-b border-brand-cerulean/20 pb-2">
                         Kết quả Học tập
                     </h3>

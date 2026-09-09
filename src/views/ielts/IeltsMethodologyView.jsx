@@ -32,12 +32,12 @@ export const IeltsMethodologyView = ({ onSelectZone }) => {
     return (
         <div className="max-w-5xl mx-auto space-y-6 animate-fade-in pb-16">
             {/* Header Banner - Identical layout to ProgramsView (Sticky Header) */}
-            <div className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
+            <div className="static md:sticky md:-top-12 z-30 bg-brand-cream/95 md:backdrop-blur-md pt-2 md:pt-12 pb-3 md:pb-4 mb-4 md:mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row sm:items-end justify-between gap-3 md:gap-4">
+                <div className="hidden md:block">
                     <h2 className="text-4xl font-serif-title text-brand-cerulean font-bold">Phương Pháp Luận & Rubrics IELTS</h2>
                     <p className="text-lg text-gray-600 mt-2 font-body">Giải phẫu Band Descriptors 5.0 - 9.0, Khung tư duy PEEL/5W1H và Bẫy L1 Pitfalls.</p>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 no-scrollbar">
                     {[
                         { id: 'rubrics', label: '1. Tiêu chí Rubrics', icon: Award },
                         { id: 'frameworks', label: '2. Khung tư duy', icon: Layers },
@@ -50,7 +50,7 @@ export const IeltsMethodologyView = ({ onSelectZone }) => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`px-3 py-1.5 text-xs font-serif-title font-bold transition-all border flex items-center gap-1.5 ${
+                                className={`px-2.5 sm:px-3 py-1.5 text-xs font-serif-title font-bold transition-all border flex items-center gap-1.5 whitespace-nowrap shrink-0 sm:shrink ${
                                     isActive
                                         ? 'bg-brand-jasper text-white border-brand-jasper shadow-editorial'
                                         : 'bg-white text-brand-cerulean border-brand-cerulean/30 hover:bg-brand-cream'

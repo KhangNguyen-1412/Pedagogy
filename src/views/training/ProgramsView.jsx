@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, CheckCircle2, PlusCircle, Trash2 } from 'lucide-react';
 import { EditorialSelect, Modal } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 import { getCategoryPresets, isModuleInProgram, getProgramStatus, getProgramStatusLabel, isThptProgram, isThcsProgram } from '../../utils/ruleValidators';
 
 export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeleteProgram, onToggleEnrollProgram, onUpdateProgramStatus, navigate }) => {
@@ -84,29 +85,32 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
 
     return (
         <div className="max-w-5xl mx-auto">
-            <div className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
-                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Quản lý Chương trình đào tạo</h2>
-                    <p className="text-lg text-gray-600 mt-2">Cấu trúc quy tắc tín chỉ Đại học & Khóa bồi dưỡng nghiệp vụ.</p>
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="w-52">
-                        <EditorialSelect
-                            value={statusFilter}
-                            onChange={setStatusFilter}
-                            options={statusFilterOptions}
-                        />
+            <CollapsiblePageHeader
+                title="Quản lý Chương trình đào tạo"
+                subtitle="Cấu trúc quy tắc tín chỉ Đại học & Khóa bồi dưỡng nghiệp vụ."
+                actions={
+                    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                        <div className="flex-1 sm:w-48">
+                            <EditorialSelect
+                                value={statusFilter}
+                                onChange={setStatusFilter}
+                                options={statusFilterOptions}
+                            />
+                        </div>
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-brand-jasper text-brand-cream font-serif-title hover:bg-red-800 transition-colors shadow-editorial whitespace-nowrap text-xs sm:text-sm shrink-0"
+                        >
+                            <Plus size={16} /> Khởi tạo
+                        </button>
                     </div>
-                    <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-brand-jasper text-brand-cream font-serif-title hover:bg-red-800 transition-colors shadow-editorial whitespace-nowrap">
-                        <Plus size={18} /> Khởi tạo
-                    </button>
-                </div>
-            </div>
+                }
+            />
 
             <div className="space-y-6">
                 {filteredPrograms.length === 0 ? (
-                    <div className="border-editorial p-12 bg-white text-center space-y-4 shadow-sm">
-                        <p className="text-gray-500 font-serif-title text-lg">Chưa có chương trình đào tạo nào phù hợp.</p>
+                    <div className="border-editorial p-8 sm:p-12 bg-white text-center space-y-4 shadow-sm">
+                        <p className="text-gray-500 font-serif-title text-base sm:text-lg">Chưa có chương trình đào tạo nào phù hợp.</p>
                         <button onClick={() => setIsModalOpen(true)} className="px-5 py-2.5 bg-brand-jasper text-brand-cream font-serif-title hover:bg-red-800 transition-colors shadow-editorial inline-flex items-center gap-2 text-sm">
                             <Plus size={18} /> Khởi tạo chương trình mới
                         </button>
@@ -118,67 +122,67 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                         const isDaiHoc = prog.category === 'dai_hoc' || prog.rules?.general !== undefined;
 
                         return (
-                            <div key={prog.id} className="border-editorial p-6 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group hover:bg-blue-50/30 transition-colors">
-                                <div className="flex-1 space-y-2">
-                                    <div className="flex items-center gap-3 flex-wrap">
-                                        <h3 className="text-2xl font-serif-title text-brand-cerulean font-bold cursor-pointer group-hover:text-brand-jasper" onClick={() => navigate('program_detail', { programId: prog.id })}>
+                            <div key={prog.id} className="border-editorial p-4 sm:p-6 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6 group hover:bg-blue-50/30 transition-colors">
+                                <div className="flex-1 space-y-2 w-full">
+                                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                                        <h3 className="text-xl sm:text-2xl font-serif-title text-brand-cerulean font-bold cursor-pointer group-hover:text-brand-jasper" onClick={() => navigate('program_detail', { programId: prog.id })}>
                                             {prog.name}
                                         </h3>
                                         {progStatus === 'chua_hoc' && (
-                                            <span className="px-2.5 py-0.5 bg-gray-100 text-gray-700 text-xs font-bold font-serif-title rounded border border-gray-300 flex items-center gap-1.5">
+                                            <span className="px-2.5 py-0.5 bg-gray-100 text-gray-700 text-[11px] sm:text-xs font-bold font-serif-title rounded border border-gray-300 flex items-center gap-1.5">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
                                                 Chưa học
                                             </span>
                                         )}
                                         {progStatus === 'dang_hoc' && (
-                                            <span className="px-2.5 py-0.5 bg-brand-cream text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/40 flex items-center gap-1.5">
+                                            <span className="px-2.5 py-0.5 bg-brand-cream text-brand-cerulean text-[11px] sm:text-xs font-bold font-serif-title rounded border border-brand-cerulean/40 flex items-center gap-1.5">
                                                 <span className="w-2 h-2 rounded-full bg-brand-cerulean animate-pulse"></span>
                                                 Đang học
                                             </span>
                                         )}
                                         {progStatus === 'da_hoc' && (
-                                            <span className="px-2.5 py-0.5 bg-brand-cerulean/15 text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/40 flex items-center gap-1.5">
+                                            <span className="px-2.5 py-0.5 bg-brand-cerulean/15 text-brand-cerulean text-[11px] sm:text-xs font-bold font-serif-title rounded border border-brand-cerulean/40 flex items-center gap-1.5">
                                                 <CheckCircle2 size={13} className="text-brand-cerulean" />
                                                 Đã học
                                             </span>
                                         )}
                                         {isDaiHoc && (
-                                            <span className="px-2.5 py-0.5 bg-brand-cream text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/30">
+                                            <span className="px-2.5 py-0.5 bg-brand-cream text-brand-cerulean text-[11px] sm:text-xs font-bold font-serif-title rounded border border-brand-cerulean/30">
                                                 Bậc Đại học (4 năm)
                                             </span>
                                         )}
                                         {sharedCount > 0 && (
-                                            <span className="px-2.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/20">
+                                            <span className="px-2.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-[11px] sm:text-xs font-bold font-serif-title rounded border border-brand-cerulean/20">
                                                 {sharedCount} học phần dùng chung
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-gray-600 text-sm line-clamp-2">{prog.description}</p>
+                                    <p className="text-gray-600 text-xs sm:text-sm line-clamp-2">{prog.description}</p>
                                     
                                     {isDaiHoc ? (
-                                        <div className="pt-2 flex flex-wrap gap-2 text-xs font-sans">
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">GD Đại cương: <b>{prog.rules?.general ?? 28} TC</b></span>
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Cơ sở ngành (BB): <b>{prog.rules?.fundamentalMandatory ?? prog.rules?.fundamental ?? 26} TC</b></span>
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Cơ sở ngành (TC): <b>{prog.rules?.fundamentalElective ?? 8} TC</b></span>
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Chuyên ngành (BB): <b>{prog.rules?.specializedMandatory ?? 42} TC</b></span>
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Chuyên ngành (TC): <b>{prog.rules?.specializedElective ?? 16} TC</b></span>
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Thực tập & Khóa luận: <b>{prog.rules?.internshipGraduation ?? 15} TC</b></span>
+                                        <div className="pt-2 flex flex-wrap gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-sans">
+                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">GD Đại cương: <b>{prog.rules?.general ?? 28} TC</b></span>
+                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Cơ sở ngành (BB): <b>{prog.rules?.fundamentalMandatory ?? prog.rules?.fundamental ?? 26} TC</b></span>
+                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Cơ sở ngành (TC): <b>{prog.rules?.fundamentalElective ?? 8} TC</b></span>
+                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Chuyên ngành (BB): <b>{prog.rules?.specializedMandatory ?? 42} TC</b></span>
+                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Chuyên ngành (TC): <b>{prog.rules?.specializedElective ?? 16} TC</b></span>
+                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Thực tập & Khóa luận: <b>{prog.rules?.internshipGraduation ?? 15} TC</b></span>
                                         </div>
                                     ) : prog.evaluationType === 'credits' && prog.rules ? (
-                                        <div className="pt-2 flex flex-wrap gap-2 text-xs font-sans">
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối A Bắt buộc: <b>{prog.rules.mandatoryA || 0} TC</b></span>
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối A Tự chọn: <b>{prog.rules.electiveA || 0} TC</b></span>
+                                        <div className="pt-2 flex flex-wrap gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-sans">
+                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Khối A Bắt buộc: <b>{prog.rules.mandatoryA || 0} TC</b></span>
+                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Khối A Tự chọn: <b>{prog.rules.electiveA || 0} TC</b></span>
                                             {isThptProgram(prog) ? (
                                                 <>
-                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối C Bắt buộc: <b>{prog.rules.mandatoryC || 0} TC</b></span>
-                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối C Thực hành: <b>{prog.rules.practiceC || 0} TC</b></span>
-                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối C Tự chọn: <b>{prog.rules.electiveC || 0} TC</b></span>
+                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Khối C Bắt buộc: <b>{prog.rules.mandatoryC || 0} TC</b></span>
+                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Khối C Thực hành: <b>{prog.rules.practiceC || 0} TC</b></span>
+                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Khối C Tự chọn: <b>{prog.rules.electiveC || 0} TC</b></span>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối B Bắt buộc: <b>{prog.rules.mandatoryB || 0} TC</b></span>
-                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối B Thực hành: <b>{prog.rules.practiceB || 0} TC</b></span>
-                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối B Tự chọn: <b>{prog.rules.electiveB || 0} TC</b></span>
+                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Khối B Bắt buộc: <b>{prog.rules.mandatoryB || 0} TC</b></span>
+                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Khối B Thực hành: <b>{prog.rules.practiceB || 0} TC</b></span>
+                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-0.5 sm:py-1 rounded">Khối B Tự chọn: <b>{prog.rules.electiveB || 0} TC</b></span>
                                                 </>
                                             )}
                                         </div>
@@ -187,12 +191,12 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                                 
                                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
                                     {/* 3-State Status Switcher */}
-                                    <div className="flex items-center p-0.5 bg-gray-100 border border-gray-200 rounded text-xs font-serif-title">
+                                    <div className="flex items-center p-0.5 bg-gray-100 border border-gray-200 rounded text-xs font-serif-title w-full sm:w-auto">
                                         <button
                                             type="button"
                                             title="Chuyển trạng thái: Chưa học"
                                             onClick={() => onUpdateProgramStatus ? onUpdateProgramStatus(prog.id, 'chua_hoc') : onToggleEnrollProgram && onToggleEnrollProgram(prog.id)}
-                                            className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                                            className={`flex-1 sm:flex-none justify-center px-2.5 sm:px-3 py-1.5 rounded transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-[11px] sm:text-xs ${
                                                 progStatus === 'chua_hoc'
                                                     ? 'bg-white text-gray-800 font-bold shadow-xs border border-gray-300'
                                                     : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
@@ -205,7 +209,7 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                                             type="button"
                                             title="Chuyển trạng thái: Đang học"
                                             onClick={() => onUpdateProgramStatus ? onUpdateProgramStatus(prog.id, 'dang_hoc') : onToggleEnrollProgram && onToggleEnrollProgram(prog.id)}
-                                            className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                                            className={`flex-1 sm:flex-none justify-center px-2.5 sm:px-3 py-1.5 rounded transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-[11px] sm:text-xs ${
                                                 progStatus === 'dang_hoc'
                                                     ? 'bg-brand-cerulean text-white font-bold shadow-xs'
                                                     : 'text-gray-600 hover:text-brand-cerulean hover:bg-brand-cream'
@@ -218,7 +222,7 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                                             type="button"
                                             title="Chuyển trạng thái: Đã học"
                                             onClick={() => onUpdateProgramStatus ? onUpdateProgramStatus(prog.id, 'da_hoc') : onToggleEnrollProgram && onToggleEnrollProgram(prog.id)}
-                                            className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                                            className={`flex-1 sm:flex-none justify-center px-2.5 sm:px-3 py-1.5 rounded transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-[11px] sm:text-xs ${
                                                 progStatus === 'da_hoc'
                                                     ? 'bg-brand-cerulean text-white font-bold shadow-xs'
                                                     : 'text-gray-600 hover:text-brand-cerulean hover:bg-brand-cream'

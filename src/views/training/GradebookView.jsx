@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Award, BookOpen, AlertCircle, Check, Search, RotateCcw, X, Filter, CheckSquare, Square } from 'lucide-react';
 import { EditorialSelect } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 import { normalizeProgram, getFilteredModules, getModuleProgramNames, isModuleInProgram, getProgramStatus, getProgramStatusLabel, getSelectedModules } from "../../utils/ruleValidators";
 import { calculateModuleFinal, calculateOverallGPA } from "../../utils/gpaCalculators";
 
@@ -199,44 +200,90 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
 
     return (
         <div className="max-w-6xl mx-auto space-y-8">
-            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Sổ điểm & Đánh giá kết quả</h2>
-                    <p className="text-lg text-gray-600 mt-1">Cập nhật điểm thành phần, theo dõi GPA và kết quả tích lũy theo từng phân hệ.</p>
-                </div>
-                <div className="flex gap-4 items-center flex-wrap w-full md:w-auto">
-                    {evalType === 'credits' ? (
-                        <>
-                            <div className="bg-white border-editorial p-3.5 text-center shadow-editorial min-w-[90px]">
-                                <span className="text-[10px] uppercase text-gray-400 font-bold block">GPA Hệ 10</span>
-                                <span className="text-2xl font-serif-title text-brand-cerulean font-bold">{overall.gpa10}</span>
+            <CollapsiblePageHeader
+                title="Sổ điểm & Đánh giá kết quả"
+                subtitle="Cập nhật điểm thành phần, theo dõi GPA và kết quả tích lũy theo từng phân hệ."
+                actions={({ isScrolled }) => (
+                    evalType === 'credits' ? (
+                        <div className={`transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                            isScrolled ? 'flex items-center gap-1.5 sm:gap-2' : 'grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full md:w-auto'
+                        }`}>
+                            <div className={`bg-white border border-brand-cerulean/20 text-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-center ${
+                                isScrolled
+                                    ? 'px-2 py-0.5 sm:px-2.5 sm:py-1 rounded shadow-xs'
+                                    : 'p-1.5 sm:p-2.5 shadow-editorial flex-col min-w-[55px] sm:min-w-[75px]'
+                            }`}>
+                                <span className={`font-bold transition-all duration-300 ${
+                                    isScrolled ? 'text-[10px] text-gray-500 mr-1' : 'text-[9px] uppercase text-gray-400 block'
+                                }`}>
+                                    {isScrolled ? '10:' : 'Hệ 10'}
+                                </span>
+                                <span className={`font-serif-title font-bold text-brand-cerulean transition-all duration-300 leading-tight ${
+                                    isScrolled ? 'text-xs sm:text-sm' : 'text-base sm:text-xl'
+                                }`}>{overall.gpa10}</span>
                             </div>
-                            <div className="bg-brand-cerulean text-white border-editorial p-3.5 text-center shadow-editorial min-w-[90px]">
-                                <span className="text-[10px] uppercase text-white/80 font-bold block">GPA Hệ 4.0</span>
-                                <span className="text-2xl font-serif-title font-bold">{overall.gpa4}</span>
+                            <div className={`bg-brand-cerulean text-white text-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-center ${
+                                isScrolled
+                                    ? 'px-2 py-0.5 sm:px-2.5 sm:py-1 rounded shadow-xs'
+                                    : 'p-1.5 sm:p-2.5 shadow-editorial flex-col min-w-[55px] sm:min-w-[75px]'
+                            }`}>
+                                <span className={`font-bold transition-all duration-300 ${
+                                    isScrolled ? 'text-[10px] text-white/80 mr-1' : 'text-[9px] uppercase text-white/80 block'
+                                }`}>
+                                    {isScrolled ? '4.0:' : 'Hệ 4.0'}
+                                </span>
+                                <span className={`font-serif-title font-bold transition-all duration-300 leading-tight ${
+                                    isScrolled ? 'text-xs sm:text-sm' : 'text-base sm:text-xl'
+                                }`}>{overall.gpa4}</span>
                             </div>
-                            <div className="bg-white border-editorial p-3.5 text-center shadow-editorial min-w-[100px] hidden sm:block">
-                                <span className="text-[10px] uppercase text-gray-400 font-bold block">TC Tích Lũy</span>
-                                <span className="text-2xl font-serif-title text-brand-jasper font-bold">{overall.earnedCredits} <span className="text-xs text-gray-400 font-normal">TC</span></span>
+                            <div className={`bg-white border border-brand-cerulean/20 text-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-center ${
+                                isScrolled
+                                    ? 'px-2 py-0.5 sm:px-2.5 sm:py-1 rounded shadow-xs'
+                                    : 'p-1.5 sm:p-2.5 shadow-editorial flex-col min-w-[55px] sm:min-w-[75px]'
+                            }`}>
+                                <span className={`font-bold transition-all duration-300 ${
+                                    isScrolled ? 'text-[10px] text-gray-500 mr-1' : 'text-[9px] uppercase text-gray-400 block'
+                                }`}>
+                                    {isScrolled ? 'TC:' : 'Tín chỉ'}
+                                </span>
+                                <span className={`font-serif-title font-bold text-brand-jasper transition-all duration-300 leading-tight ${
+                                    isScrolled ? 'text-xs sm:text-sm' : 'text-base sm:text-xl'
+                                }`}>{overall.earnedCredits}</span>
                             </div>
-                            <div className="bg-white border-editorial p-3.5 text-center shadow-editorial min-w-[90px] hidden md:block">
-                                <span className="text-[10px] uppercase text-gray-400 font-bold block">Xếp loại</span>
-                                <span className="text-lg font-serif-title text-brand-cerulean font-bold">{overall.rank}</span>
+                            <div className={`bg-white border border-brand-cerulean/20 text-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-center ${
+                                isScrolled
+                                    ? 'px-2 py-0.5 sm:px-2.5 sm:py-1 rounded shadow-xs'
+                                    : 'p-1.5 sm:p-2.5 shadow-editorial flex-col min-w-[65px] sm:min-w-[85px]'
+                            }`}>
+                                <span className={`font-bold transition-all duration-300 ${
+                                    isScrolled ? 'hidden' : 'text-[9px] uppercase text-gray-400 block'
+                                }`}>
+                                    Xếp loại
+                                </span>
+                                <span className={`font-serif-title font-bold text-brand-cerulean transition-all duration-300 leading-tight ${
+                                    isScrolled ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'
+                                }`}>{overall.rank}</span>
                             </div>
-                        </>
+                        </div>
                     ) : (
-                        <div className="bg-brand-cerulean text-white border-editorial p-3.5 text-center shadow-editorial min-w-[140px]">
-                            <span className="text-[10px] uppercase text-white/80 font-bold block">Đạt Chuyên đề</span>
-                            <span className="text-xl font-serif-title font-bold">
+                        <div className={`bg-brand-cerulean text-white border-editorial text-center shadow-editorial transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                            isScrolled ? 'px-2.5 py-1' : 'p-2 sm:p-3 sm:min-w-[140px]'
+                        }`}>
+                            <span className={`uppercase text-white/80 font-bold block transition-all duration-300 ${
+                                isScrolled ? 'text-[9px]' : 'text-[10px]'
+                            }`}>Đạt Chuyên đề</span>
+                            <span className={`font-serif-title font-bold transition-all duration-300 ${
+                                isScrolled ? 'text-xs sm:text-sm' : 'text-lg sm:text-xl'
+                            }`}>
                                 {passedCount} / {filteredModules.length}
                             </span>
                         </div>
-                    )}
-                </div>
-            </header>
+                    )
+                )}
+            />
 
             {/* BẢNG BỘ LỌC ĐA CHIỀU */}
-            <section className="bg-white border-editorial p-5 shadow-editorial space-y-4">
+            <section className="bg-white border-editorial p-3.5 sm:p-5 shadow-editorial space-y-3 sm:space-y-4">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
                     <div className="relative flex-1 max-w-md">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -338,8 +385,121 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
                 </div>
             </section>
 
-            {/* BẢNG ĐIỂM HỌC PHẦN */}
-            <div className="bg-white border-editorial shadow-editorial overflow-x-auto max-h-[600px] overflow-y-auto pr-1">
+            {/* DANH SÁCH THẺ ĐIỂM DÀNH CHO MOBILE / MÀN HÌNH DỌC (md:hidden) */}
+            <div className="md:hidden space-y-3">
+                {filteredModules.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500 bg-white border-editorial shadow-editorial space-y-2">
+                        <Filter size={28} className="text-gray-400 mx-auto stroke-1" />
+                        <p className="font-serif-title text-sm text-gray-600">
+                            {isFiltered ? "Không tìm thấy học phần nào khớp với bộ lọc." : "Chưa có học phần nào trong chương trình."}
+                        </p>
+                        {isFiltered && (
+                            <button
+                                onClick={handleResetFilters}
+                                className="px-3 py-1.5 bg-brand-cerulean text-white text-xs font-serif-title inline-flex items-center gap-1.5 shadow-sm"
+                            >
+                                <RotateCcw size={13} /> Đặt lại bộ lọc
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    filteredModules.map(mod => {
+                        const { score10, letter, gpa4 } = calculateModuleFinal(mod.grades, mod.syllabus?.weights);
+                        const isPassed = score10 >= 5.0 || mod.status === 'completed';
+                        return (
+                            <div key={mod.id} className="bg-white border-editorial p-3.5 shadow-editorial space-y-2.5">
+                                {/* Header: Code, Semester, Credits & Final Badge */}
+                                <div className="flex justify-between items-start gap-2 pb-2 border-b border-gray-100">
+                                    <div className="space-y-0.5 flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="font-sans font-bold text-xs text-brand-cerulean bg-brand-cerulean/10 px-1.5 py-0.5 rounded">
+                                                {(mod.code || '').toUpperCase()}
+                                            </span>
+                                            <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 text-[10px] font-sans rounded border border-gray-200">
+                                                {mod.semester ? (mod.semester === 'summer' ? 'Hè' : `HK ${mod.semester}`) : 'Chưa xếp'}
+                                            </span>
+                                            <span className="text-[11px] font-bold text-gray-600 font-sans">
+                                                {evalType === 'hours' ? `${Number(mod.credits || 3) * 15} tiết` : `${mod.credits} TC`}
+                                            </span>
+                                        </div>
+                                        <h4 className="font-serif-title font-bold text-sm text-brand-cerulean leading-snug">
+                                            {mod.name}
+                                        </h4>
+                                    </div>
+                                    {/* Score indicator */}
+                                    <div className="text-right shrink-0">
+                                        <div className="text-lg font-serif-title text-brand-jasper font-bold leading-tight">
+                                            {score10}
+                                        </div>
+                                        {evalType === 'credits' ? (
+                                            <span className={`text-[10px] font-sans font-bold px-1.5 py-0.5 rounded inline-block ${
+                                                isPassed ? 'bg-brand-cerulean/10 text-brand-cerulean' : 'bg-red-50 text-red-700'
+                                            }`}>
+                                                {letter} ({gpa4})
+                                            </span>
+                                        ) : (
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded inline-block ${
+                                                isPassed ? 'bg-brand-cerulean/15 text-brand-cerulean' : 'bg-red-50 text-red-700'
+                                            }`}>
+                                                {isPassed ? 'ĐẠT' : 'CHƯA'}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 3 Inline Grade Inputs: CC, GK, CK */}
+                                <div className="grid grid-cols-3 gap-2 bg-brand-cream/50 p-2 border border-brand-cerulean/15 rounded-xs">
+                                    <div>
+                                        <label className="block text-[10px] font-serif-title text-gray-600 font-bold mb-1 text-center">
+                                            CC ({mod.syllabus?.weights?.attendance ?? 10}%)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            min="0"
+                                            max="10"
+                                            className="input-editorial w-full text-center font-sans text-xs py-1 px-1"
+                                            value={mod.grades?.attendance || 0}
+                                            onChange={e => handleGradeChange(mod, 'attendance', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-serif-title text-gray-600 font-bold mb-1 text-center truncate">
+                                            {evalType === 'credits' ? `GK (${mod.syllabus?.weights?.midterm ?? 30}%)` : 'B.tập'}
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            min="0"
+                                            max="10"
+                                            className="input-editorial w-full text-center font-sans text-xs py-1 px-1"
+                                            value={mod.grades?.midterm || 0}
+                                            onChange={e => handleGradeChange(mod, 'midterm', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-serif-title text-gray-600 font-bold mb-1 text-center truncate">
+                                            {evalType === 'credits' ? `CK (${mod.syllabus?.weights?.final ?? 60}%)` : 'Đồ án'}
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            min="0"
+                                            max="10"
+                                            className="input-editorial w-full text-center font-sans text-xs py-1 px-1"
+                                            value={mod.grades?.final || 0}
+                                            onChange={e => handleGradeChange(mod, 'final', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
+            </div>
+
+            {/* BẢNG ĐIỂM HỌC PHẦN DÀNH CHO DESKTOP (hidden md:block) */}
+            <div className="hidden md:block bg-white border-editorial shadow-editorial overflow-x-auto max-h-[600px] overflow-y-auto pr-1">
                 <table className="w-full text-left font-body relative border-collapse">
                     <thead className="bg-brand-cream border-b border-brand-cerulean text-brand-cerulean font-serif-title sticky top-0 z-10 shadow-sm">
                         <tr>

@@ -54,6 +54,7 @@ import { slugify, getSEOAndPath, getViewFromPath, formatModuleName } from './uti
 
 // Layouts & Reusable UI Components
 import { SidebarNavigation } from './layouts/SidebarNavigation';
+import { MobileBottomNav } from './layouts/MobileBottomNav';
 import {
     EditorialSelect,
     EditorialDatePicker,
@@ -78,6 +79,7 @@ import { CalendarAttendanceView } from './views/training/CalendarAttendanceView'
 import { GradebookView } from './views/training/GradebookView';
 import { ResourcesStudyLogView } from './views/training/ResourcesStudyLogView';
 import { ProfileView } from './views/training/ProfileView';
+import { ScrollProvider } from './context/ScrollContext';
 
 
 
@@ -168,6 +170,25 @@ export default function App() {
 
     const [authLoadingState, setAuthLoadingState] = useState(null); // 'logging_in' | 'logging_out' | null
     const [isViewTransitioning, setIsViewTransitioning] = useState(false);
+    const isScrolledRef = useRef(false);
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    // Reset scroll state on view transition
+    useEffect(() => {
+        isScrolledRef.current = false;
+        setIsScrolled(false);
+    }, [currentView]);
+
+    const handleMainScroll = (e) => {
+        const top = e.currentTarget.scrollTop;
+        // Hysteresis: collapse when scrolling down past 35px; expand when scrolling back up (< 12px)
+        // Eliminates continuous re-rendering storm and edge flickering
+        const nextScrolled = isScrolledRef.current ? top > 12 : top > 35;
+        if (nextScrolled !== isScrolledRef.current) {
+            isScrolledRef.current = nextScrolled;
+            setIsScrolled(nextScrolled);
+        }
+    };
 
     const handleGoogleLogin = async () => {
         setAuthLoadingState('logging_in');
@@ -844,49 +865,77 @@ export default function App() {
             {isViewTransitioning && (
                 <div className="fixed top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-brand-cerulean via-brand-jasper to-brand-cerulean z-50 animate-route-progress pointer-events-none" />
             )}
-            {/* Sidebar (Stationary / Fixed with Collapsible Support) */}
-            <SidebarNavigation
-                currentView={currentView}
-                navigate={navigate}
-                isSidebarCollapsed={isSidebarCollapsed}
-                toggleSidebar={toggleSidebar}
-                profile={profile}
-                currentUser={user}
-                handleGoogleSignIn={handleGoogleLogin}
-                handleSignOut={handleSignOut}
-            />
-
-            {/* Mobile Header */}
-            <div className="md:hidden fixed top-0 w-full bg-brand-cream border-b border-brand-cerulean p-4 flex justify-between items-center z-40">
-                <div className="flex items-center gap-2">
-                    <img src={logoImg} alt="Logo" className="w-8 h-8 rounded-full" />
-                    <h1 className="font-serif-title text-2xl text-brand-cerulean">Pedagogy</h1>
-                </div>
-                <div className="flex items-center gap-1.5 overflow-x-auto">
-                    <button
-                        onClick={() => navigate('dashboard')}
-                        className="px-2 py-1 bg-emerald-800 text-white rounded text-xs font-bold shrink-0"
-                    >
-                        Tổng quan
-                    </button>
-                    <button
-                        onClick={() => navigate('programs')}
-                        className="px-2 py-1 bg-brand-cerulean text-white rounded text-xs font-bold shrink-0"
-                    >
-                        Khóa đào tạo
-                    </button>
-                    <button
-                        onClick={() => navigate('practicum')}
-                        className="px-2 py-1 bg-brand-jasper text-white rounded text-xs font-bold shrink-0"
-                    >
-                        Thực tập SP
-                    </button>
-                </div>
+            {/* Sidebar (Desktop only) */}
+            <div className="hidden md:block">
+                <SidebarNavigation
+                    currentView={currentView}
+                    navigate={navigate}
+                    isSidebarCollapsed={isSidebarCollapsed}
+                    toggleSidebar={toggleSidebar}
+                    profile={profile}
+                    currentUser={user}
+                    handleGoogleSignIn={handleGoogleLogin}
+                    handleSignOut={handleSignOut}
+                />
             </div>
 
+            {/* Mobile Header — app-style with page title */}
+            {(() => {
+                const viewLabels = {
+                    dashboard: 'Tổng quan',
+                    programs: 'Chương trình học',
+                    program_detail: 'Chi tiết chương trình',
+                    module_detail: 'Chi tiết môn học',
+                    syllabus: 'Đề cương chi tiết',
+                    calendar: 'Lịch biểu & Điểm danh',
+                    gradebook: 'Sổ điểm & GPA',
+                    resources: 'Học liệu & Nhật ký',
+                    practicum: 'Thực tập sư phạm',
+                    lesson_plans: 'Giáo án & Giảng thử',
+                    competencies: 'Chuẩn nghề nghiệp',
+                    graduation: 'Xét tốt nghiệp',
+                    portfolio_export: 'Hồ sơ & Bảng điểm',
+                    profile: 'Hồ sơ cá nhân',
+                };
+                const pageTitle = viewLabels[currentView] || 'Pedagogy';
+                return (
+                    <div className="md:hidden fixed top-0 w-full bg-white/90 backdrop-blur-md border-b border-brand-cerulean/10 px-3 h-11 flex items-center justify-between z-40 shadow-sm">
+                        {/* Left — Logo tap to home */}
+                        <div className="flex items-center gap-1.5 shrink-0 w-9" onClick={() => navigate('dashboard')}>
+                            <img src={logoImg} alt="Logo" className="w-7 h-7 rounded-full" />
+                        </div>
+                        {/* Center — App branding */}
+                        <div className="flex-1 text-center font-serif-title text-xs font-bold text-brand-cerulean tracking-wider uppercase opacity-80 truncate px-2">
+                            Đào tạo Sư phạm
+                        </div>
+                        {/* Right — Avatar */}
+                        <div className="flex items-center shrink-0 w-9 justify-end">
+                            {profile && (
+                                profile.avatarUrl ? (
+                                    <img
+                                        src={profile.avatarUrl}
+                                        alt="avatar"
+                                        className="w-7 h-7 rounded-full border border-brand-cerulean/15"
+                                        onClick={() => navigate('profile')}
+                                    />
+                                ) : (
+                                    <div
+                                        className="w-7 h-7 rounded-full bg-brand-cerulean/10 flex items-center justify-center text-brand-cerulean text-[11px] font-bold"
+                                        onClick={() => navigate('profile')}
+                                    >
+                                        {(profile.fullName || 'U').charAt(0)}
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    </div>
+                );
+            })()}
+
             {/* Main Content Area (Independent Vertical Scroll with Page Transition Animation) */}
-            <main key={currentView} className="flex-1 h-full overflow-y-auto p-6 md:p-12 mt-14 md:mt-0 animate-page-enter">
-                {error && <AlertBox type="error" message={error} onClose={() => setError(null)} />}
+            <main key={currentView} onScroll={handleMainScroll} className="flex-1 h-full overflow-y-auto px-3.5 sm:px-4 md:px-12 pt-3.5 sm:pt-4 md:pt-12 pb-32 sm:pb-36 md:pb-20 mt-11 md:mt-0 animate-page-enter">
+                <ScrollProvider isScrolled={isScrolled}>
+                    {error && <AlertBox type="error" message={error} onClose={() => setError(null)} />}
 
                 {isViewTransitioning ? (
                     <ViewSkeleton currentView={currentView} />
@@ -1014,7 +1063,20 @@ export default function App() {
                         )}
                     </>
                 )}
+
+                {/* Generous bottom clearance spacer ensuring floating bottom bar never obscures content */}
+                <div className="h-10 sm:h-12 md:hidden pointer-events-none" aria-hidden="true" />
+                </ScrollProvider>
             </main>
+
+            {/* Mobile Bottom Navigation */}
+            <MobileBottomNav
+                currentView={currentView}
+                navigate={navigate}
+                profile={profile}
+                currentUser={user}
+                handleSignOut={handleSignOut}
+            />
 
             {/* Auth Login / Logout Transition Overlay */}
             {authLoadingState && createPortal(

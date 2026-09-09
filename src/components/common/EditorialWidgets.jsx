@@ -581,12 +581,12 @@ export const EditorialTimePicker = ({ label, value, onChange, className = "" }) 
 export const Modal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
     return createPortal(
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-brand-ink/60 backdrop-blur-md animate-backdrop-in">
-            <div className="bg-brand-cream border-editorial p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-editorial relative animate-modal-pop-in">
-                <button onClick={onClose} className="absolute top-4 right-4 text-brand-cerulean hover:text-brand-jasper transition-colors p-1">
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-3 sm:p-4 bg-brand-ink/60 backdrop-blur-md animate-backdrop-in">
+            <div className="bg-brand-cream border-editorial p-4 sm:p-6 w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-editorial relative animate-modal-pop-in">
+                <button onClick={onClose} className="absolute top-3 right-3 sm:top-4 sm:right-4 text-brand-cerulean hover:text-brand-jasper transition-colors p-1.5 cursor-pointer z-10" aria-label="Đóng">
                     <X size={20} />
                 </button>
-                <h2 className="text-3xl font-serif-title text-brand-cerulean mb-6 pb-2 border-b border-brand-cerulean/30">{title}</h2>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-serif-title text-brand-cerulean mb-4 sm:mb-6 pb-2 border-b border-brand-cerulean/30 pr-8 leading-snug">{title}</h2>
                 {children}
             </div>
         </div>,

@@ -32,6 +32,7 @@ import {
     EditorialTimePicker,
     Modal
 } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 
 // Timetable Matrix Rows (Sáng, Chiều, Tối)
 export const TIMETABLE_ROWS = [
@@ -146,10 +147,18 @@ export const getEventSession = (evtOrTime) => {
     return 'evening';
 };
 
+const pad = (n) => String(n).padStart(2, '0');
+const formatDateYMD = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+const dayNames = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+const todayStr = formatDateYMD(new Date());
+
 export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = [], navigate, onAddEvent, onUpdateEvent, onDeleteEvent }) => {
     const [viewMode, setViewMode] = useState('week'); // 'week' | 'grid' | 'list'
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [currentWeekDate, setCurrentWeekDate] = useState(new Date());
+    const [selectedDayDate, setSelectedDayDate] = useState(() => todayStr);
+    const [selectedMonthDate, setSelectedMonthDate] = useState(() => todayStr);
+    const [mobileWeekTab, setMobileWeekTab] = useState('day'); // 'day' | 'all' | 'matrix'
     const [sessionFilter, setSessionFilter] = useState('all'); // 'all' | 'morning' | 'afternoon' | 'both' | 'evening'
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEventId, setEditingEventId] = useState(null);
@@ -320,7 +329,6 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
     const firstDayOfMonth = new Date(year, month, 1);
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const startDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7; // Monday = 0 ... Sunday = 6
-    const todayStr = new Date().toISOString().split('T')[0];
 
     // Weekly Timetable Matrix Helpers
     const getMondayOfWeek = (d) => {
@@ -354,11 +362,32 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
     const jumpToToday = () => {
         setCurrentWeekDate(new Date());
         setCurrentMonth(new Date());
+        setSelectedDayDate(todayStr);
+        setSelectedMonthDate(todayStr);
     };
 
-    const pad = (n) => String(n).padStart(2, '0');
-    const formatDateYMD = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-    const dayNames = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+    // Active Day for Mobile Week View
+    const activeDayDate = weekDays.some(d => formatDateYMD(d) === selectedDayDate)
+        ? selectedDayDate
+        : formatDateYMD(weekDays[0]);
+
+    const selectedDayObj = weekDays.find(d => formatDateYMD(d) === activeDayDate) || weekDays[0];
+    const selectedDayIdx = weekDays.findIndex(d => formatDateYMD(d) === activeDayDate);
+    const selectedDayName = selectedDayIdx >= 0 ? dayNames[selectedDayIdx] : 'Thứ 2';
+    const selectedDayTitle = `${selectedDayName}, ${pad(selectedDayObj.getDate())}/${pad(selectedDayObj.getMonth() + 1)}/${selectedDayObj.getFullYear()}`;
+    const selectedDayEvents = events
+        .filter(e => e.date === activeDayDate)
+        .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+
+    // Selected Date for Month View
+    const monthSelectedDateEvents = events
+        .filter(e => e.date === selectedMonthDate)
+        .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+
+    const selectedMonthDateObj = new Date(selectedMonthDate + 'T00:00:00');
+    const selectedMonthDateFormatted = !isNaN(selectedMonthDateObj.getTime())
+        ? `${dayNames[(selectedMonthDateObj.getDay() + 6) % 7]}, ${pad(selectedMonthDateObj.getDate())}/${pad(selectedMonthDateObj.getMonth() + 1)}/${selectedMonthDateObj.getFullYear()}`
+        : selectedMonthDate;
 
     // Filter events by session (supporting 'both' for full-day)
     const filteredListEvents = events.filter(evt => {
@@ -369,6 +398,178 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
         if (sessionFilter === 'afternoon') return s === 'afternoon' || s === 'both';
         return s === sessionFilter;
     });
+
+    // Reusable Event Card Component for Mobile & Detailed Views
+    const renderEventCard = (evt) => {
+        const mod = modules.find(m => m.id === evt.moduleId);
+        const session = getEventSession(evt);
+        const sessionMeta = SESSIONS.find(s => s.id === session) || SESSIONS[0];
+        const SessionIcon = sessionMeta.icon;
+        const isBoth = session === 'both';
+        const relatedLog = (studyLogs || []).find(l => l.eventId === evt.id || (l.date === evt.date && l.moduleId === evt.moduleId));
+
+        return (
+            <div key={evt.id} className="bg-white border-editorial p-3.5 sm:p-5 shadow-editorial space-y-3 transition-all hover:border-brand-cerulean">
+                {/* Header: Session & Status & Actions */}
+                <div className="flex items-center justify-between gap-2 flex-wrap pb-2.5 border-b border-brand-cerulean/15">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-[10px] sm:text-xs font-bold font-sans">
+                            {mod?.code || 'Học phần'}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] sm:text-xs font-serif-title font-bold flex items-center gap-1 ${sessionMeta.badgeClass}`}>
+                            <SessionIcon size={12} className={sessionMeta.iconColor} />
+                            <span>{sessionMeta.label} ({evt.startTime} - {evt.endTime})</span>
+                            {isBoth && <span className="font-mono text-[9px] text-brand-jasper font-bold">&bull; Tiết 1-10</span>}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <button
+                            type="button"
+                            onClick={() => handleOpenEdit(evt)}
+                            className="p-1.5 text-brand-cerulean hover:bg-brand-cream border border-brand-cerulean/20 rounded transition-colors"
+                            title="Chỉnh sửa buổi học"
+                        >
+                            <Pencil size={13} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (window.confirm(`Xóa buổi học "${evt.title}"?`)) {
+                                    onDeleteEvent(evt.id);
+                                }
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-brand-jasper hover:bg-brand-cream rounded transition-colors"
+                            title="Xóa buổi học"
+                        >
+                            <Trash2 size={13} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Title & Subject */}
+                <div>
+                    <h4 className="font-serif-title font-bold text-brand-cerulean text-base sm:text-lg leading-snug">
+                        {evt.title}
+                    </h4>
+                    {mod?.name && mod.name !== evt.title && (
+                        <p className="text-xs text-gray-500 font-sans mt-0.5 font-medium">{mod.name}</p>
+                    )}
+                </div>
+
+                {/* Metadata: Location, Teacher, Meet Link */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 font-sans">
+                    <div className="flex items-center gap-1.5">
+                        <MapPin size={13} className="text-brand-jasper shrink-0" />
+                        <span className="truncate">{evt.location || 'Chưa cập nhật phòng học'}</span>
+                    </div>
+                    {mod?.instructor && (
+                        <div className="flex items-center gap-1.5">
+                            <GraduationCap size={13} className="text-brand-cerulean shrink-0" />
+                            <span className="truncate">GV: {mod.instructor}</span>
+                        </div>
+                    )}
+                    {evt.meetLink && (
+                        <div className="sm:col-span-2">
+                            <a
+                                href={evt.meetLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-brand-jasper hover:underline font-bold text-xs"
+                            >
+                                <ExternalLink size={12} /> Link lớp trực tuyến (Meet / Zoom)
+                            </a>
+                        </div>
+                    )}
+                </div>
+
+                {/* Notes if any */}
+                {evt.notes && (
+                    <div className="p-2 bg-brand-cream/80 border-l-2 border-brand-cerulean text-xs italic text-gray-700 flex items-start gap-1.5">
+                        <FileText size={12} className="text-brand-cerulean shrink-0 mt-0.5" />
+                        <span>{evt.notes}</span>
+                    </div>
+                )}
+
+                {/* Sổ ghi chép link */}
+                {relatedLog ? (
+                    <div className="flex items-center justify-between p-2 bg-brand-cream/60 border border-brand-cerulean/20 text-xs">
+                        <div className="flex items-center gap-1.5 text-brand-cerulean truncate">
+                            <StickyNote size={12} className="text-brand-jasper shrink-0" />
+                            <span className="font-bold truncate">{relatedLog.title}</span>
+                        </div>
+                        {navigate && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    sessionStorage.setItem('pedagogy_view_log_id', relatedLog.id);
+                                    sessionStorage.setItem('pedagogy_resources_tab', 'logs');
+                                    navigate('resources');
+                                }}
+                                className="text-xs font-serif-title font-bold text-brand-jasper hover:underline shrink-0 ml-2"
+                            >
+                                Mở sổ &rarr;
+                            </button>
+                        )}
+                    </div>
+                ) : navigate ? (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            sessionStorage.setItem('pedagogy_prefill_event', JSON.stringify(evt));
+                            sessionStorage.setItem('pedagogy_study_log_editor_active', 'true');
+                            sessionStorage.setItem('pedagogy_resources_tab', 'logs');
+                            navigate('resources');
+                        }}
+                        className="text-[11px] font-serif-title text-gray-500 hover:text-brand-cerulean inline-flex items-center gap-1 hover:underline font-medium"
+                    >
+                        <Plus size={11} /> Thêm ghi chép bài học
+                    </button>
+                ) : null}
+
+                {/* Quick Check-in Bar */}
+                <div className="pt-2 border-t border-brand-cerulean/15 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <span className="text-[11px] font-serif-title text-gray-500 font-bold uppercase tracking-wider">
+                        Trạng thái điểm danh:
+                    </span>
+                    <div className="flex items-center gap-1 w-full sm:w-auto bg-brand-cream p-0.5 border border-brand-cerulean/20">
+                        <button
+                            type="button"
+                            onClick={() => handleCheckin(evt, 'present')}
+                            className={`flex-1 sm:flex-none px-3 py-1 text-[11px] font-serif-title text-center transition-all ${
+                                evt.attendanceStatus === 'present'
+                                    ? 'bg-brand-cerulean text-white font-bold shadow-xs'
+                                    : 'text-gray-600 hover:bg-white'
+                            }`}
+                        >
+                            Có mặt
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleCheckin(evt, 'late')}
+                            className={`flex-1 sm:flex-none px-3 py-1 text-[11px] font-serif-title text-center transition-all ${
+                                evt.attendanceStatus === 'late'
+                                    ? 'bg-brand-jasper/90 text-white font-bold shadow-xs'
+                                    : 'text-gray-600 hover:bg-white'
+                            }`}
+                        >
+                            Đi trễ
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleCheckin(evt, 'absent')}
+                            className={`flex-1 sm:flex-none px-3 py-1 text-[11px] font-serif-title text-center transition-all ${
+                                evt.attendanceStatus === 'absent'
+                                    ? 'bg-brand-jasper text-white font-bold shadow-xs'
+                                    : 'text-gray-600 hover:bg-white'
+                            }`}
+                        >
+                            Vắng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     // Conflict detection in event modal
     const conflictEvent = events.find(e =>
@@ -472,67 +673,73 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
-            {/* STICKY HEADER */}
-            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-                <div>
-                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Lịch biểu & Điểm danh</h2>
-                    <p className="text-base text-gray-600 mt-1">
-                        Quản lý thời khóa biểu theo ca Sáng – Chiều, phòng học, đường dẫn trực tuyến & chuyên cần.
-                    </p>
-                </div>
-                <div className="flex items-center gap-3 flex-wrap">
-                    {/* View Switcher: Tuần | Tháng | Danh sách */}
-                    <div className="flex items-center p-0.5 bg-gray-100 border border-gray-200 rounded text-xs font-serif-title">
+        <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
+            <CollapsiblePageHeader
+                title="Lịch biểu & Điểm danh"
+                subtitle="Quản lý thời khóa biểu theo ca Sáng – Chiều, phòng học, đường dẫn trực tuyến & chuyên cần."
+                actions={({ isScrolled }) => (
+                    <div className={`flex gap-2 sm:gap-3 w-full sm:w-auto ${
+                        isScrolled
+                            ? 'items-center justify-end'
+                            : 'flex-col sm:flex-row items-stretch sm:items-center'
+                    }`}>
+                        {/* View Switcher: Tuần | Tháng | Danh sách */}
+                        <div className={`items-center p-0.5 bg-gray-100 border border-gray-200 rounded text-xs font-serif-title ${
+                            isScrolled ? 'hidden md:flex' : 'flex w-full sm:w-auto'
+                        }`}>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('week')}
+                                title="Xem Thời khóa biểu tuần phân ca Sáng - Chiều"
+                                className={`flex-1 sm:flex-none justify-center px-2.5 sm:px-3 py-1.5 rounded transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-[11px] sm:text-xs font-bold ${
+                                    viewMode === 'week'
+                                        ? 'bg-brand-cerulean text-white shadow-xs'
+                                        : 'text-gray-600 hover:text-brand-cerulean hover:bg-brand-cream'
+                                }`}
+                            >
+                                <CalendarDays size={14} />
+                                <span>TKB Tuần</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('grid')}
+                                title="Xem Lịch theo tháng"
+                                className={`flex-1 sm:flex-none justify-center px-2.5 sm:px-3 py-1.5 rounded transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-[11px] sm:text-xs font-bold ${
+                                    viewMode === 'grid'
+                                        ? 'bg-brand-cerulean text-white shadow-xs'
+                                        : 'text-gray-600 hover:text-brand-cerulean hover:bg-brand-cream'
+                                }`}
+                            >
+                                <Calendar size={14} />
+                                <span>Lịch tháng</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('list')}
+                                title="Xem danh sách chi tiết tất cả buổi học"
+                                className={`flex-1 sm:flex-none justify-center px-2.5 sm:px-3 py-1.5 rounded transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-[11px] sm:text-xs font-bold ${
+                                    viewMode === 'list'
+                                        ? 'bg-brand-cerulean text-white shadow-xs'
+                                        : 'text-gray-600 hover:text-brand-cerulean hover:bg-brand-cream'
+                                }`}
+                            >
+                                <List size={14} />
+                                <span>Danh sách</span>
+                            </button>
+                        </div>
+
                         <button
                             type="button"
-                            onClick={() => setViewMode('week')}
-                            title="Xem Thời khóa biểu tuần phân ca Sáng - Chiều"
-                            className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                                viewMode === 'week'
-                                    ? 'bg-brand-cerulean text-white font-bold shadow-xs'
-                                    : 'text-gray-600 hover:text-brand-cerulean hover:bg-brand-cream'
+                            onClick={() => handleOpenAdd()}
+                            className={`justify-center flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-brand-jasper text-white font-serif-title shadow-editorial whitespace-nowrap hover:bg-brand-jasper/90 transition-all text-xs sm:text-sm font-bold shrink-0 ${
+                                isScrolled ? 'px-2.5 py-1 text-xs w-auto' : 'w-full sm:w-auto'
                             }`}
                         >
-                            <CalendarDays size={15} />
-                            <span>TKB Tuần</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setViewMode('grid')}
-                            title="Xem Lịch theo tháng"
-                            className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                                viewMode === 'grid'
-                                    ? 'bg-brand-cerulean text-white font-bold shadow-xs'
-                                    : 'text-gray-600 hover:text-brand-cerulean hover:bg-brand-cream'
-                            }`}
-                        >
-                            <Calendar size={15} />
-                            <span>Lịch tháng</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setViewMode('list')}
-                            title="Xem danh sách chi tiết tất cả buổi học"
-                            className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                                viewMode === 'list'
-                                    ? 'bg-brand-cerulean text-white font-bold shadow-xs'
-                                    : 'text-gray-600 hover:text-brand-cerulean hover:bg-brand-cream'
-                            }`}
-                        >
-                            <List size={15} />
-                            <span>Danh sách</span>
+                            <Plus size={14} /> <span>Thêm Buổi học</span>
                         </button>
                     </div>
-
-                    <button
-                        onClick={() => handleOpenAdd()}
-                        className="flex items-center gap-2 px-4 py-2 bg-brand-jasper text-white font-serif-title shadow-editorial whitespace-nowrap hover:bg-brand-jasper/90 transition-colors text-sm"
-                    >
-                        <Plus size={16} /> Thêm Buổi học
-                    </button>
-                </div>
-            </header>
+                )}
+            />
 
             {/* EMPTY STATE HELPER (Optional 1-Click Sample Timetable) */}
             {events.length === 0 && (
@@ -558,54 +765,239 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
 
             {/* 1. WEEKLY MATRIX TIMETABLE VIEW (Chế độ xem Thời Khóa Biểu Tuần) */}
             {viewMode === 'week' && (
-                <div className="bg-white border-editorial shadow-editorial space-y-4 p-5">
+                <div className="bg-white border-editorial shadow-editorial space-y-4 p-3.5 sm:p-5">
                     {/* Week Navigation Header */}
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pb-4 border-b border-brand-cerulean/20">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
                             <button
                                 onClick={prevWeek}
-                                className="p-2 text-brand-cerulean hover:bg-brand-cream border border-brand-cerulean/20 rounded-sm transition-colors"
+                                className="p-2 text-brand-cerulean hover:bg-brand-cream border border-brand-cerulean/20 rounded-sm transition-colors cursor-pointer"
                                 title="Tuần trước"
                             >
                                 <ChevronLeft size={18} />
                             </button>
                             <button
+                                onClick={jumpToToday}
+                                className="px-3 py-1.5 text-xs font-serif-title font-bold text-brand-cerulean border border-brand-cerulean/30 hover:bg-brand-cream rounded-sm cursor-pointer"
+                            >
+                                Tuần này
+                            </button>
+                            <button
                                 onClick={nextWeek}
-                                className="p-2 text-brand-cerulean hover:bg-brand-cream border border-brand-cerulean/20 rounded-sm transition-colors"
+                                className="p-2 text-brand-cerulean hover:bg-brand-cream border border-brand-cerulean/20 rounded-sm transition-colors cursor-pointer"
                                 title="Tuần kế tiếp"
                             >
                                 <ChevronRight size={18} />
                             </button>
-                            <button
-                                onClick={jumpToToday}
-                                className="px-3 py-1.5 text-xs font-serif-title font-bold text-brand-cerulean border border-brand-cerulean/30 hover:bg-brand-cream rounded-sm"
-                            >
-                                Tuần hiện tại
-                            </button>
                         </div>
 
-                        <h3 className="text-xl font-serif-title text-brand-cerulean font-bold text-center">
+                        <h3 className="text-sm sm:text-lg md:text-xl font-serif-title text-brand-cerulean font-bold text-center">
                             Tuần từ {pad(weekDays[0].getDate())}/{pad(weekDays[0].getMonth() + 1)} đến {pad(weekDays[6].getDate())}/{pad(weekDays[6].getMonth() + 1)}/{weekDays[6].getFullYear()}
                         </h3>
 
                         {/* Session Legend Indicator */}
-                        <div className="flex items-center gap-3 text-xs font-serif-title flex-wrap">
+                        <div className="flex items-center gap-2 sm:gap-3 text-xs font-serif-title flex-wrap justify-center">
                             <span className="flex items-center gap-1.5 text-brand-cerulean font-semibold">
-                                <Sun size={14} className="text-brand-cerulean" /> Ca Sáng (07:30–11:30)
+                                <Sun size={14} className="text-brand-cerulean" /> Ca Sáng
                             </span>
                             <span className="text-gray-300">&bull;</span>
                             <span className="flex items-center gap-1.5 text-brand-jasper font-semibold">
-                                <Sunset size={14} className="text-brand-jasper" /> Ca Chiều (13:30–17:00)
+                                <Sunset size={14} className="text-brand-jasper" /> Ca Chiều
                             </span>
                             <span className="text-gray-300">&bull;</span>
                             <span className="flex items-center gap-1.5 text-brand-cerulean font-bold">
-                                <Layers size={14} className="text-brand-cerulean" /> Cả 2 ca (07:30–17:00)
+                                <Layers size={14} className="text-brand-cerulean" /> Cả 2 ca
                             </span>
                         </div>
                     </div>
 
-                    {/* Responsive Matrix Grid */}
-                    <div className="overflow-x-auto pb-2">
+                    {/* DEDICATED MOBILE WEEK VIEW (<md) */}
+                    <div className="md:hidden space-y-4">
+                        {/* Mobile 3-Way Mode Switcher: Theo ngày / Tất cả 7 ngày / Bảng 8 cột */}
+                        <div className="flex items-center p-0.5 bg-brand-cream border border-brand-cerulean/20 rounded text-xs font-serif-title">
+                            <button
+                                type="button"
+                                onClick={() => setMobileWeekTab('day')}
+                                className={`flex-1 py-1.5 text-center font-bold transition-all rounded-xs cursor-pointer ${
+                                    mobileWeekTab === 'day'
+                                        ? 'bg-brand-cerulean text-white shadow-xs'
+                                        : 'text-gray-600 hover:text-brand-cerulean'
+                                }`}
+                            >
+                                Theo từng ngày
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setMobileWeekTab('all')}
+                                className={`flex-1 py-1.5 text-center font-bold transition-all rounded-xs cursor-pointer ${
+                                    mobileWeekTab === 'all'
+                                        ? 'bg-brand-cerulean text-white shadow-xs'
+                                        : 'text-gray-600 hover:text-brand-cerulean'
+                                }`}
+                            >
+                                Cả tuần (7 ngày)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setMobileWeekTab('matrix')}
+                                className={`flex-1 py-1.5 text-center font-bold transition-all rounded-xs cursor-pointer ${
+                                    mobileWeekTab === 'matrix'
+                                        ? 'bg-brand-cerulean text-white shadow-xs'
+                                        : 'text-gray-600 hover:text-brand-cerulean'
+                                }`}
+                            >
+                                Bảng 8 cột
+                            </button>
+                        </div>
+
+                        {/* MODE 1: THEO TỪNG NGÀY (DEFAULT MOBILE) */}
+                        {mobileWeekTab === 'day' && (
+                            <div className="space-y-4 animate-fade-in">
+                                {/* Day Selector Ribbon (7 ngày T2 - CN) */}
+                                <div className="grid grid-cols-7 gap-1 bg-brand-cream p-1 border border-brand-cerulean/20">
+                                    {weekDays.map((d, idx) => {
+                                        const dateStr = formatDateYMD(d);
+                                        const isToday = dateStr === todayStr;
+                                        const isSelected = dateStr === activeDayDate;
+                                        const dayEvts = events.filter(e => e.date === dateStr);
+                                        const hasEvts = dayEvts.length > 0;
+                                        return (
+                                            <button
+                                                key={dateStr}
+                                                type="button"
+                                                onClick={() => setSelectedDayDate(dateStr)}
+                                                className={`flex flex-col items-center py-2 px-0.5 border transition-all cursor-pointer ${
+                                                    isSelected
+                                                        ? 'bg-brand-cerulean text-white border-brand-cerulean shadow-sm font-bold'
+                                                        : isToday
+                                                        ? 'bg-white text-brand-jasper border-brand-jasper font-bold'
+                                                        : 'bg-white/80 text-gray-700 border-brand-cerulean/20 hover:bg-white'
+                                                }`}
+                                            >
+                                                <span className={`text-[10px] font-serif-title uppercase font-bold ${
+                                                    isSelected ? 'text-white' : isToday ? 'text-brand-jasper' : 'text-gray-500'
+                                                }`}>
+                                                    {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'][idx]}
+                                                </span>
+                                                <span className={`text-sm font-sans font-bold mt-0.5 ${
+                                                    isSelected ? 'text-white' : isToday ? 'text-brand-jasper' : 'text-brand-cerulean'
+                                                }`}>
+                                                    {pad(d.getDate())}
+                                                </span>
+                                                <div className="h-1.5 mt-1 flex items-center justify-center">
+                                                    {hasEvts && (
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-amber-300' : 'bg-brand-jasper'}`} />
+                                                    )}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Active Day Header & Action */}
+                                <div className="flex items-center justify-between gap-2 px-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-serif-title font-bold text-brand-cerulean text-base">
+                                            {selectedDayTitle}
+                                        </span>
+                                        {activeDayDate === todayStr && (
+                                            <span className="text-[10px] font-sans font-bold uppercase tracking-wider bg-brand-jasper text-white px-1.5 py-0.5">
+                                                Hôm nay
+                                            </span>
+                                        )}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleOpenAdd(activeDayDate)}
+                                        className="text-xs font-serif-title font-bold text-brand-jasper hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <Plus size={13} /> Thêm buổi
+                                    </button>
+                                </div>
+
+                                {/* Selected Day Cards */}
+                                {selectedDayEvents.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {selectedDayEvents.map(evt => renderEventCard(evt))}
+                                    </div>
+                                ) : (
+                                    <div className="p-8 text-center bg-white border border-dashed border-brand-cerulean/30 space-y-3">
+                                        <p className="text-sm font-serif-title text-gray-600">
+                                            Không có buổi học nào vào ngày này.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleOpenAdd(activeDayDate)}
+                                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-cerulean text-white font-serif-title text-xs font-bold shadow-xs hover:bg-brand-cerulean/90 cursor-pointer"
+                                        >
+                                            <Plus size={13} /> Thêm buổi học vào ngày này
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* MODE 2: TẤT CẢ 7 NGÀY (CHẾ ĐỘ XEM CUỘN DỌC CẢ TUẦN) */}
+                        {mobileWeekTab === 'all' && (
+                            <div className="space-y-4 animate-fade-in">
+                                {weekDays.map((d, idx) => {
+                                    const dateStr = formatDateYMD(d);
+                                    const isToday = dateStr === todayStr;
+                                    const dayEvts = events.filter(e => e.date === dateStr);
+                                    return (
+                                        <div key={dateStr} className="space-y-2">
+                                            <div className={`p-2.5 border flex items-center justify-between ${
+                                                isToday
+                                                    ? 'bg-brand-cream border-brand-jasper shadow-xs'
+                                                    : 'bg-white border-brand-cerulean/20'
+                                            }`}>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`font-serif-title font-bold text-sm ${isToday ? 'text-brand-jasper' : 'text-brand-cerulean'}`}>
+                                                        {dayNames[idx]}, {pad(d.getDate())}/{pad(d.getMonth() + 1)}
+                                                    </span>
+                                                    {isToday && (
+                                                        <span className="text-[9px] font-sans font-bold uppercase bg-brand-jasper text-white px-1.5 py-0.5">
+                                                            Hôm nay
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-serif-title text-gray-500">
+                                                        {dayEvts.length} buổi
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenAdd(dateStr)}
+                                                        className="text-[11px] font-serif-title text-brand-jasper hover:underline font-bold cursor-pointer"
+                                                    >
+                                                        + Thêm
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            {dayEvts.length > 0 ? (
+                                                <div className="space-y-2.5 pl-1">
+                                                    {dayEvts.map(evt => renderEventCard(evt))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-gray-400 italic font-body px-3 py-1">
+                                                    Không có tiết học
+                                                </p>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Responsive Matrix Grid: Shown on desktop always, or on mobile when 'matrix' tab is active */}
+                    <div className={`${mobileWeekTab === 'matrix' ? 'block' : 'hidden md:block'} overflow-x-auto pb-2`}>
+                        {mobileWeekTab === 'matrix' && (
+                            <div className="md:hidden text-[11px] text-brand-cerulean/80 flex items-center justify-between gap-1 font-serif-title bg-brand-cream/80 px-2.5 py-1.5 mb-2 border border-brand-cerulean/20">
+                                <span>↔ Vuốt ngang bảng để xem đủ 7 ngày học</span>
+                                <span className="font-bold font-sans">8 cột</span>
+                            </div>
+                        )}
                         <div className="min-w-[760px] border border-brand-cerulean/30">
                             {/* Days of Week Header */}
                             <div className="grid grid-cols-8 bg-brand-cream border-b border-brand-cerulean/30 text-center font-serif-title font-bold text-xs">
@@ -648,17 +1040,21 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
                                         }`}
                                     >
                                         {/* Row Label (Cột Ca học) */}
-                                        <div className="p-3 border-r border-brand-cerulean/30 flex flex-col justify-center items-center text-center space-y-1 bg-brand-cream/60">
-                                            <SessionIcon size={20} className={session.iconColor} />
-                                            <span className={`font-serif-title font-bold text-xs uppercase tracking-wider ${isAfternoon ? 'text-brand-jasper' : 'text-brand-cerulean'}`}>
-                                                {session.label}
-                                            </span>
-                                            <span className="text-[10px] text-gray-500 font-mono font-semibold">
-                                                {session.timeRange}
-                                            </span>
-                                            <span className="text-[9px] text-gray-400 font-sans italic">
-                                                ({session.periodDesc})
-                                            </span>
+                                        <div className="p-3 border-r border-brand-cerulean/30 flex flex-col justify-between items-center text-center bg-brand-cream/60">
+                                            <div className="space-y-1">
+                                                <div className="p-2 rounded-full bg-white shadow-2xs inline-flex items-center justify-center">
+                                                    <SessionIcon size={18} className={isMorning ? 'text-brand-cerulean' : isAfternoon ? 'text-brand-jasper' : 'text-brand-cerulean'} />
+                                                </div>
+                                                <div className="font-serif-title font-bold text-xs text-brand-cerulean">
+                                                    {session.label}
+                                                </div>
+                                                <div className="text-[10px] text-gray-500 font-sans">
+                                                    {session.time}
+                                                </div>
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-white text-gray-600 border border-gray-200 font-mono inline-block">
+                                                    {session.periods}
+                                                </span>
+                                            </div>
                                         </div>
 
                                         {/* 7 Day Columns for this Session */}
@@ -784,35 +1180,35 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
 
             {/* 2. MONTH GRID VIEW (Chế độ xem Lịch Tháng) */}
             {viewMode === 'grid' && (
-                <div className="bg-white border-editorial p-6 shadow-editorial space-y-6">
+                <div className="bg-white border-editorial p-3.5 sm:p-6 shadow-editorial space-y-4 sm:space-y-6">
                     {/* Month Nav Controls */}
-                    <div className="flex justify-between items-center pb-4 border-b border-brand-cerulean/20">
+                    <div className="flex justify-between items-center pb-3 sm:pb-4 border-b border-brand-cerulean/20">
                         <button onClick={prevMonth} className="p-2 text-brand-cerulean hover:bg-brand-cream border border-brand-cerulean/20 transition-colors">
-                            <ChevronLeft size={20} />
+                            <ChevronLeft size={18} />
                         </button>
-                        <h3 className="text-2xl font-serif-title text-brand-cerulean font-bold">
+                        <h3 className="text-lg sm:text-2xl font-serif-title text-brand-cerulean font-bold">
                             {monthNames[month]} - NĂM {year}
                         </h3>
                         <button onClick={nextMonth} className="p-2 text-brand-cerulean hover:bg-brand-cream border border-brand-cerulean/20 transition-colors">
-                            <ChevronRight size={20} />
+                            <ChevronRight size={18} />
                         </button>
                     </div>
 
                     {/* Day Headers (Mon - Sun) */}
-                    <div className="grid grid-cols-7 gap-1 text-center font-serif-title text-brand-cerulean font-bold text-sm bg-brand-cream py-2 border-b border-brand-cerulean">
-                        <div>Thứ 2</div>
-                        <div>Thứ 3</div>
-                        <div>Thứ 4</div>
-                        <div>Thứ 5</div>
-                        <div>Thứ 6</div>
-                        <div>Thứ 7</div>
-                        <div>Chủ nhật</div>
+                    <div className="grid grid-cols-7 gap-1 text-center font-serif-title text-brand-cerulean font-bold text-xs sm:text-sm bg-brand-cream py-1.5 sm:py-2 border-b border-brand-cerulean">
+                        <div><span className="sm:hidden">T2</span><span className="hidden sm:inline">Thứ 2</span></div>
+                        <div><span className="sm:hidden">T3</span><span className="hidden sm:inline">Thứ 3</span></div>
+                        <div><span className="sm:hidden">T4</span><span className="hidden sm:inline">Thứ 4</span></div>
+                        <div><span className="sm:hidden">T5</span><span className="hidden sm:inline">Thứ 5</span></div>
+                        <div><span className="sm:hidden">T6</span><span className="hidden sm:inline">Thứ 6</span></div>
+                        <div><span className="sm:hidden">T7</span><span className="hidden sm:inline">Thứ 7</span></div>
+                        <div><span className="sm:hidden">CN</span><span className="hidden sm:inline">Chủ nhật</span></div>
                     </div>
 
                     {/* Days Grid */}
-                    <div className="grid grid-cols-7 gap-2">
+                    <div className="grid grid-cols-7 gap-1 sm:gap-2">
                         {Array.from({ length: startDayOfWeek }).map((_, idx) => (
-                            <div key={`empty-${idx}`} className="h-28 bg-gray-50/50 border border-gray-100 p-2 opacity-30"></div>
+                            <div key={`empty-${idx}`} className="h-16 sm:h-28 bg-gray-50/50 border border-gray-100 p-1 opacity-30"></div>
                         ))}
 
                         {Array.from({ length: daysInMonth }).map((_, dayIdx) => {
@@ -823,25 +1219,46 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
                                 .filter(e => e.date === dayStr)
                                 .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
 
+                            const isSelected = dayStr === selectedMonthDate;
                             return (
                                 <div
                                     key={dayStr}
-                                    onClick={() => handleOpenAdd(dayStr)}
-                                    className={`h-32 border p-2 flex flex-col justify-between transition-all cursor-pointer group hover:border-brand-jasper ${
-                                        isToday ? 'bg-brand-cream border-2 border-brand-jasper font-bold' : 'bg-white border-brand-cerulean/20 hover:bg-brand-cream/50'
+                                    onClick={() => setSelectedMonthDate(dayStr)}
+                                    className={`min-h-[64px] sm:h-32 border p-1 sm:p-2 flex flex-col justify-between transition-all cursor-pointer group ${
+                                        isSelected
+                                            ? 'ring-2 ring-brand-cerulean border-brand-cerulean bg-blue-50/40 font-bold shadow-xs'
+                                            : isToday
+                                            ? 'bg-brand-cream border-2 border-brand-jasper font-bold'
+                                            : 'bg-white border-brand-cerulean/20 hover:bg-brand-cream/50'
                                     }`}
                                 >
                                     <div className="flex justify-between items-center">
-                                        <span className={`text-sm font-sans font-bold ${isToday ? 'text-brand-jasper' : 'text-brand-cerulean'}`}>
+                                        <span className={`text-xs sm:text-sm font-sans font-bold ${isSelected ? 'text-brand-cerulean' : isToday ? 'text-brand-jasper' : 'text-brand-cerulean'}`}>
                                             {dayNum}
                                         </span>
                                         {isToday && (
-                                            <span className="text-[10px] bg-brand-jasper text-white px-1 font-sans uppercase">Hôm nay</span>
+                                            <span className="text-[9px] sm:text-[10px] bg-brand-jasper text-white px-1 font-sans uppercase">Hôm nay</span>
                                         )}
                                     </div>
 
-                                    {/* Events List inside Day Cell with Session Icons */}
-                                    <div className="space-y-1 overflow-y-auto max-h-22 my-1">
+                                    {/* On mobile: compact event dots */}
+                                    <div className="sm:hidden flex flex-wrap gap-1 mt-1">
+                                        {dayEvents.slice(0, 3).map(evt => (
+                                            <span
+                                                key={evt.id}
+                                                className={`w-2 h-2 rounded-full ${
+                                                    evt.attendanceStatus === 'present' ? 'bg-emerald-600' : evt.attendanceStatus === 'absent' ? 'bg-red-600' : 'bg-brand-cerulean'
+                                                }`}
+                                                title={evt.title}
+                                            />
+                                        ))}
+                                        {dayEvents.length > 3 && (
+                                            <span className="text-[9px] font-bold text-brand-cerulean leading-none">+{dayEvents.length - 3}</span>
+                                        )}
+                                    </div>
+
+                                    {/* Events List inside Day Cell with Session Icons (Desktop) */}
+                                    <div className="hidden sm:block space-y-1 overflow-y-auto max-h-22 my-1">
                                         {dayEvents.map(evt => {
                                             const mod = modules.find(m => m.id === evt.moduleId);
                                             const session = getEventSession(evt);
@@ -885,11 +1302,54 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
                                     </div>
 
                                     <div className="text-[10px] text-gray-400 group-hover:text-brand-jasper opacity-0 group-hover:opacity-100 transition-opacity text-right font-serif-title">
-                                        + Thêm
+                                        + Xem
                                     </div>
                                 </div>
                             );
                         })}
+                    </div>
+
+                    {/* SELECTED DATE DETAILS PANEL (Crucial for Mobile & Helpful on Desktop) */}
+                    <div className="pt-4 sm:pt-6 border-t border-brand-cerulean/20 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                                <Calendar size={16} className="text-brand-cerulean shrink-0" />
+                                <h4 className="font-serif-title font-bold text-brand-cerulean text-base sm:text-lg">
+                                    Lịch học: {selectedMonthDateFormatted}
+                                </h4>
+                                {selectedMonthDate === todayStr && (
+                                    <span className="text-[10px] font-sans font-bold uppercase tracking-wider bg-brand-jasper text-white px-1.5 py-0.5">
+                                        Hôm nay
+                                    </span>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => handleOpenAdd(selectedMonthDate)}
+                                className="text-xs font-serif-title font-bold text-brand-jasper hover:underline flex items-center gap-1 cursor-pointer w-fit"
+                            >
+                                <Plus size={13} /> Thêm buổi học vào ngày này
+                            </button>
+                        </div>
+
+                        {monthSelectedDateEvents.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {monthSelectedDateEvents.map(evt => renderEventCard(evt))}
+                            </div>
+                        ) : (
+                            <div className="p-6 text-center bg-brand-cream/50 border border-dashed border-brand-cerulean/30 space-y-2">
+                                <p className="text-xs sm:text-sm font-serif-title text-gray-500">
+                                    Không có buổi học nào vào ngày này.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => handleOpenAdd(selectedMonthDate)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-cerulean text-white font-serif-title text-xs font-bold shadow-xs hover:bg-brand-cerulean/90 cursor-pointer"
+                                >
+                                    <Plus size={12} /> Thêm buổi học
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -898,15 +1358,15 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
             {viewMode === 'list' && (
                 <div className="space-y-4">
                     {/* Session Quick Filter Bar */}
-                    <div className="bg-white border-editorial p-4 shadow-editorial flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 text-xs font-serif-title font-bold text-brand-cerulean">
+                    <div className="bg-white border-editorial p-3.5 sm:p-4 shadow-editorial flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-xs font-serif-title font-bold text-brand-cerulean shrink-0">
                             <Filter size={15} /> Lọc theo Ca học:
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar w-full sm:w-auto">
                             <button
                                 type="button"
                                 onClick={() => setSessionFilter('all')}
-                                className={`px-3 py-1.5 text-xs font-serif-title font-bold rounded transition-all ${
+                                className={`px-3 py-1.5 text-xs font-serif-title font-bold rounded transition-all whitespace-nowrap shrink-0 sm:shrink cursor-pointer ${
                                     sessionFilter === 'all'
                                         ? 'bg-brand-cerulean text-white shadow-xs'
                                         : 'bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 hover:bg-white'
@@ -929,7 +1389,7 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
                                         key={s.id}
                                         type="button"
                                         onClick={() => setSessionFilter(s.id)}
-                                        className={`px-3 py-1.5 text-xs font-serif-title font-bold rounded transition-all flex items-center gap-1.5 ${
+                                        className={`px-3 py-1.5 text-xs font-serif-title font-bold rounded transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 sm:shrink cursor-pointer ${
                                             isSelected
                                                 ? s.id === 'afternoon' ? 'bg-brand-jasper text-white shadow-xs' : 'bg-brand-cerulean text-white shadow-xs'
                                                 : s.badgeClass + ' hover:bg-white'
@@ -952,23 +1412,23 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
                         const isBoth = session === 'both';
 
                         return (
-                            <div key={evt.id} className="bg-white border-editorial p-6 shadow-editorial flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                                <div className="flex-1 space-y-2">
-                                    <div className="flex items-center gap-2.5 flex-wrap">
-                                        <span className="px-2.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-xs font-bold font-sans">
+                            <div key={evt.id} className="bg-white border-editorial p-4 sm:p-6 shadow-editorial flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6">
+                                <div className="flex-1 space-y-2 w-full">
+                                    <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                                        <span className="px-2.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-[11px] sm:text-xs font-bold font-sans">
                                             {mod?.code || 'Học phần'}
                                         </span>
-                                        <span className={`px-2.5 py-0.5 rounded text-xs font-serif-title font-bold flex items-center gap-1.5 ${sessionMeta.badgeClass}`}>
+                                        <span className={`px-2.5 py-0.5 rounded text-[11px] sm:text-xs font-serif-title font-bold flex items-center gap-1.5 ${sessionMeta.badgeClass}`}>
                                             <SessionIcon size={13} className={sessionMeta.iconColor} />
                                             {sessionMeta.label} ({evt.startTime} - {evt.endTime})
                                             {isBoth && <span className="font-mono text-[10px] text-brand-jasper font-bold">&bull; Tiết 1 - 10</span>}
                                         </span>
-                                        <span className="text-sm font-sans text-gray-500 font-bold">{evt.date}</span>
+                                        <span className="text-xs sm:text-sm font-sans text-gray-500 font-bold">{evt.date}</span>
                                     </div>
 
-                                    <h4 className="text-2xl font-serif-title text-brand-cerulean font-bold">{evt.title}</h4>
+                                    <h4 className="text-xl sm:text-2xl font-serif-title text-brand-cerulean font-bold">{evt.title}</h4>
 
-                                    <div className="flex flex-wrap gap-4 text-sm font-body text-gray-600 items-center">
+                                    <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm font-body text-gray-600 items-center">
                                         <span className="flex items-center gap-1.5">
                                             <MapPin size={14} className="text-brand-jasper shrink-0" />
                                             {evt.location || 'Chưa cập nhật địa điểm'}
@@ -1001,7 +1461,7 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
                                                 <div className="flex items-center justify-between gap-2 p-2 bg-brand-cream/70 border border-brand-cerulean/30 rounded-xs text-xs">
                                                     <div className="flex items-center gap-1.5 text-brand-cerulean overflow-hidden">
                                                         <StickyNote size={14} className="text-brand-jasper shrink-0" />
-                                                        <span className="font-serif-title font-bold shrink-0">Ghi chép bài học:</span>
+                                                        <span className="font-serif-title font-bold shrink-0">Ghi chép:</span>
                                                         <span className="font-sans font-semibold text-gray-800 truncate">{relatedLog.title}</span>
                                                     </div>
                                                     {navigate && (
@@ -1016,7 +1476,7 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
                                                             }}
                                                             className="text-xs font-serif-title font-bold text-brand-jasper hover:underline shrink-0 ml-2"
                                                         >
-                                                            Mở sổ bài học &rarr;
+                                                            Mở sổ &rarr;
                                                         </button>
                                                     )}
                                                 </div>
@@ -1046,46 +1506,48 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
                                     })()}
                                 </div>
 
-                                <div className="flex flex-col items-end gap-2 w-full md:w-auto">
-                                    <div className="flex items-center gap-2">
+                                <div className="flex flex-col sm:items-end items-stretch gap-2 w-full md:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                                    <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                                         <span className="text-xs font-serif-title text-gray-400 uppercase tracking-widest mr-1">Thao tác</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleOpenEdit(evt)}
-                                            className="px-2.5 py-1 text-xs font-serif-title font-semibold text-brand-cerulean border border-brand-cerulean/30 hover:bg-brand-cerulean hover:text-white rounded transition-all flex items-center gap-1"
-                                            title="Chỉnh sửa buổi học"
-                                        >
-                                            <Pencil size={12} /> Sửa
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (window.confirm(`Xóa sự kiện "${evt.title}"?`)) {
-                                                    onDeleteEvent(evt.id);
-                                                }
-                                            }}
-                                            className="p-1.5 text-gray-400 hover:text-brand-jasper hover:bg-brand-cream rounded transition-colors"
-                                            title="Xóa sự kiện"
-                                        >
-                                            <Trash2 size={15} />
-                                        </button>
+                                        <div className="flex items-center gap-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleOpenEdit(evt)}
+                                                className="px-2.5 py-1 text-xs font-serif-title font-semibold text-brand-cerulean border border-brand-cerulean/30 hover:bg-brand-cerulean hover:text-white rounded transition-all flex items-center gap-1"
+                                                title="Chỉnh sửa buổi học"
+                                            >
+                                                <Pencil size={12} /> Sửa
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (window.confirm(`Xóa sự kiện "${evt.title}"?`)) {
+                                                        onDeleteEvent(evt.id);
+                                                    }
+                                                }}
+                                                className="p-1.5 text-gray-400 hover:text-brand-jasper hover:bg-brand-cream rounded transition-colors"
+                                                title="Xóa sự kiện"
+                                            >
+                                                <Trash2 size={15} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="flex gap-1 bg-brand-cream p-1 border border-brand-cerulean/20">
+                                    <div className="flex gap-1 bg-brand-cream p-1 border border-brand-cerulean/20 w-full sm:w-auto justify-around sm:justify-start">
                                         <button
                                             onClick={() => handleCheckin(evt, 'present')}
-                                            className={`px-3 py-1 text-xs font-serif-title ${evt.attendanceStatus === 'present' ? 'bg-brand-cerulean text-white font-bold' : 'text-gray-600 hover:bg-white'}`}
+                                            className={`flex-1 sm:flex-none text-center px-3 py-1 text-xs font-serif-title ${evt.attendanceStatus === 'present' ? 'bg-brand-cerulean text-white font-bold' : 'text-gray-600 hover:bg-white'}`}
                                         >
                                             Có mặt
                                         </button>
                                         <button
                                             onClick={() => handleCheckin(evt, 'late')}
-                                            className={`px-3 py-1 text-xs font-serif-title ${evt.attendanceStatus === 'late' ? 'bg-brand-jasper/80 text-white font-bold' : 'text-gray-600 hover:bg-white'}`}
+                                            className={`flex-1 sm:flex-none text-center px-3 py-1 text-xs font-serif-title ${evt.attendanceStatus === 'late' ? 'bg-brand-jasper/80 text-white font-bold' : 'text-gray-600 hover:bg-white'}`}
                                         >
                                             Trễ
                                         </button>
                                         <button
                                             onClick={() => handleCheckin(evt, 'absent')}
-                                            className={`px-3 py-1 text-xs font-serif-title ${evt.attendanceStatus === 'absent' ? 'bg-brand-jasper text-white font-bold' : 'text-gray-600 hover:bg-white'}`}
+                                            className={`flex-1 sm:flex-none text-center px-3 py-1 text-xs font-serif-title ${evt.attendanceStatus === 'absent' ? 'bg-brand-jasper text-white font-bold' : 'text-gray-600 hover:bg-white'}`}
                                         >
                                             Vắng
                                         </button>

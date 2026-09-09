@@ -14,10 +14,10 @@ import {
     ChevronDown,
     ChevronUp,
     Download,
-    Filter,
-    Trash2
+    Filter
 } from 'lucide-react';
 import { EditorialSelect, Modal } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 import { initialTeacherCompetencies, initialPloMatrix } from '../../data/trainingData';
 
 export const CompetenciesView = () => {
@@ -145,110 +145,118 @@ export const CompetenciesView = () => {
         overallBadgeClass = 'bg-amber-600 text-white';
     }
 
-    const handleResetCompetencies = () => {
-        if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ đánh giá và minh chứng mẫu để nhập mới?')) {
-            setCompetencies(initialTeacherCompetencies);
-            setPloMatrix(initialPloMatrix);
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('pedagogy_competencies', JSON.stringify(initialTeacherCompetencies));
-                localStorage.setItem('pedagogy_plo_matrix', JSON.stringify(initialPloMatrix));
-            }
-        }
-    };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
-            {/* Top Sticky Header */}
-            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-3 flex-wrap">
-                        <span className="px-2.5 py-0.5 text-xs font-bold font-serif-title bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 rounded uppercase tracking-wider">
+        <div className="max-w-6xl mx-auto space-y-6 md:space-y-8">
+            <CollapsiblePageHeader
+                badge={
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap mb-1">
+                        <span className="px-2 py-0.5 text-[11px] sm:text-xs font-bold font-serif-title bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 rounded uppercase tracking-wider">
                             Thông tư 20/2018/TT-BGDĐT
                         </span>
-                        <span className="px-2.5 py-0.5 text-xs font-bold font-serif-title bg-brand-cerulean/10 text-brand-cerulean border border-brand-cerulean/20 rounded">
+                        <span className="px-2 py-0.5 text-[11px] sm:text-xs font-bold font-serif-title bg-brand-cerulean/10 text-brand-cerulean border border-brand-cerulean/20 rounded">
                             5 Tiêu chuẩn &bull; 15 Tiêu chí
                         </span>
                     </div>
-                    <h1 className="text-4xl sm:text-5xl font-serif-title text-brand-cerulean flex items-center gap-3">
-                        <Award className="text-brand-cerulean shrink-0" size={36} />
-                        Chuẩn Nghề Nghiệp Giáo Viên & Ma Trận PLO
-                    </h1>
-                    <p className="text-base sm:text-lg text-gray-600 font-body leading-relaxed mt-1">
-                        Hệ thống tự đánh giá năng lực nghề nghiệp giáo viên cơ sở giáo dục phổ thông, quản trị minh chứng và đối soát chuẩn đầu ra.
-                    </p>
-                </div>
+                }
+                title={
+                    <span className="flex items-center gap-2 sm:gap-3">
+                        <Award className="text-brand-cerulean shrink-0" size={24} />
+                        <span>Chuẩn Nghề Nghiệp Giáo Viên & Ma Trận PLO</span>
+                    </span>
+                }
+                subtitle="Hệ thống tự đánh giá năng lực nghề nghiệp giáo viên cơ sở giáo dục phổ thông, quản trị minh chứng và đối soát chuẩn đầu ra."
+                actions={({ isScrolled }) => (
+                    <div className="flex items-center gap-1.5 sm:gap-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]">
+                        <div className={`bg-white border border-brand-cerulean/20 text-center shadow-xs flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                            isScrolled ? 'px-2 py-0.5 sm:px-2.5 sm:py-1 rounded' : 'p-1.5 sm:p-2 flex-col min-w-[55px]'
+                        }`}>
+                            <span className={`font-bold transition-all duration-300 ${
+                                isScrolled ? 'text-[10px] text-gray-500 mr-1' : 'text-[9px] uppercase text-emerald-800 block'
+                            }`}>
+                                {isScrolled ? 'Tốt:' : 'Mức Tốt'}
+                            </span>
+                            <span className={`font-serif-title font-bold text-emerald-700 transition-all duration-300 leading-tight ${
+                                isScrolled ? 'text-xs sm:text-sm' : 'text-base sm:text-xl'
+                            }`}>
+                                {goodCount}<span className={`font-normal text-gray-400 ${isScrolled ? 'text-[10px]' : 'text-xs'}`}>/15</span>
+                            </span>
+                        </div>
+                        <div className={`bg-white border border-brand-cerulean/20 text-center shadow-xs flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                            isScrolled ? 'px-2 py-0.5 sm:px-2.5 sm:py-1 rounded' : 'p-1.5 sm:p-2 flex-col min-w-[55px]'
+                        }`}>
+                            <span className={`font-bold transition-all duration-300 ${
+                                isScrolled ? 'text-[10px] text-gray-500 mr-1' : 'text-[9px] uppercase text-sky-800 block'
+                            }`}>
+                                {isScrolled ? 'Khá:' : 'Mức Khá'}
+                            </span>
+                            <span className={`font-serif-title font-bold text-sky-700 transition-all duration-300 leading-tight ${
+                                isScrolled ? 'text-xs sm:text-sm' : 'text-base sm:text-xl'
+                            }`}>
+                                {fairCount}<span className={`font-normal text-gray-400 ${isScrolled ? 'text-[10px]' : 'text-xs'}`}>/15</span>
+                            </span>
+                        </div>
+                        <div className={`bg-white border border-brand-cerulean/20 text-center shadow-xs flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                            isScrolled ? 'px-2 py-0.5 sm:px-2.5 sm:py-1 rounded' : 'p-1.5 sm:p-2 flex-col min-w-[55px]'
+                        }`}>
+                            <span className={`font-bold transition-all duration-300 ${
+                                isScrolled ? 'text-[10px] text-gray-500 mr-1' : 'text-[9px] uppercase text-brand-cerulean block'
+                            }`}>
+                                {isScrolled ? 'PLO:' : 'Chuẩn PLO'}
+                            </span>
+                            <span className={`font-serif-title font-bold text-brand-cerulean transition-all duration-300 leading-tight ${
+                                isScrolled ? 'text-xs sm:text-sm' : 'text-base sm:text-xl'
+                            }`}>
+                                {ploAchievedCount}<span className={`font-normal text-gray-400 ${isScrolled ? 'text-[10px]' : 'text-xs'}`}>/{ploMatrix.length}</span>
+                            </span>
+                        </div>
 
-                {/* Score Stats & Actions */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <div className="bg-white border border-brand-cerulean/20 px-3.5 py-2 text-center shadow-xs">
-                            <div className="text-2xl font-serif-title font-bold text-emerald-700">{goodCount} <span className="text-xs text-gray-400">/ 15</span></div>
-                            <div className="text-[10px] font-serif-title uppercase tracking-wider text-emerald-800 font-bold">Mức Tốt</div>
-                        </div>
-                        <div className="bg-white border border-brand-cerulean/20 px-3.5 py-2 text-center shadow-xs">
-                            <div className="text-2xl font-serif-title font-bold text-sky-700">{fairCount} <span className="text-xs text-gray-400">/ 15</span></div>
-                            <div className="text-[10px] font-serif-title uppercase tracking-wider text-sky-800 font-bold">Mức Khá</div>
-                        </div>
-                        <div className="bg-white border border-brand-cerulean/20 px-3.5 py-2 text-center shadow-xs">
-                            <div className="text-2xl font-serif-title font-bold text-brand-cerulean">{ploAchievedCount} <span className="text-xs text-gray-400">/ {ploMatrix.length}</span></div>
-                            <div className="text-[10px] font-serif-title uppercase tracking-wider text-brand-cerulean font-bold">Chuẩn PLO</div>
-                        </div>
                     </div>
-                    <button
-                        type="button"
-                        onClick={handleResetCompetencies}
-                        className="px-3 py-2 bg-white hover:bg-rose-50 text-stone-600 hover:text-rose-700 border border-stone-200 text-xs font-serif-title flex items-center gap-1.5 transition-all shadow-xs shrink-0"
-                        title="Xóa toàn bộ đánh giá và minh chứng mẫu"
-                    >
-                        <Trash2 size={14} /> Xóa mẫu
-                    </button>
-                </div>
-            </header>
+                )}
+            />
 
             {/* Segmented Tab Switcher */}
-            <div className="flex items-center justify-between gap-4 border-b border-brand-cerulean/20 pb-4">
-                <div className="inline-flex p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs flex-wrap gap-1">
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('tt20')}
-                        className={`flex items-center gap-1.5 px-4 py-2 text-xs font-serif-title font-bold transition-all rounded ${
-                            activeTab === 'tt20'
-                                ? 'bg-brand-cerulean text-white shadow-xs'
-                                : 'text-brand-cerulean hover:bg-brand-cerulean/10'
-                        }`}
-                    >
-                        <Award size={15} /> 5 Tiêu chuẩn – 15 Tiêu chí (TT 20)
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('plo')}
-                        className={`flex items-center gap-1.5 px-4 py-2 text-xs font-serif-title font-bold transition-all rounded ${
-                            activeTab === 'plo'
-                                ? 'bg-brand-cerulean text-white shadow-xs'
-                                : 'text-brand-cerulean hover:bg-brand-cerulean/10'
-                        }`}
-                    >
-                        <Compass size={15} /> Ma trận Chuẩn đầu ra (PLO)
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('guidelines')}
-                        className={`flex items-center gap-1.5 px-4 py-2 text-xs font-serif-title font-bold transition-all rounded ${
-                            activeTab === 'guidelines'
-                                ? 'bg-brand-cerulean text-white shadow-xs'
-                                : 'text-brand-cerulean hover:bg-brand-cerulean/10'
-                        }`}
-                    >
-                        <BookOpen size={15} /> Quy trình & Hướng dẫn Minh chứng
-                    </button>
-                </div>
+            <div className="flex w-full p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs overflow-x-auto gap-1">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('tt20')}
+                    className={`flex-1 justify-center flex items-center gap-1.5 px-2.5 sm:px-4 py-2 text-[11px] sm:text-xs font-serif-title font-bold transition-all rounded whitespace-nowrap ${
+                        activeTab === 'tt20'
+                            ? 'bg-brand-cerulean text-white shadow-xs'
+                            : 'text-brand-cerulean hover:bg-brand-cerulean/10'
+                    }`}
+                >
+                    <Award size={14} /> 5 Tiêu chuẩn (TT 20)
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('plo')}
+                    className={`flex-1 justify-center flex items-center gap-1.5 px-2.5 sm:px-4 py-2 text-[11px] sm:text-xs font-serif-title font-bold transition-all rounded whitespace-nowrap ${
+                        activeTab === 'plo'
+                            ? 'bg-brand-cerulean text-white shadow-xs'
+                            : 'text-brand-cerulean hover:bg-brand-cerulean/10'
+                    }`}
+                >
+                    <Compass size={14} /> Ma trận PLO
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('guidelines')}
+                    className={`flex-1 justify-center flex items-center gap-1.5 px-2.5 sm:px-4 py-2 text-[11px] sm:text-xs font-serif-title font-bold transition-all rounded whitespace-nowrap ${
+                        activeTab === 'guidelines'
+                            ? 'bg-brand-cerulean text-white shadow-xs'
+                            : 'text-brand-cerulean hover:bg-brand-cerulean/10'
+                    }`}
+                >
+                    <BookOpen size={14} /> Hướng dẫn
+                </button>
             </div>
 
             {/* TAB 1: 5 TIÊU CHUẨN 15 TIÊU CHÍ */}
             {activeTab === 'tt20' && (
                 <div className="space-y-6">
                     {/* Status Overview Card */}
-                    <div className="bg-white border-editorial shadow-editorial p-6 border-l-4 border-l-brand-cerulean flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="bg-white border-editorial shadow-editorial p-4 sm:p-6 border-l-4 border-l-brand-cerulean flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="space-y-1">
                             <span className="px-2 py-0.5 text-[11px] font-bold font-serif-title bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 rounded uppercase tracking-wider">
                                 Điều 10 • Thông tư 20/2018/TT-BGDĐT

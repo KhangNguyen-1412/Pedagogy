@@ -41,6 +41,7 @@ import {
     AlertCircle
 } from 'lucide-react';
 import { EditorialSelect, EditorialDatePicker, Modal } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 
 const DRAFT_STORAGE_KEY = 'pedagogy_study_log_draft';
 const PREFILL_EVENT_KEY = 'pedagogy_prefill_event';
@@ -890,51 +891,48 @@ export const ResourcesStudyLogView = ({
     // VIEW 2: TRANG DANH SÁCH BÀI HỌC VÀ HỌC LIỆU (NOTEBOOK LIST VIEW)
     // =========================================================================
     return (
-        <div className="max-w-6xl mx-auto space-y-8 pb-12">
-            {/* TOP STICKY HEADER */}
-            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-                <div>
-                    <h2 className="text-4xl font-serif-title text-brand-cerulean">Học liệu & Nhật ký học tập</h2>
-                    <p className="text-base text-gray-600 mt-1">
-                        Sổ ghi chép bài học sau từng buổi giảng, lưu trữ tài liệu slide & việc cần làm trước buổi sau.
-                    </p>
-                </div>
-                <div className="flex bg-white p-1 border border-brand-cerulean shadow-xs shrink-0">
-                    <button
-                        onClick={() => setActiveTab('logs')}
-                        className={`px-4 py-2 font-serif-title flex items-center gap-2 text-sm transition-all ${
-                            activeTab === 'logs' ? 'bg-brand-cerulean text-white font-bold shadow-xs' : 'text-brand-cerulean hover:bg-brand-cream'
-                        }`}
-                    >
-                        <StickyNote size={15} />
-                        <span>Sổ ghi chép bài học</span>
-                        <span className={`text-xs px-1.5 py-0.2 rounded-full font-sans ${
-                            activeTab === 'logs' ? 'bg-white/25 text-white' : 'bg-brand-cerulean/10 text-brand-cerulean font-bold'
-                        }`}>
-                            {studyLogs.length}
-                        </span>
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('resources')}
-                        className={`px-4 py-2 font-serif-title flex items-center gap-2 text-sm transition-all ${
-                            activeTab === 'resources' ? 'bg-brand-cerulean text-white font-bold shadow-xs' : 'text-brand-cerulean hover:bg-brand-cream'
-                        }`}
-                    >
-                        <FolderOpen size={15} />
-                        <span>Tài liệu học phần</span>
-                        <span className={`text-xs px-1.5 py-0.2 rounded-full font-sans ${
-                            activeTab === 'resources' ? 'bg-white/25 text-white' : 'bg-brand-cerulean/10 text-brand-cerulean font-bold'
-                        }`}>
-                            {resources.length}
-                        </span>
-                    </button>
-                </div>
-            </header>
+        <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 pb-12">
+            <CollapsiblePageHeader
+                title="Học liệu & Nhật ký học tập"
+                subtitle="Sổ ghi chép bài học sau từng buổi giảng, lưu trữ tài liệu slide & việc cần làm trước buổi sau."
+                actions={
+                    <div className="flex w-full sm:w-auto bg-white p-1 border border-brand-cerulean shadow-xs shrink-0">
+                        <button
+                            onClick={() => setActiveTab('logs')}
+                            className={`flex-1 sm:flex-none justify-center px-2.5 sm:px-4 py-1.5 sm:py-2 font-serif-title flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm transition-all ${
+                                activeTab === 'logs' ? 'bg-brand-cerulean text-white font-bold shadow-xs' : 'text-brand-cerulean hover:bg-brand-cream'
+                            }`}
+                        >
+                            <StickyNote size={14} />
+                            <span>Sổ ghi chép</span>
+                            <span className={`text-[10px] sm:text-xs px-1.5 py-0.2 rounded-full font-sans ${
+                                activeTab === 'logs' ? 'bg-white/25 text-white' : 'bg-brand-cerulean/10 text-brand-cerulean font-bold'
+                            }`}>
+                                {studyLogs.length}
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('resources')}
+                            className={`flex-1 sm:flex-none justify-center px-2.5 sm:px-4 py-1.5 sm:py-2 font-serif-title flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm transition-all ${
+                                activeTab === 'resources' ? 'bg-brand-cerulean text-white font-bold shadow-xs' : 'text-brand-cerulean hover:bg-brand-cream'
+                            }`}
+                        >
+                            <FolderOpen size={14} />
+                            <span>Tài liệu môn</span>
+                            <span className={`text-[10px] sm:text-xs px-1.5 py-0.2 rounded-full font-sans ${
+                                activeTab === 'resources' ? 'bg-white/25 text-white' : 'bg-brand-cerulean/10 text-brand-cerulean font-bold'
+                            }`}>
+                                {resources.length}
+                            </span>
+                        </button>
+                    </div>
+                }
+            />
 
             {/* FEEDBACK BANNER IF JUST SAVED */}
             {saveFeedback && (
-                <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded flex items-center gap-2 text-sm font-serif-title font-bold animate-fade-in-down shadow-xs">
-                    <CheckCircle2 size={18} className="text-emerald-600" />
+                <div className="p-3.5 sm:p-4 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded flex items-center gap-2 text-xs sm:text-sm font-serif-title font-bold animate-fade-in-down shadow-xs">
+                    <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
                     <span>{saveFeedback}</span>
                 </div>
             )}
@@ -944,24 +942,24 @@ export const ResourcesStudyLogView = ({
                 <div className="space-y-6">
                     {/* PERSISTENT UNSAVED DRAFT ALERT BANNER */}
                     {savedDraft && (
-                        <div className="p-4 bg-amber-50 border-2 border-brand-jasper/50 rounded-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-editorial animate-fade-in-down">
+                        <div className="p-3.5 sm:p-4 bg-amber-50 border-2 border-brand-jasper/50 rounded-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-editorial animate-fade-in-down">
                             <div className="flex items-start gap-3">
                                 <div className="p-2 bg-brand-jasper/10 text-brand-jasper rounded-full mt-0.5 shrink-0">
-                                    <StickyNote size={20} />
+                                    <StickyNote size={18} />
                                 </div>
                                 <div>
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="font-serif-title font-bold text-brand-cerulean text-base">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h4 className="font-serif-title font-bold text-brand-cerulean text-sm sm:text-base">
                                             Bạn đang có một bài ghi chép dở dang chưa lưu vào sổ!
                                         </h4>
-                                        <span className="px-2 py-0.2 bg-brand-jasper text-white text-[10px] font-bold uppercase rounded">Bản nháp</span>
+                                        <span className="px-1.5 py-0.2 bg-brand-jasper text-white text-[10px] font-bold uppercase rounded">Bản nháp</span>
                                     </div>
                                     <p className="text-xs font-sans text-gray-700 mt-0.5">
-                                        Bài: <strong className="text-brand-jasper font-serif-title text-sm">{savedDraft.formData.title || 'Chưa đặt tiêu đề'}</strong> &bull; {savedDraft.formData.date} &bull; Tự động bảo lưu lúc {new Date(savedDraft.lastSavedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                        Bài: <strong className="text-brand-jasper font-serif-title text-xs sm:text-sm">{savedDraft.formData.title || 'Chưa đặt tiêu đề'}</strong> &bull; {savedDraft.formData.date} &bull; Tự động bảo lưu lúc {new Date(savedDraft.lastSavedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                            <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
                                 <button
                                     type="button"
                                     onClick={handleDiscardDraft}
@@ -981,8 +979,8 @@ export const ResourcesStudyLogView = ({
                     )}
 
                     {/* TOOLBAR: MODULE FILTER, SEARCH & FULL-PAGE NEW NOTE BUTTON */}
-                    <div className="bg-white border-editorial p-5 shadow-editorial flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+                    <div className="bg-white border-editorial p-3.5 sm:p-5 shadow-editorial flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 flex-1">
                             {/* Module filter */}
                             <div className="w-full sm:w-64">
                                 <EditorialSelect
@@ -1000,8 +998,8 @@ export const ResourcesStudyLogView = ({
                                     type="text"
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
-                                    placeholder="Tìm theo tên bài học, nội dung, từ khóa, giảng viên..."
-                                    className="input-editorial w-full pl-9 pr-3 text-sm"
+                                    placeholder="Tìm theo tên bài, nội dung, từ khóa..."
+                                    className="input-editorial w-full pl-9 pr-3 text-xs sm:text-sm"
                                 />
                                 {searchQuery && (
                                     <button
@@ -1015,7 +1013,7 @@ export const ResourcesStudyLogView = ({
                         </div>
 
                         {/* Action buttons */}
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
                             {events.length > 0 && (
                                 <button
                                     type="button"
@@ -1031,7 +1029,7 @@ export const ResourcesStudyLogView = ({
                             <button
                                 type="button"
                                 onClick={() => handleOpenAddLog(selectedModuleFilter !== 'all' ? selectedModuleFilter : null)}
-                                className="px-5 py-2.5 bg-brand-cerulean text-white font-serif-title shadow-editorial hover:bg-brand-cerulean/90 transition-colors text-sm font-bold flex items-center justify-center gap-2"
+                                className="w-full sm:w-auto px-5 py-2.5 bg-brand-cerulean text-white font-serif-title shadow-editorial hover:bg-brand-cerulean/90 transition-colors text-xs sm:text-sm font-bold flex items-center justify-center gap-2"
                             >
                                 <Plus size={16} /> Soạn Bài Học Mới
                             </button>
@@ -1039,14 +1037,14 @@ export const ResourcesStudyLogView = ({
                     </div>
 
                     {/* STATS STRIP */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className="bg-white border-editorial p-4 shadow-editorial flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-brand-cerulean/10 text-brand-cerulean flex items-center justify-center shrink-0">
-                                <BookOpen size={20} />
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+                        <div className="bg-white border-editorial p-3 sm:p-4 shadow-editorial flex items-center gap-2.5 sm:gap-3">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-brand-cerulean/10 text-brand-cerulean flex items-center justify-center shrink-0">
+                                <BookOpen size={18} />
                             </div>
                             <div>
-                                <span className="text-xs uppercase text-gray-500 font-bold block">Tổng số buổi ghi</span>
-                                <h4 className="text-2xl font-serif-title font-bold text-brand-cerulean">{studyLogs.length} buổi</h4>
+                                <span className="text-[10px] sm:text-xs uppercase text-gray-500 font-bold block">Tổng số buổi</span>
+                                <h4 className="text-lg sm:text-2xl font-serif-title font-bold text-brand-cerulean">{studyLogs.length} buổi</h4>
                             </div>
                         </div>
 
@@ -1106,7 +1104,7 @@ export const ResourcesStudyLogView = ({
                                     {/* TOP COLOR ACCENT BAR */}
                                     <div className="h-1.5 bg-gradient-to-r from-brand-cerulean via-brand-cerulean/80 to-brand-jasper w-full"></div>
 
-                                    <div className="p-6 space-y-4">
+                                    <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                                         {/* HEADER METADATA: SESSION BADGE, MODULE, DATE, CA HỌC, GIẢNG VIÊN */}
                                         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-brand-cerulean/15">
                                             <div className="flex items-center gap-2 flex-wrap">
@@ -1321,8 +1319,8 @@ export const ResourcesStudyLogView = ({
             {/* TAB 2: TÀI LIỆU HỌC PHẦN (RESOURCES) */}
             {activeTab === 'resources' && (
                 <div className="space-y-6">
-                    <form onSubmit={handleCreateResource} className="bg-white border-editorial p-6 shadow-editorial space-y-4">
-                        <h3 className="text-2xl font-serif-title text-brand-cerulean font-bold">Thêm Học liệu / Tài liệu mới</h3>
+                    <form onSubmit={handleCreateResource} className="bg-white border-editorial p-4 sm:p-6 shadow-editorial space-y-4">
+                        <h3 className="text-xl sm:text-2xl font-serif-title text-brand-cerulean font-bold">Thêm Học liệu / Tài liệu mới</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <EditorialSelect

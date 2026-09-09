@@ -23,6 +23,7 @@ import {
     Lightbulb
 } from 'lucide-react';
 import { EditorialSelect, Modal, AlertBox, ProgressBar } from '../../components/common/EditorialWidgets';
+import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 import { RuleValidationPanel } from '../../components/training/RuleValidationPanel';
 import { isModuleInProgram, getModuleProgramNames, calculateRuleBreakdown, normalizeModuleProgramIds, getProgramStatus, getProgramStatusLabel, isThptProgram, isThcsProgram } from "../../utils/ruleValidators";
 import { calculateModuleFinal } from "../../utils/gpaCalculators";
@@ -557,145 +558,184 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
     const progStatus = getProgramStatus(program);
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
-            <header className="sticky -top-6 md:-top-12 z-30 bg-brand-cream/95 backdrop-blur-md pt-6 md:pt-12 pb-4 -mt-6 md:-mt-12 mb-8 border-b-2 border-brand-cerulean space-y-3">
-                <button onClick={() => navigate('programs')} className="flex items-center gap-2 text-brand-cerulean hover:text-brand-jasper font-serif-title text-sm font-bold transition-colors">
-                    <ArrowLeft size={16} /> Quay lại danh sách chương trình
-                </button>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
-                    <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-3 flex-wrap">
-                            <h1 className="text-4xl sm:text-5xl font-serif-title text-brand-cerulean">{program.name}</h1>
-                            {progStatus === 'chua_hoc' && (
-                                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold font-serif-title rounded border border-gray-300 flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                    Chưa học
-                                </span>
-                            )}
-                            {progStatus === 'dang_hoc' && (
-                                <span className="px-3 py-1 bg-brand-cream text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/40 flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full bg-brand-cerulean animate-pulse"></span>
-                                    Đang học
-                                </span>
-                            )}
-                            {progStatus === 'da_hoc' && (
-                                <span className="px-3 py-1 bg-brand-cerulean/15 text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/40 flex items-center gap-1.5">
-                                    <CheckCircle2 size={13} className="text-brand-cerulean" />
-                                    Đã học
-                                </span>
-                            )}
-                            {isDaiHoc && (
-                                <span className="px-3 py-1 bg-brand-cream text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/30">
-                                    Bậc Đại học (4 năm &bull; 8 Học kỳ)
-                                </span>
-                            )}
-                            {/* 3-State Quick Switcher in Header */}
-                            <div className="flex items-center p-0.5 bg-gray-100 border border-gray-200 rounded text-xs font-serif-title">
-                                <button
-                                    type="button"
-                                    title="Chuyển sang Chưa học"
-                                    onClick={() => onUpdateProgramStatus && onUpdateProgramStatus(program.id, 'chua_hoc')}
-                                    className={`px-2.5 py-1 rounded transition-all flex items-center gap-1 ${
-                                        progStatus === 'chua_hoc'
-                                            ? 'bg-white text-gray-800 font-bold shadow-xs border border-gray-300'
-                                            : 'text-gray-500 hover:text-gray-800'
-                                    }`}
-                                >
-                                    Chưa học
-                                </button>
-                                <button
-                                    type="button"
-                                    title="Chuyển sang Đang học"
-                                    onClick={() => onUpdateProgramStatus && onUpdateProgramStatus(program.id, 'dang_hoc')}
-                                    className={`px-2.5 py-1 rounded transition-all flex items-center gap-1 ${
-                                        progStatus === 'dang_hoc'
-                                            ? 'bg-brand-cerulean text-white font-bold shadow-xs'
-                                            : 'text-gray-500 hover:text-brand-cerulean'
-                                    }`}
-                                >
-                                    Đang học
-                                </button>
-                                <button
-                                    type="button"
-                                    title="Chuyển sang Đã học"
-                                    onClick={() => onUpdateProgramStatus && onUpdateProgramStatus(program.id, 'da_hoc')}
-                                    className={`px-2.5 py-1 rounded transition-all flex items-center gap-1 ${
-                                        progStatus === 'da_hoc'
-                                            ? 'bg-brand-cerulean text-white font-bold shadow-xs'
-                                            : 'text-gray-500 hover:text-brand-cerulean'
-                                    }`}
-                                >
-                                    Đã học
-                                </button>
-                            </div>
+        <div className="max-w-6xl mx-auto space-y-6 md:space-y-8">
+            <CollapsiblePageHeader
+                backButton={{
+                    label: 'Quay lại danh sách chương trình',
+                    onClick: () => navigate('programs')
+                }}
+                badge={
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                        {progStatus === 'chua_hoc' && (
+                            <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-gray-100 text-gray-700 text-xs font-bold font-serif-title rounded border border-gray-300 flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                Chưa học
+                            </span>
+                        )}
+                        {progStatus === 'dang_hoc' && (
+                            <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-brand-cream text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/40 flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-brand-cerulean animate-pulse"></span>
+                                Đang học
+                            </span>
+                        )}
+                        {progStatus === 'da_hoc' && (
+                            <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-brand-cerulean/15 text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/40 flex items-center gap-1.5">
+                                <CheckCircle2 size={13} className="text-brand-cerulean" />
+                                Đã học
+                            </span>
+                        )}
+                        {isDaiHoc && (
+                            <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-brand-cream text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/30">
+                                Bậc Đại học (4 năm &bull; 8 Học kỳ)
+                            </span>
+                        )}
+                        {/* 3-State Quick Switcher in Header */}
+                        <div className="flex items-center p-0.5 bg-gray-100 border border-gray-200 rounded text-xs font-serif-title">
                             <button
-                                onClick={handleOpenProgramEditModal}
-                                className="p-2 text-brand-cerulean hover:text-brand-jasper hover:bg-brand-cerulean/10 border border-brand-cerulean/30 rounded transition-all shadow-sm"
-                                title="Chỉnh sửa thông tin chương trình đào tạo"
+                                type="button"
+                                title="Chuyển sang Chưa học"
+                                onClick={() => onUpdateProgramStatus && onUpdateProgramStatus(program.id, 'chua_hoc')}
+                                className={`px-2 sm:px-2.5 py-1 rounded transition-all flex items-center gap-1 text-[11px] sm:text-xs ${
+                                    progStatus === 'chua_hoc'
+                                        ? 'bg-white text-gray-800 font-bold shadow-xs border border-gray-300'
+                                        : 'text-gray-500 hover:text-gray-800'
+                                }`}
                             >
-                                <Pencil size={18} />
+                                Chưa học
                             </button>
                             <button
-                                onClick={handleDeleteProgramClick}
-                                className="p-2 text-red-600 hover:text-white hover:bg-red-600 border border-red-200 hover:border-red-600 rounded transition-all shadow-sm"
-                                title="Xóa chương trình đào tạo này"
+                                type="button"
+                                title="Chuyển sang Đang học"
+                                onClick={() => onUpdateProgramStatus && onUpdateProgramStatus(program.id, 'dang_hoc')}
+                                className={`px-2 sm:px-2.5 py-1 rounded transition-all flex items-center gap-1 text-[11px] sm:text-xs ${
+                                    progStatus === 'dang_hoc'
+                                        ? 'bg-brand-cerulean text-white font-bold shadow-xs'
+                                        : 'text-gray-500 hover:text-brand-cerulean'
+                                }`}
                             >
-                                <Trash2 size={18} />
+                                Đang học
+                            </button>
+                            <button
+                                type="button"
+                                title="Chuyển sang Đã học"
+                                onClick={() => onUpdateProgramStatus && onUpdateProgramStatus(program.id, 'da_hoc')}
+                                className={`px-2 sm:px-2.5 py-1 rounded transition-all flex items-center gap-1 text-[11px] sm:text-xs ${
+                                    progStatus === 'da_hoc'
+                                        ? 'bg-brand-cerulean text-white font-bold shadow-xs'
+                                        : 'text-gray-500 hover:text-brand-cerulean'
+                                }`}
+                            >
+                                Đã học
                             </button>
                         </div>
-                        {program.description && (
-                            <div className="max-w-3xl">
-                                <p className={`text-sm text-gray-600 font-body leading-relaxed transition-all ${!isDescExpanded ? 'line-clamp-2' : ''}`}>
-                                    {program.description}
-                                </p>
-                                {program.description.length > 120 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsDescExpanded(!isDescExpanded)}
-                                        className="inline-flex items-center gap-1 text-xs font-serif-title font-bold text-brand-cerulean hover:text-brand-jasper transition-colors mt-0.5"
-                                    >
-                                        {isDescExpanded ? 'Thu gọn ▲' : 'Xem thêm mục tiêu ▼'}
-                                    </button>
-                                )}
+                        <button
+                            onClick={handleOpenProgramEditModal}
+                            className="p-1.5 sm:p-2 text-brand-cerulean hover:text-brand-jasper hover:bg-brand-cerulean/10 border border-brand-cerulean/30 rounded transition-all shadow-sm"
+                            title="Chỉnh sửa thông tin chương trình đào tạo"
+                        >
+                            <Pencil size={16} />
+                        </button>
+                        <button
+                            onClick={handleDeleteProgramClick}
+                            className="p-1.5 sm:p-2 text-red-600 hover:text-white hover:bg-red-600 border border-red-200 hover:border-red-600 rounded transition-all shadow-sm"
+                            title="Xóa chương trình đào tạo này"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </div>
+                }
+                title={program.name}
+                subtitle={
+                    program.description ? (
+                        <div className="max-w-3xl">
+                            <p className={`text-xs sm:text-sm text-gray-600 font-body leading-relaxed transition-all ${!isDescExpanded ? 'line-clamp-2' : ''}`}>
+                                {program.description}
+                            </p>
+                            {program.description.length > 120 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsDescExpanded(!isDescExpanded)}
+                                    className="inline-flex items-center gap-1 text-xs font-serif-title font-bold text-brand-cerulean hover:text-brand-jasper transition-colors mt-0.5"
+                                >
+                                    {isDescExpanded ? 'Thu gọn ▲' : 'Xem thêm mục tiêu ▼'}
+                                </button>
+                            )}
+                        </div>
+                    ) : null
+                }
+                actions={({ isScrolled }) => (
+                    <div className="text-right transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]">
+                        {program.evaluationType === 'modules' ? (
+                            <div className={`transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                                isScrolled ? 'bg-brand-cream px-2.5 py-1 rounded border border-brand-cerulean/20' : ''
+                            }`}>
+                                <div className={`font-serif-title font-bold text-brand-jasper transition-all duration-300 ${
+                                    isScrolled ? 'text-xs sm:text-sm' : 'text-xl sm:text-3xl'
+                                }`}>
+                                    {programModules.length} <span className={`font-normal text-gray-500 ${isScrolled ? 'text-xs' : 'text-sm sm:text-base'}`}>/ {program.totalCreditsRequired || 6} CĐ</span>
+                                </div>
+                                <div className={`grid transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                                    isScrolled ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
+                                }`}>
+                                    <div className="overflow-hidden text-[10px] uppercase tracking-wider text-brand-cerulean font-bold mt-0.5">
+                                        Chuyên đề trong CTĐT
+                                    </div>
+                                </div>
+                            </div>
+                        ) : program.evaluationType === 'hours' ? (
+                            <div className={`transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                                isScrolled ? 'bg-brand-cream px-2.5 py-1 rounded border border-brand-cerulean/20' : ''
+                            }`}>
+                                <div className={`font-serif-title font-bold text-brand-jasper transition-all duration-300 ${
+                                    isScrolled ? 'text-xs sm:text-sm' : 'text-xl sm:text-3xl'
+                                }`}>
+                                    {programModules.reduce((s, m) => s + (Number(m.credits || 3) * 15), 0)} <span className={`font-normal text-gray-500 ${isScrolled ? 'text-xs' : 'text-sm sm:text-base'}`}>/ {program.totalCreditsRequired || 120} Tiết</span>
+                                </div>
+                                <div className={`grid transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                                    isScrolled ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
+                                }`}>
+                                    <div className="overflow-hidden text-[10px] uppercase tracking-wider text-brand-cerulean font-bold mt-0.5">
+                                        Tiết học trong CTĐT
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className={`transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                                isScrolled ? 'bg-brand-cream px-2.5 py-1 rounded border border-brand-cerulean/20' : ''
+                            }`}>
+                                <div className={`font-serif-title font-bold text-brand-jasper transition-all duration-300 ${
+                                    isScrolled ? 'text-xs sm:text-sm' : 'text-xl sm:text-3xl'
+                                }`}>
+                                    {totalProgramCredits} <span className={`font-normal text-gray-500 ${isScrolled ? 'text-xs' : 'text-sm sm:text-base'}`}>/ {program.totalCreditsRequired || (isDaiHoc ? 135 : 34)} TC</span>
+                                </div>
+                                <div className={`grid transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                                    isScrolled ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
+                                }`}>
+                                    <div className="overflow-hidden text-[10px] uppercase tracking-wider text-brand-cerulean font-bold mt-0.5">
+                                        Tín chỉ hiện có trong CTĐT
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
-                    <div className="text-right min-w-[200px]">
-                        {program.evaluationType === 'modules' ? (
-                            <>
-                                <div className="text-4xl font-serif-title text-brand-jasper">{programModules.length} <span className="text-lg text-gray-500">/ {program.totalCreditsRequired || 6}</span></div>
-                                <div className="text-sm uppercase tracking-wider text-brand-cerulean font-bold mt-1">Chuyên đề trong CTĐT</div>
-                            </>
-                        ) : program.evaluationType === 'hours' ? (
-                            <>
-                                <div className="text-4xl font-serif-title text-brand-jasper">{programModules.reduce((s, m) => s + (Number(m.credits || 3) * 15), 0)} <span className="text-lg text-gray-500">/ {program.totalCreditsRequired || 120}</span></div>
-                                <div className="text-sm uppercase tracking-wider text-brand-cerulean font-bold mt-1">Tiết học trong CTĐT</div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="text-4xl font-serif-title text-brand-jasper">{totalProgramCredits} <span className="text-lg text-gray-500">/ {program.totalCreditsRequired || (isDaiHoc ? 135 : 34)}</span></div>
-                                <div className="text-sm uppercase tracking-wider text-brand-cerulean font-bold mt-1">Tín chỉ hiện có trong CTĐT</div>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </header>
+                )}
+            />
 
             {/* Live Rule Validation Breakdown Panel */}
             <RuleValidationPanel program={program} modules={modules} />
 
             {/* Action Bar with View Mode Switcher and Filters */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-brand-cerulean/20 pb-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 border-b border-brand-cerulean/20 pb-3 sm:pb-4">
                 <div className="space-y-2">
-                    <h2 className="text-3xl font-serif-title text-brand-cerulean">
+                    <h2 className="text-base sm:text-lg md:text-2xl font-serif-title text-brand-cerulean font-bold">
                         {viewMode === 'category' ? 'Danh sách Học phần theo Khối kiến thức' : 'Lộ trình Học phần theo Từng Học kỳ'}
                     </h2>
                     {/* View Switcher Toggle */}
-                    <div className="inline-flex p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs">
+                    <div className="flex w-full sm:w-auto p-1 bg-brand-cream border border-brand-cerulean/30 rounded shadow-xs">
                         <button
                             type="button"
                             onClick={() => setViewMode('category')}
-                            className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-serif-title font-bold transition-all rounded ${
+                            className={`flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3 py-1.5 text-xs font-serif-title font-bold transition-all rounded ${
                                 viewMode === 'category'
                                     ? 'bg-brand-cerulean text-white shadow-xs'
                                     : 'text-brand-cerulean hover:bg-brand-cerulean/10'
@@ -706,7 +746,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                         <button
                             type="button"
                             onClick={() => setViewMode('semester')}
-                            className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-serif-title font-bold transition-all rounded ${
+                            className={`flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3 py-1.5 text-xs font-serif-title font-bold transition-all rounded ${
                                 viewMode === 'semester'
                                     ? 'bg-brand-cerulean text-white shadow-xs'
                                     : 'text-brand-cerulean hover:bg-brand-cerulean/10'
@@ -717,9 +757,9 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
                     {isDaiHoc && viewMode === 'category' && (
-                        <div className="w-48">
+                        <div className="w-full sm:w-48">
                             <EditorialSelect
                                 value={semesterFilter}
                                 onChange={setSemesterFilter}
@@ -728,7 +768,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                         </div>
                     )}
                     {programModules.length > 0 && (
-                        <div className="w-52">
+                        <div className="w-full sm:w-52">
                             <EditorialSelect
                                 value={categoryFilter}
                                 onChange={setCategoryFilter}
@@ -736,7 +776,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                             />
                         </div>
                     )}
-                    <button onClick={handleOpenAddModal} className="px-4 py-2 bg-brand-cerulean text-brand-cream font-serif-title shadow-editorial hover:shadow-editorial-hover transition-all whitespace-nowrap">
+                    <button onClick={handleOpenAddModal} className="w-full sm:w-auto px-4 py-2.5 bg-brand-cerulean text-brand-cream font-serif-title shadow-editorial hover:shadow-editorial-hover transition-all text-center">
                         + Thêm Học phần
                     </button>
                 </div>
@@ -757,22 +797,22 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                             const semTotalCredits = mods.reduce((s, m) => s + Number(m.credits || 0), 0);
 
                             return (
-                                <section key={semKey} className="space-y-6 break-inside-avoid bg-white p-6 border-editorial shadow-editorial">
-                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b-2 border-brand-cerulean pb-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded bg-brand-cerulean text-white font-serif-title font-bold flex items-center justify-center text-lg shrink-0 shadow-xs">
+                                <section key={semKey} className="space-y-4 sm:space-y-6 break-inside-avoid bg-white p-3.5 sm:p-6 border-editorial shadow-editorial">
+                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2.5 sm:gap-3 border-b-2 border-brand-cerulean pb-3">
+                                        <div className="flex items-center gap-2.5 sm:gap-3">
+                                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded bg-brand-cerulean text-white font-serif-title font-bold flex items-center justify-center text-sm sm:text-lg shrink-0 shadow-xs">
                                                 {semKey === 'summer' ? 'Hè' : `K${semKey}`}
                                             </div>
                                             <div>
-                                                <h3 className="text-2xl font-serif-title text-brand-cerulean uppercase tracking-wider flex items-center gap-2 flex-wrap">
+                                                <h3 className="text-lg sm:text-2xl font-serif-title text-brand-cerulean uppercase tracking-wider flex items-center gap-2 flex-wrap">
                                                     {getSemesterTitle(semKey)}
                                                     {semKey === 'unassigned' && (
-                                                        <span className="px-2.5 py-0.5 bg-brand-cream text-brand-jasper border border-brand-jasper/40 text-xs font-bold font-sans rounded-full normal-case">
+                                                        <span className="px-2 py-0.5 bg-brand-cream text-brand-jasper border border-brand-jasper/40 text-[11px] sm:text-xs font-bold font-sans rounded-full normal-case">
                                                             Chưa phân bổ
                                                         </span>
                                                     )}
                                                 </h3>
-                                                <p className="text-xs text-gray-500 font-sans mt-0.5">
+                                                <p className="text-[11px] sm:text-xs text-gray-500 font-sans mt-0.5">
                                                     {semKey === 'unassigned' 
                                                         ? 'Các học phần đã nhập nhưng chưa gán kỳ học — bạn có thể chọn học kỳ ngay trên thẻ môn'
                                                         : semKey === 'summer' 
@@ -1063,12 +1103,12 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                             const selectedElectiveId = electives.find(m => m.isSelected)?.id;
 
                             return (
-                                <section key={category} className="space-y-6 break-inside-avoid bg-white p-6 border-editorial shadow-editorial">
-                                    <div className="flex justify-between items-center border-b border-brand-cerulean pb-3">
-                                        <h3 className="text-2xl font-serif-title text-brand-cerulean uppercase tracking-wider">
+                                <section key={category} className="space-y-4 sm:space-y-6 break-inside-avoid bg-white p-3.5 sm:p-6 border-editorial shadow-editorial">
+                                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-1.5 border-b border-brand-cerulean pb-3">
+                                        <h3 className="text-base sm:text-2xl font-serif-title text-brand-cerulean uppercase tracking-wider">
                                             {getCategoryTitle(category)}
                                         </h3>
-                                        <span className="text-xs font-serif-title text-gray-500 uppercase tracking-widest">
+                                        <span className="text-[11px] sm:text-xs font-serif-title text-gray-500 uppercase tracking-widest">
                                             {mods.length} Học phần &bull; {mods.reduce((s, m) => s + Number(m.credits || 0), 0)} TC
                                         </span>
                                     </div>
