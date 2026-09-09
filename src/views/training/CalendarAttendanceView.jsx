@@ -22,7 +22,9 @@ import {
     Filter,
     Layers,
     CheckSquare,
-    Square
+    Square,
+    StickyNote,
+    BookOpen
 } from 'lucide-react';
 import {
     EditorialSelect,
@@ -144,7 +146,7 @@ export const getEventSession = (evtOrTime) => {
     return 'evening';
 };
 
-export const CalendarAttendanceView = ({ modules = [], events = [], onAddEvent, onUpdateEvent, onDeleteEvent }) => {
+export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = [], navigate, onAddEvent, onUpdateEvent, onDeleteEvent }) => {
     const [viewMode, setViewMode] = useState('week'); // 'week' | 'grid' | 'list'
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [currentWeekDate, setCurrentWeekDate] = useState(new Date());
@@ -726,11 +728,18 @@ export const CalendarAttendanceView = ({ modules = [], events = [], onAddEvent, 
                                                                         </div>
                                                                     )}
                                                                     <div className="mt-1.5 pt-1 border-t border-gray-100 flex items-center justify-between text-[10px]">
-                                                                        <span className={`font-semibold ${
-                                                                            evt.attendanceStatus === 'present' ? 'text-brand-cerulean' : evt.attendanceStatus === 'absent' ? 'text-brand-jasper' : 'text-gray-500'
-                                                                        }`}>
-                                                                            {evt.attendanceStatus === 'present' ? 'Có mặt' : evt.attendanceStatus === 'late' ? 'Trễ' : evt.attendanceStatus === 'absent' ? 'Vắng' : 'Kế hoạch'}
-                                                                        </span>
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <span className={`font-semibold ${
+                                                                                evt.attendanceStatus === 'present' ? 'text-brand-cerulean' : evt.attendanceStatus === 'absent' ? 'text-brand-jasper' : 'text-gray-500'
+                                                                            }`}>
+                                                                                {evt.attendanceStatus === 'present' ? 'Có mặt' : evt.attendanceStatus === 'late' ? 'Trễ' : evt.attendanceStatus === 'absent' ? 'Vắng' : 'Kế hoạch'}
+                                                                            </span>
+                                                                            {(studyLogs || []).some(l => l.eventId === evt.id || (l.date === evt.date && l.moduleId === evt.moduleId)) && (
+                                                                                <span className="text-brand-jasper flex items-center" title="Đã có ghi chép bài học">
+                                                                                    <StickyNote size={10} />
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
                                                                         <Pencil size={10} className="text-gray-400 opacity-0 group-hover/card:opacity-100 transition-opacity" />
                                                                     </div>
                                                                 </div>
@@ -983,6 +992,58 @@ export const CalendarAttendanceView = ({ modules = [], events = [], onAddEvent, 
                                             <span>Ghi chú: {evt.notes}</span>
                                         </p>
                                     )}
+
+                                    {/* SỔ GHI CHÉP BÀI HỌC CỦA BUỔI HỌC NÀY */}
+                                    {(() => {
+                                        const relatedLog = (studyLogs || []).find(l => l.eventId === evt.id || (l.date === evt.date && l.moduleId === evt.moduleId));
+                                        if (relatedLog) {
+                                            return (
+                                                <div className="flex items-center justify-between gap-2 p-2 bg-brand-cream/70 border border-brand-cerulean/30 rounded-xs text-xs">
+                                                    <div className="flex items-center gap-1.5 text-brand-cerulean overflow-hidden">
+                                                        <StickyNote size={14} className="text-brand-jasper shrink-0" />
+                                                        <span className="font-serif-title font-bold shrink-0">Ghi chép bài học:</span>
+                                                        <span className="font-sans font-semibold text-gray-800 truncate">{relatedLog.title}</span>
+                                                    </div>
+                                                    {navigate && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (typeof window !== 'undefined') {
+                                                                    sessionStorage.setItem('pedagogy_view_log_id', relatedLog.id);
+                                                                    sessionStorage.setItem('pedagogy_resources_tab', 'logs');
+                                                                }
+                                                                navigate('resources');
+                                                            }}
+                                                            className="text-xs font-serif-title font-bold text-brand-jasper hover:underline shrink-0 ml-2"
+                                                        >
+                                                            Mở sổ bài học &rarr;
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        }
+                                        if (navigate) {
+                                            return (
+                                                <div className="pt-0.5">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (typeof window !== 'undefined') {
+                                                                sessionStorage.setItem('pedagogy_prefill_event', JSON.stringify(evt));
+                                                                sessionStorage.setItem('pedagogy_study_log_editor_active', 'true');
+                                                                sessionStorage.setItem('pedagogy_resources_tab', 'logs');
+                                                            }
+                                                            navigate('resources');
+                                                        }}
+                                                        className="text-xs font-serif-title text-gray-500 hover:text-brand-cerulean inline-flex items-center gap-1 hover:underline font-medium"
+                                                    >
+                                                        <Plus size={12} /> Ghi chép bài học cho buổi này
+                                                    </button>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
                                 </div>
 
                                 <div className="flex flex-col items-end gap-2 w-full md:w-auto">

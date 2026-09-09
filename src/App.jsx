@@ -639,6 +639,12 @@ export default function App() {
         try { await setDoc(getDocRef(userId, 'studyLogs', newLog.id), newLog); } catch (err) {}
     };
 
+    const handleUpdateStudyLog = async (updatedLog) => {
+        setStudyLogs(prev => prev.map(l => l.id === updatedLog.id ? updatedLog : l));
+        const userId = getUserId(user);
+        try { await setDoc(getDocRef(userId, 'studyLogs', updatedLog.id), updatedLog); } catch (err) {}
+    };
+
     const handleDeleteStudyLog = async (logId) => {
         setStudyLogs(prev => prev.filter(l => l.id !== logId));
         const userId = getUserId(user);
@@ -986,6 +992,8 @@ export default function App() {
                     <CalendarAttendanceView
                         modules={filteredModules.length > 0 ? filteredModules : modules}
                         events={events}
+                        studyLogs={studyLogs}
+                        navigate={navigate}
                         onAddEvent={handleAddEvent}
                         onUpdateEvent={handleUpdateEvent}
                         onDeleteEvent={handleDeleteEvent}
@@ -1003,10 +1011,13 @@ export default function App() {
                         modules={filteredModules.length > 0 ? filteredModules : modules}
                         studyLogs={studyLogs}
                         resources={resources}
+                        events={events}
                         onAddStudyLog={handleAddStudyLog}
+                        onUpdateStudyLog={handleUpdateStudyLog}
                         onDeleteStudyLog={handleDeleteStudyLog}
                         onAddResource={handleAddResource}
                         onDeleteResource={handleDeleteResource}
+                        navigate={navigate}
                     />
                 )}
 
