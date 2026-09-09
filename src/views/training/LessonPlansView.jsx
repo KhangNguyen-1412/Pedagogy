@@ -220,17 +220,6 @@ export const LessonPlansView = ({ profile }) => {
         : '---';
     const approvedPlansCount = lessonPlans.filter(p => p.status === 'approved').length;
 
-    const handleResetPlans = () => {
-        if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ giáo án mẫu và ca tập giảng để nhập mới?')) {
-            setLessonPlans([]);
-            setMicroSessions([]);
-            setSelectedPlanId(null);
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('pedagogy_lesson_plans', JSON.stringify([]));
-                localStorage.setItem('pedagogy_micro_sessions', JSON.stringify([]));
-            }
-        }
-    };
 
     return (
         <div className="max-w-6xl mx-auto space-y-6 md:space-y-8">
