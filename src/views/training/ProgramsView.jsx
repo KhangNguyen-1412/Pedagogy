@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, CheckCircle2, PlusCircle, Trash2 } from 'lucide-react';
 import { EditorialSelect, Modal } from '../../components/common/EditorialWidgets';
-import { getCategoryPresets, isModuleInProgram, getProgramStatus, getProgramStatusLabel } from '../../utils/ruleValidators';
+import { getCategoryPresets, isModuleInProgram, getProgramStatus, getProgramStatusLabel, isThptProgram, isThcsProgram } from '../../utils/ruleValidators';
 
 export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeleteProgram, onToggleEnrollProgram, onUpdateProgramStatus, navigate }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,6 +32,7 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
         });
     };
 
+    const isEditThpt = formData.category === 'nvsp_thpt' || (formData.name && formData.name.toLowerCase().includes('thpt'));
     const programTotalCredits = formData.category === 'dai_hoc'
         ? ((formData.rules?.general ?? 0) +
            (formData.rules?.fundamentalMandatory ?? formData.rules?.fundamental ?? 0) +
@@ -41,11 +42,17 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
            (formData.rules?.internshipGraduation ?? 0))
         : formData.evaluationType === 'modules' || formData.evaluationType === 'hours'
             ? ((formData.rules?.mandatoryA ?? 0) + (formData.rules?.electiveA ?? 0))
-            : ((formData.rules?.mandatoryA ?? 0) +
-               (formData.rules?.electiveA ?? 0) +
-               (formData.rules?.mandatoryB ?? 0) +
-               (formData.rules?.practiceB ?? 0) +
-               (formData.rules?.electiveB ?? 0));
+            : isEditThpt
+                ? ((formData.rules?.mandatoryA ?? 0) +
+                   (formData.rules?.electiveA ?? 0) +
+                   (formData.rules?.mandatoryC ?? 0) +
+                   (formData.rules?.practiceC ?? 0) +
+                   (formData.rules?.electiveC ?? 0))
+                : ((formData.rules?.mandatoryA ?? 0) +
+                   (formData.rules?.electiveA ?? 0) +
+                   (formData.rules?.mandatoryB ?? 0) +
+                   (formData.rules?.practiceB ?? 0) +
+                   (formData.rules?.electiveB ?? 0));
 
     const handleCreate = (e) => {
         e.preventDefault();
@@ -124,8 +131,8 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                                             </span>
                                         )}
                                         {progStatus === 'dang_hoc' && (
-                                            <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-800 text-xs font-bold font-serif-title rounded border border-emerald-300 flex items-center gap-1.5">
-                                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                            <span className="px-2.5 py-0.5 bg-brand-cream text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/40 flex items-center gap-1.5">
+                                                <span className="w-2 h-2 rounded-full bg-brand-cerulean animate-pulse"></span>
                                                 Đang học
                                             </span>
                                         )}
@@ -136,12 +143,12 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                                             </span>
                                         )}
                                         {isDaiHoc && (
-                                            <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-800 text-xs font-bold font-serif-title rounded border border-emerald-300">
+                                            <span className="px-2.5 py-0.5 bg-brand-cream text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/30">
                                                 Bậc Đại học (4 năm)
                                             </span>
                                         )}
                                         {sharedCount > 0 && (
-                                            <span className="px-2.5 py-0.5 bg-blue-50 text-brand-cerulean/80 text-xs font-bold font-serif-title rounded border border-brand-cerulean/20">
+                                            <span className="px-2.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/20">
                                                 {sharedCount} học phần dùng chung
                                             </span>
                                         )}
@@ -159,11 +166,21 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                                         </div>
                                     ) : prog.evaluationType === 'credits' && prog.rules ? (
                                         <div className="pt-2 flex flex-wrap gap-2 text-xs font-sans">
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">A Bắt buộc: <b>{prog.rules.mandatoryA || 0} TC</b></span>
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">A Tự chọn: <b>{prog.rules.electiveA || 0} TC</b></span>
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">B Bắt buộc: <b>{prog.rules.mandatoryB || 0} TC</b></span>
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">B Thực hành: <b>{prog.rules.practiceB || 0} TC</b></span>
-                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">B Tự chọn: <b>{prog.rules.electiveB || 0} TC</b></span>
+                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối A Bắt buộc: <b>{prog.rules.mandatoryA || 0} TC</b></span>
+                                            <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối A Tự chọn: <b>{prog.rules.electiveA || 0} TC</b></span>
+                                            {isThptProgram(prog) ? (
+                                                <>
+                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối C Bắt buộc: <b>{prog.rules.mandatoryC || 0} TC</b></span>
+                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối C Thực hành: <b>{prog.rules.practiceC || 0} TC</b></span>
+                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối C Tự chọn: <b>{prog.rules.electiveC || 0} TC</b></span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối B Bắt buộc: <b>{prog.rules.mandatoryB || 0} TC</b></span>
+                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối B Thực hành: <b>{prog.rules.practiceB || 0} TC</b></span>
+                                                    <span className="bg-brand-cream border border-brand-cerulean/20 px-2 py-1 rounded">Khối B Tự chọn: <b>{prog.rules.electiveB || 0} TC</b></span>
+                                                </>
+                                            )}
                                         </div>
                                     ) : null}
                                 </div>
@@ -190,8 +207,8 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                                             onClick={() => onUpdateProgramStatus ? onUpdateProgramStatus(prog.id, 'dang_hoc') : onToggleEnrollProgram && onToggleEnrollProgram(prog.id)}
                                             className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 whitespace-nowrap ${
                                                 progStatus === 'dang_hoc'
-                                                    ? 'bg-emerald-600 text-white font-bold shadow-xs'
-                                                    : 'text-gray-600 hover:text-emerald-700 hover:bg-emerald-50'
+                                                    ? 'bg-brand-cerulean text-white font-bold shadow-xs'
+                                                    : 'text-gray-600 hover:text-brand-cerulean hover:bg-brand-cream'
                                             }`}
                                         >
                                             <span className={`w-1.5 h-1.5 rounded-full ${progStatus === 'dang_hoc' ? 'bg-white' : 'bg-transparent'}`}></span>
@@ -204,7 +221,7 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                                             className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 whitespace-nowrap ${
                                                 progStatus === 'da_hoc'
                                                     ? 'bg-brand-cerulean text-white font-bold shadow-xs'
-                                                    : 'text-gray-600 hover:text-brand-cerulean hover:bg-blue-50'
+                                                    : 'text-gray-600 hover:text-brand-cerulean hover:bg-brand-cream'
                                             }`}
                                         >
                                             <span className={`w-1.5 h-1.5 rounded-full ${progStatus === 'da_hoc' ? 'bg-white' : 'bg-transparent'}`}></span>
@@ -261,9 +278,10 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                                 }}
                                 options={[
                                     { label: 'Bậc Đại học (Cử nhân / Kỹ sư 120-150 TC)', value: 'dai_hoc' },
-                                    { label: 'Nhánh A: Nghiệp vụ Sư phạm (34-36 TC)', value: 'nhanh_a' },
-                                    { label: 'Nhánh B: Bồi dưỡng CDNN Giáo viên', value: 'nhanh_b' },
-                                    { label: 'Nhánh C: Chứng chỉ Kỹ năng / Ngắn hạn', value: 'nhanh_c' }
+                                    { label: 'NVSP THCS: Nghiệp vụ Sư phạm THCS (Khối A & B - 34 TC)', value: 'nvsp_thcs' },
+                                    { label: 'NVSP THPT: Nghiệp vụ Sư phạm THPT (Khối A & C - 36 TC)', value: 'nvsp_thpt' },
+                                    { label: 'Bồi dưỡng CDNN Giáo viên (Hệ chuyên đề)', value: 'nhanh_b' },
+                                    { label: 'Chứng chỉ Kỹ năng / Ngắn hạn (Hệ tiết học)', value: 'nhanh_c' }
                                 ]}
                             />
                         </div>
@@ -359,27 +377,56 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                                     <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA} onChange={e => handleUpdateProgramFormRule('electiveA', e.target.value)} />
                                 </div>
                             </div>
+                        ) : isEditThpt ? (
+                            <div className="space-y-2">
+                                <div className="text-xs font-bold text-brand-cerulean">Khối A (Học phần chung) & Khối C (Chuyên ngành THPT):</div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Bắt buộc (TC)</label>
+                                        <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA ?? 15} onChange={e => handleUpdateProgramFormRule('mandatoryA', e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Tự chọn (TC)</label>
+                                        <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA ?? 2} onChange={e => handleUpdateProgramFormRule('electiveA', e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối C Bắt buộc (TC)</label>
+                                        <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryC ?? 11} onChange={e => handleUpdateProgramFormRule('mandatoryC', e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối C Thực hành (TC)</label>
+                                        <input type="number" min="0" className="input-editorial w-full" value={formData.rules.practiceC ?? 6} onChange={e => handleUpdateProgramFormRule('practiceC', e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối C Tự chọn (TC)</label>
+                                        <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveC ?? 2} onChange={e => handleUpdateProgramFormRule('electiveC', e.target.value)} />
+                                    </div>
+                                </div>
+                            </div>
                         ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Bắt buộc (TC)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA} onChange={e => handleUpdateProgramFormRule('mandatoryA', e.target.value)} />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Tự chọn (TC)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA} onChange={e => handleUpdateProgramFormRule('electiveA', e.target.value)} />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Bắt buộc (TC)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryB} onChange={e => handleUpdateProgramFormRule('mandatoryB', e.target.value)} />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Thực hành (TC)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.practiceB} onChange={e => handleUpdateProgramFormRule('practiceB', e.target.value)} />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Tự chọn (TC)</label>
-                                    <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveB} onChange={e => handleUpdateProgramFormRule('electiveB', e.target.value)} />
+                            <div className="space-y-2">
+                                <div className="text-xs font-bold text-brand-cerulean">Khối A (Học phần chung) & Khối B (Chuyên ngành THCS):</div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Bắt buộc (TC)</label>
+                                        <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryA ?? 15} onChange={e => handleUpdateProgramFormRule('mandatoryA', e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Tự chọn (TC)</label>
+                                        <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveA ?? 2} onChange={e => handleUpdateProgramFormRule('electiveA', e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Bắt buộc (TC)</label>
+                                        <input type="number" min="0" className="input-editorial w-full" value={formData.rules.mandatoryB ?? 9} onChange={e => handleUpdateProgramFormRule('mandatoryB', e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Thực hành (TC)</label>
+                                        <input type="number" min="0" className="input-editorial w-full" value={formData.rules.practiceB ?? 6} onChange={e => handleUpdateProgramFormRule('practiceB', e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Tự chọn (TC)</label>
+                                        <input type="number" min="0" className="input-editorial w-full" value={formData.rules.electiveB ?? 2} onChange={e => handleUpdateProgramFormRule('electiveB', e.target.value)} />
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -398,7 +445,7 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                                 </div>
                                 <p className="text-[11px] text-gray-500 italic">Tổng số lượng có trong toàn bộ danh mục chương trình đào tạo</p>
                             </div>
-                            <div className="p-3.5 bg-amber-50/80 border border-amber-300 rounded space-y-1">
+                            <div className="p-3.5 bg-brand-cream border border-brand-jasper/40 rounded space-y-1">
                                 <label className="block text-xs font-bold text-brand-jasper">
                                     Số {formData.evaluationType === 'modules' ? 'chuyên đề' : formData.evaluationType === 'hours' ? 'tiết' : 'tín chỉ'} cần học để tốt nghiệp (Định mức) *
                                 </label>

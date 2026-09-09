@@ -186,7 +186,7 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
     if (!currentModule || selectedModules.length === 0) {
         return (
             <div className="max-w-4xl mx-auto my-12 bg-white border-editorial p-10 text-center shadow-editorial space-y-6 animate-fade-in">
-                <div className="w-16 h-16 mx-auto bg-amber-50 border border-amber-300 rounded-full flex items-center justify-center text-brand-jasper">
+                <div className="w-16 h-16 mx-auto bg-brand-cream border border-brand-jasper/30 rounded-full flex items-center justify-center text-brand-jasper">
                     <BookOpen size={32} />
                 </div>
                 <div className="space-y-2">
@@ -275,7 +275,7 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
                                 {(currentModule.code || '').toUpperCase()}
                             </span>
                             {(syllabusData.instructor || currentModule.instructor) && (
-                                <span className="text-xs font-serif-title text-brand-cerulean bg-amber-50/80 px-2.5 py-0.5 rounded border border-amber-300 flex items-center gap-1.5 font-semibold">
+                                <span className="text-xs font-serif-title text-brand-cerulean bg-brand-cream px-2.5 py-0.5 rounded border border-brand-cerulean/30 flex items-center gap-1.5 font-semibold">
                                     <GraduationCap size={13} className="text-brand-jasper" />
                                     GV: {syllabusData.instructor || currentModule.instructor}
                                 </span>

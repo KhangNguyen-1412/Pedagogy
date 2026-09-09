@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Pencil,
     Award,
@@ -59,13 +59,39 @@ export const ProfileView = ({ profile, programs, navigate, onUpdateProfile, onOp
         { label: 'Đã tốt nghiệp', value: 'Đã tốt nghiệp' },
     ];
 
-    // Structured Address Location Dropdowns
-    const provinceList = Object.keys(vietnamLocations || {});
-    const provinceOptions = provinceList.map(p => ({ label: p, value: p }));
+    // Helper to strip administrative prefixes for natural Vietnamese alphabetical sorting
+    const cleanProvinceName = (name) => (name || '').replace(/^(Thành phố|Tỉnh)\s+/i, '').trim();
+    const cleanWardName = (name) => (name || '').replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, '').trim();
 
-    const currentProvince = formData.province || provinceList[0] || 'Thành phố Hồ Chí Minh';
-    const wardList = vietnamLocations[currentProvince] || [];
-    const wardOptions = wardList.map(w => ({ label: w, value: w }));
+    // Structured Address Location Dropdowns (Alphabetically sorted in Vietnamese collation A-Z)
+    const provinceList = useMemo(() => {
+        return Object.keys(vietnamLocations || {}).sort((a, b) => {
+            const ca = cleanProvinceName(a);
+            const cb = cleanProvinceName(b);
+            const cmp = ca.localeCompare(cb, 'vi', { numeric: true, sensitivity: 'base' });
+            return cmp !== 0 ? cmp : a.localeCompare(b, 'vi', { numeric: true });
+        });
+    }, []);
+
+    const provinceOptions = useMemo(() => {
+        return provinceList.map(p => ({ label: p, value: p }));
+    }, [provinceList]);
+
+    const currentProvince = formData.province || 'Thành phố Hồ Chí Minh';
+
+    const wardList = useMemo(() => {
+        const raw = vietnamLocations[currentProvince] || [];
+        return [...raw].sort((a, b) => {
+            const ca = cleanWardName(a);
+            const cb = cleanWardName(b);
+            const cmp = ca.localeCompare(cb, 'vi', { numeric: true, sensitivity: 'base' });
+            return cmp !== 0 ? cmp : a.localeCompare(b, 'vi', { numeric: true });
+        });
+    }, [currentProvince]);
+
+    const wardOptions = useMemo(() => {
+        return wardList.map(w => ({ label: w, value: w }));
+    }, [wardList]);
 
     const emergencyRelationOptions = [
         { label: 'Anh em', value: 'Anh em' },
@@ -78,8 +104,14 @@ export const ProfileView = ({ profile, programs, navigate, onUpdateProfile, onOp
     ];
 
     const handleProvinceChange = (newProv) => {
-        const newWardList = vietnamLocations[newProv] || [];
-        const firstWard = newWardList[0] || '';
+        const rawNewWardList = vietnamLocations[newProv] || [];
+        const sortedNewWardList = [...rawNewWardList].sort((a, b) => {
+            const ca = cleanWardName(a);
+            const cb = cleanWardName(b);
+            const cmp = ca.localeCompare(cb, 'vi', { numeric: true, sensitivity: 'base' });
+            return cmp !== 0 ? cmp : a.localeCompare(b, 'vi', { numeric: true });
+        });
+        const firstWard = sortedNewWardList[0] || '';
         const newAddrDetail = formData.addressDetail || '';
         const fullAddr = [newAddrDetail, firstWard, newProv].filter(Boolean).join(', ');
         setFormData(prev => ({
@@ -354,9 +386,9 @@ export const ProfileView = ({ profile, programs, navigate, onUpdateProfile, onOp
                             </div>
                             <div>
                                 <span className="text-xs uppercase font-bold text-gray-400 block">Lớp & Trạng thái</span>
-                                <span className="text-base font-body">{profile.className || 'Chưa xếp lớp'} &bull; <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-bold rounded">{profile.status || 'Đang học'}</span></span>
+                                <span className="text-base font-body">{profile.className || 'Chưa xếp lớp'} &bull; <span className="px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean border border-brand-cerulean/20 text-xs font-bold font-serif-title rounded">{profile.status || 'Đang học'}</span></span>
                             </div>
-                            <div className="md:col-span-2 p-4 bg-blue-50/60 border border-brand-cerulean/50 rounded flex justify-between items-center flex-wrap gap-3 mt-2">
+                            <div className="md:col-span-2 p-4 bg-brand-cream border border-brand-cerulean/40 rounded flex justify-between items-center flex-wrap gap-3 mt-2">
                                 <div className="flex items-center gap-3">
                                     <Award className="text-brand-cerulean" size={24} />
                                     <div>

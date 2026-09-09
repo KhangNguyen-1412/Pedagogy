@@ -129,54 +129,41 @@ export const getSEOAndPath = (currentView, activeProgramId, activeModuleId, prog
                 path: '/ho-so-ca-nhan'
             };
 
-        case 'ielts_hub':
-        case 'ielts_methodology':
+        case 'practicum':
             return {
-                title: 'IELTS Academic - Phương Pháp & Tiêu Chí Chấm Band 7.5+ | Pedagogy',
-                description: 'Phân tích tiêu chí chấm 4 kỹ năng IELTS, ma trận Band Descriptors và khung tư duy PEEL, 5W1H.',
-                path: '/ielts/phuong-phap-rubrics'
+                title: 'Thực Tập & Kiến Tập Sư Phạm (TTSP) | Pedagogy',
+                description: 'Quản lý hồ sơ thực tập sư phạm, sổ dự giờ điện tử Công văn 5555, nhật ký chủ nhiệm lớp và bảng điểm tổng kết.',
+                path: '/thuc-tap-su-pham'
             };
-        case 'ielts_drills':
+        case 'lesson_plans':
             return {
-                title: 'IELTS Academic - Luyện Dạng Bài Trọng Tâm (Micro-Drills) | Pedagogy',
-                description: 'Kho bài tập ngắn 3-5 phút theo từng dạng câu hỏi khó: Matching Headings, True/False/Not Given, Audio Drills.',
-                path: '/ielts/luyen-dang-bai'
+                title: 'Kế Hoạch Bài Dạy (CV 5555) & Phòng Tập Giảng | Pedagogy',
+                description: 'Soạn giáo án điện tử chuẩn Công văn 5555 với 4 hoạt động bài học và ghi nhận đánh giá tập giảng Micro-teaching.',
+                path: '/ke-hoach-bai-day'
             };
-        case 'ielts_writing_lab':
+        case 'competencies':
             return {
-                title: 'IELTS Writing Lab - Phòng Soạn Thảo & Dàn Ý Giám Khảo | Pedagogy',
-                description: 'Giao diện Split-Screen viết bài Task 1 & Task 2, đếm từ real-time, đồng hồ bấm giờ và bài mẫu 8.5+.',
-                path: '/ielts/writing-lab'
+                title: 'Chuẩn Nghề Nghiệp Giáo Viên (TT 20/2018) & PLO | Pedagogy',
+                description: 'Hệ thống tự đánh giá 5 tiêu chuẩn 15 tiêu chí nghề nghiệp giáo viên phổ thông và liên kết ma trận chuẩn đầu ra CTĐT.',
+                path: '/chuan-nghe-nghiep'
             };
-        case 'ielts_speaking_lab':
+        case 'graduation':
             return {
-                title: 'IELTS Speaking Lab - Trạm Thu Âm & Cue Card Giám Khảo | Pedagogy',
-                description: 'Thu âm trực tiếp bài nói Speaking Part 1, 2, 3 trên trình duyệt, dàn ý 5W1H và bài mẫu Cambridge 8.0+.',
-                path: '/ielts/speaking-lab'
+                title: 'Thẩm Định Tốt Nghiệp & Cấp Chứng Chỉ NVSP | Pedagogy',
+                description: 'Đối soát 5 tiêu chuẩn công nhận tốt nghiệp và xem trước phôi chứng chỉ nghiệp vụ sư phạm theo quy chuẩn Bộ GD&ĐT.',
+                path: '/tham-dinh-tot-nghiep'
             };
-        case 'ielts_simulator':
+        case 'portfolio_export':
             return {
-                title: 'IELTS Exam Simulator - Phòng Thi Thử Trực Tuyến 3 Giờ | Pedagogy',
-                description: 'Mô phỏng kỳ thi máy tính IELTS Computer-Delivered với đồng hồ đếm ngược và bảng điểm sau nộp bài.',
-                path: '/ielts/thi-thu-truc-tuyen'
-            };
-        case 'ielts_gym':
-            return {
-                title: 'IELTS Language Gym - Flashcards Collocations & Ngữ Pháp 7.5+ | Pedagogy',
-                description: 'Luyện phản xạ từ vựng học thuật C1/C2 theo chủ đề, phát âm UK và bài tập cấu trúc ngữ pháp nâng cao.',
-                path: '/ielts/language-gym'
-            };
-        case 'ielts_analytics':
-            return {
-                title: 'Báo Cáo Tiến Độ & Gap Analysis IELTS 4 Kỹ Năng | Pedagogy',
-                description: 'Định vị trình độ Diagnostic Placement, phân tích lỗ hổng kỹ năng và lộ trình cán mốc mục tiêu Target Band.',
-                path: '/ielts/bao-cao-tien-do'
+                title: 'Xuất Bản Hồ Sơ Sư Phạm & Bảng Điểm In Ấn | Pedagogy',
+                description: 'Trích xuất bảng điểm học tập chính thức và Hồ sơ năng lực sư phạm tổng thể (Teaching Dossier) hỗ trợ in ấn A4.',
+                path: '/xuat-ho-so-bang-diem'
             };
 
         default:
             return {
-                title: 'Pedagogy - Nền Tảng Giáo Dục & Đào Tạo Sư Phạm Toàn Diện',
-                description: 'Hệ thống cá nhân hóa học tập, quản lý chương trình đào tạo nghiệp vụ sư phạm và luyện thi IELTS Academic.',
+                title: 'Pedagogy - Nền Tảng Quản Trị & Đào Tạo Nghiệp Vụ Sư Phạm',
+                description: 'Hệ thống cá nhân hóa học tập, quản lý chương trình đào tạo nghiệp vụ sư phạm, thực tập giảng dạy và cấp chứng chỉ chuẩn quốc gia.',
                 path: '/'
             };
     }
@@ -192,15 +179,12 @@ export const getViewFromPath = (pathname, programs = [], modules = []) => {
     if (cleanPath === '/tai-lieu-nhat-ky') return { view: 'resources' };
     if (cleanPath === '/ho-so-ca-nhan') return { view: 'profile' };
 
-
-    // IELTS
-    if (cleanPath === '/ielts' || cleanPath === '/ielts/phuong-phap-rubrics') return { view: 'ielts_methodology' };
-    if (cleanPath === '/ielts/luyen-dang-bai') return { view: 'ielts_drills' };
-    if (cleanPath === '/ielts/writing-lab') return { view: 'ielts_writing_lab' };
-    if (cleanPath === '/ielts/speaking-lab') return { view: 'ielts_speaking_lab' };
-    if (cleanPath === '/ielts/thi-thu-truc-tuyen') return { view: 'ielts_simulator' };
-    if (cleanPath === '/ielts/language-gym') return { view: 'ielts_gym' };
-    if (cleanPath === '/ielts/bao-cao-tien-do') return { view: 'ielts_analytics' };
+    // Pedagogical Modules
+    if (cleanPath === '/thuc-tap-su-pham') return { view: 'practicum' };
+    if (cleanPath === '/ke-hoach-bai-day') return { view: 'lesson_plans' };
+    if (cleanPath === '/chuan-nghe-nghiep') return { view: 'competencies' };
+    if (cleanPath === '/tham-dinh-tot-nghiep') return { view: 'graduation' };
+    if (cleanPath === '/xuat-ho-so-bang-diem') return { view: 'portfolio_export' };
 
 
 

@@ -1,11 +1,48 @@
 import { calculateModuleFinal } from './gpaCalculators';
 
+export const isThptProgram = (prog) => {
+    if (!prog) return false;
+    if (prog.category === 'nvsp_thpt') return true;
+    if (prog.category === 'dai_hoc' || prog.rules?.general !== undefined) return false;
+    const name = (prog.name || '').toLowerCase();
+    const id = (prog.id || '').toLowerCase();
+    if (name.includes('thpt') || id.includes('thpt')) return true;
+    if (prog.rules?.mandatoryC !== undefined || prog.rules?.practiceC !== undefined || prog.rules?.electiveC !== undefined) return true;
+    return false;
+};
+
+export const isThcsProgram = (prog) => {
+    if (!prog) return false;
+    if (prog.category === 'nvsp_thcs') return true;
+    if (prog.category === 'dai_hoc' || prog.rules?.general !== undefined) return false;
+    if (isThptProgram(prog)) return false;
+    const name = (prog.name || '').toLowerCase();
+    const id = (prog.id || '').toLowerCase();
+    if (name.includes('thcs') || id.includes('thcs')) return true;
+    if (prog.rules?.mandatoryB !== undefined || prog.rules?.practiceB !== undefined || prog.rules?.electiveB !== undefined) return true;
+    return true; // Mặc định NVSP là THCS (Khối A & B)
+};
+
 export const getCategoryPresets = (category) => {
     if (category === 'dai_hoc') {
         return {
             evaluationType: 'credits',
             totalCreditsRequired: 135,
             rules: { general: 28, fundamentalMandatory: 26, fundamentalElective: 8, specializedMandatory: 42, specializedElective: 16, internshipGraduation: 15 }
+        };
+    }
+    if (category === 'nvsp_thpt') {
+        return {
+            evaluationType: 'credits',
+            totalCreditsRequired: 36,
+            rules: { mandatoryA: 15, electiveA: 2, mandatoryC: 11, practiceC: 6, electiveC: 2 }
+        };
+    }
+    if (category === 'nvsp_thcs' || category === 'nhanh_a') {
+        return {
+            evaluationType: 'credits',
+            totalCreditsRequired: 34,
+            rules: { mandatoryA: 15, electiveA: 2, mandatoryB: 9, practiceB: 6, electiveB: 2 }
         };
     }
     if (category === 'nhanh_b') {
@@ -22,7 +59,7 @@ export const getCategoryPresets = (category) => {
             rules: { mandatoryA: 80, electiveA: 40, mandatoryB: 0, practiceB: 0, electiveB: 0 }
         };
     }
-    // nhanh_a (default NVSP)
+    // Default THCS
     return {
         evaluationType: 'credits',
         totalCreditsRequired: 34,
@@ -53,7 +90,16 @@ export const getProgramStatusLabel = (progOrStatus) => {
 
 export const normalizeProgram = (prog) => {
     if (!prog) return prog;
-    const category = prog.category || (prog.rules?.general !== undefined ? 'dai_hoc' : prog.rules ? 'nhanh_a' : 'nhanh_b');
+    let category = prog.category;
+    if (!category) {
+        if (prog.rules?.general !== undefined) category = 'dai_hoc';
+        else if (isThptProgram(prog)) category = 'nvsp_thpt';
+        else if (isThcsProgram(prog)) category = 'nvsp_thcs';
+        else if (prog.rules) category = 'nvsp_thcs';
+        else category = 'nhanh_b';
+    } else if (category === 'nhanh_a') {
+        category = isThptProgram(prog) ? 'nvsp_thpt' : 'nvsp_thcs';
+    }
     let defaultEval = 'credits';
     if (category === 'nhanh_b') defaultEval = 'modules';
     else if (category === 'nhanh_c') defaultEval = 'hours';
@@ -69,23 +115,44 @@ export const normalizeProgram = (prog) => {
 
 export const calculateRuleBreakdown = (program, modules = []) => {
     if (!program) return null;
-    const progModules = modules.filter(m => isModuleInProgram(m, program.id));
+    const progModules = (modules || []).filter(m => isModuleInProgram(m, program.id));
     const evalType = program.evaluationType || (program.category === 'nhanh_b' ? 'modules' : program.category === 'nhanh_c' ? 'hours' : 'credits');
     const isDaiHoc = program.category === 'dai_hoc' || program.rules?.general !== undefined;
-    const rules = program.rules || (isDaiHoc
-        ? { general: 28, fundamentalMandatory: 26, fundamentalElective: 8, specializedMandatory: 42, specializedElective: 16, internshipGraduation: 15 }
-        : { mandatoryA: 15, electiveA: 2, mandatoryB: 9, practiceB: 6, electiveB: 2 }
-    );
 
+    // 1. Hệ Tín chỉ - Bậc Đại học
     if (isDaiHoc && evalType === 'credits') {
-        const activeMods = progModules.filter(m => m.type !== 'elective' || m.isSelected !== false);
+        const rules = program.rules || {
+            general: 28,
+            fundamentalMandatory: 26,
+            fundamentalElective: 8,
+            specializedMandatory: 42,
+            specializedElective: 16,
+            internshipGraduation: 15
+        };
 
-        const currentGeneral = activeMods.filter(m => m.knowledgeBlock === 'general' || m.category === 'general' || m.category === 'A' || (!m.knowledgeBlock && (!m.category || m.category === 'general'))).reduce((s, m) => s + Number(m.credits || 0), 0);
-        const currentFundamentalMandatory = activeMods.filter(m => (m.knowledgeBlock === 'fundamental' || m.category === 'fundamental' || m.category === 'B') && (m.type === 'mandatory' || !m.type)).reduce((s, m) => s + Number(m.credits || 0), 0);
-        const currentFundamentalElective = activeMods.filter(m => (m.knowledgeBlock === 'fundamental' || m.category === 'fundamental' || m.category === 'B') && m.type === 'elective').reduce((s, m) => s + Number(m.credits || 0), 0);
-        const currentSpecializedMandatory = activeMods.filter(m => (m.knowledgeBlock === 'specialized' || m.category === 'specialized' || m.category === 'C') && (m.type === 'mandatory' || !m.type)).reduce((s, m) => s + Number(m.credits || 0), 0);
-        const currentSpecializedElective = activeMods.filter(m => (m.knowledgeBlock === 'specialized' || m.category === 'specialized' || m.category === 'C') && m.type === 'elective').reduce((s, m) => s + Number(m.credits || 0), 0);
-        const currentInternship = activeMods.filter(m => m.knowledgeBlock === 'internship' || m.category === 'internship' || m.type === 'practice').reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentGeneral = progModules.filter(m =>
+            m.knowledgeBlock === 'general' || m.category === 'general' || (!m.knowledgeBlock && (!m.category || m.category === 'general'))
+        ).reduce((s, m) => s + Number(m.credits || 0), 0);
+
+        const currentFundamentalMandatory = progModules.filter(m =>
+            (m.knowledgeBlock === 'fundamental' || m.category === 'fundamental') && (m.type === 'mandatory' || !m.type)
+        ).reduce((s, m) => s + Number(m.credits || 0), 0);
+
+        const currentFundamentalElective = progModules.filter(m =>
+            (m.knowledgeBlock === 'fundamental' || m.category === 'fundamental') && m.type === 'elective'
+        ).reduce((s, m) => s + Number(m.credits || 0), 0);
+
+        const currentSpecializedMandatory = progModules.filter(m =>
+            (m.knowledgeBlock === 'specialized' || m.category === 'specialized') && (m.type === 'mandatory' || !m.type)
+        ).reduce((s, m) => s + Number(m.credits || 0), 0);
+
+        const currentSpecializedElective = progModules.filter(m =>
+            (m.knowledgeBlock === 'specialized' || m.category === 'specialized') && m.type === 'elective'
+        ).reduce((s, m) => s + Number(m.credits || 0), 0);
+
+        const currentInternship = progModules.filter(m =>
+            m.knowledgeBlock === 'internship' || m.category === 'internship' || m.type === 'practice'
+        ).reduce((s, m) => s + Number(m.credits || 0), 0);
 
         const targetGeneral = rules.general ?? 28;
         const targetFundamentalMandatory = rules.fundamentalMandatory ?? rules.fundamental ?? 26;
@@ -94,10 +161,10 @@ export const calculateRuleBreakdown = (program, modules = []) => {
         const targetSpecializedElective = rules.specializedElective ?? 16;
         const targetInternship = rules.internshipGraduation ?? 15;
 
-        const totalEarned = currentGeneral + currentFundamentalMandatory + currentFundamentalElective + currentSpecializedMandatory + currentSpecializedElective + currentInternship;
+        const totalEarned = progModules.reduce((s, m) => s + Number(m.credits || 0), 0);
         const totalTarget = program.totalCreditsRequired || (targetGeneral + targetFundamentalMandatory + targetFundamentalElective + targetSpecializedMandatory + targetSpecializedElective + targetInternship);
 
-        const blocks = [
+        const allBlocks = [
             { id: 'general', label: 'GD Đại cương', current: currentGeneral, target: targetGeneral, unit: 'TC' },
             { id: 'fundamentalMandatory', label: 'Cơ sở ngành (BB)', current: currentFundamentalMandatory, target: targetFundamentalMandatory, unit: 'TC' },
             { id: 'fundamentalElective', label: 'Cơ sở ngành (TC)', current: currentFundamentalElective, target: targetFundamentalElective, unit: 'TC' },
@@ -106,11 +173,14 @@ export const calculateRuleBreakdown = (program, modules = []) => {
             { id: 'internshipGraduation', label: 'Thực tập & Khóa luận', current: currentInternship, target: targetInternship, unit: 'TC' },
         ];
 
+        const blocks = allBlocks.filter(b => b.target > 0 || b.current > 0);
         const missingBlocks = blocks.filter(b => b.target > 0 && b.current < b.target);
         const isComplete = missingBlocks.length === 0 && totalEarned >= totalTarget;
 
         return {
             evalType,
+            programCategory: 'dai_hoc',
+            levelLabel: 'Bậc Đại học',
             blocks,
             totalEarned,
             totalTarget,
@@ -120,37 +190,99 @@ export const calculateRuleBreakdown = (program, modules = []) => {
         };
     }
 
+    // 2. Hệ Tín chỉ - NVSP / Khối A, B, C
     if (evalType === 'credits') {
-        const activeMods = progModules.filter(m => m.type !== 'elective' || m.isSelected);
+        const isThpt = isThptProgram(program);
+        const isThcs = isThcsProgram(program);
 
-        const currentMandatoryA = activeMods.filter(m => (m.category === 'A' || !m.category) && m.type === 'mandatory').reduce((s, m) => s + Number(m.credits || 0), 0);
-        const currentElectiveA = activeMods.filter(m => (m.category === 'A' || !m.category) && m.type === 'elective').reduce((s, m) => s + Number(m.credits || 0), 0);
-        const currentMandatoryB = activeMods.filter(m => m.category === 'B' && m.type === 'mandatory').reduce((s, m) => s + Number(m.credits || 0), 0);
-        const currentPracticeB = activeMods.filter(m => m.category === 'B' && m.type === 'practice').reduce((s, m) => s + Number(m.credits || 0), 0);
-        const currentElectiveB = activeMods.filter(m => m.category === 'B' && m.type === 'elective').reduce((s, m) => s + Number(m.credits || 0), 0);
+        const defaultRules = isThpt
+            ? { mandatoryA: 15, electiveA: 2, mandatoryC: 11, practiceC: 6, electiveC: 2 }
+            : { mandatoryA: 15, electiveA: 2, mandatoryB: 9, practiceB: 6, electiveB: 2 };
 
-        const targetMandatoryA = rules.mandatoryA ?? 15;
-        const targetElectiveA = rules.electiveA ?? 2;
-        const targetMandatoryB = rules.mandatoryB ?? 9;
-        const targetPracticeB = rules.practiceB ?? 6;
-        const targetElectiveB = rules.electiveB ?? 2;
+        const rules = program.rules || defaultRules;
 
-        const totalEarned = currentMandatoryA + currentElectiveA + currentMandatoryB + currentPracticeB + currentElectiveB;
-        const totalTarget = program.totalCreditsRequired || (targetMandatoryA + targetElectiveA + targetMandatoryB + targetPracticeB + targetElectiveB);
+        const isCatA = (m) => {
+            const c = (m.category || m.knowledgeBlock || '').toUpperCase();
+            return c === 'A' || c === 'NHANH_A' || (!m.category && !m.knowledgeBlock);
+        };
+        const isCatB = (m) => {
+            const c = (m.category || m.knowledgeBlock || '').toUpperCase();
+            return c === 'B' || c === 'NHANH_B';
+        };
+        const isCatC = (m) => {
+            const c = (m.category || m.knowledgeBlock || '').toUpperCase();
+            return c === 'C' || c === 'NHANH_C';
+        };
 
-        const blocks = [
-            { id: 'mandatoryA', label: 'Khối A Bắt buộc', current: currentMandatoryA, target: targetMandatoryA, unit: 'TC' },
-            { id: 'electiveA', label: 'Khối A Tự chọn', current: currentElectiveA, target: targetElectiveA, unit: 'TC' },
-            { id: 'mandatoryB', label: 'Khối B Bắt buộc', current: currentMandatoryB, target: targetMandatoryB, unit: 'TC' },
-            { id: 'practiceB', label: 'Khối B Thực hành', current: currentPracticeB, target: targetPracticeB, unit: 'TC' },
-            { id: 'electiveB', label: 'Khối B Tự chọn', current: currentElectiveB, target: targetElectiveB, unit: 'TC' },
-        ];
+        // Đếm TẤT CẢ các học phần hiện có trong CTĐT của từng khối
+        const currentMandatoryA = progModules.filter(m => isCatA(m) && (m.type === 'mandatory' || !m.type)).reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentElectiveA = progModules.filter(m => isCatA(m) && m.type === 'elective').reduce((s, m) => s + Number(m.credits || 0), 0);
 
+        const currentMandatoryB = progModules.filter(m => isCatB(m) && (m.type === 'mandatory' || !m.type)).reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentPracticeB = progModules.filter(m => isCatB(m) && m.type === 'practice').reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentElectiveB = progModules.filter(m => isCatB(m) && m.type === 'elective').reduce((s, m) => s + Number(m.credits || 0), 0);
+
+        const currentMandatoryC = progModules.filter(m => isCatC(m) && (m.type === 'mandatory' || !m.type)).reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentPracticeC = progModules.filter(m => isCatC(m) && m.type === 'practice').reduce((s, m) => s + Number(m.credits || 0), 0);
+        const currentElectiveC = progModules.filter(m => isCatC(m) && m.type === 'elective').reduce((s, m) => s + Number(m.credits || 0), 0);
+
+        const targetMandatoryA = Number(rules.mandatoryA ?? 15);
+        const targetElectiveA = Number(rules.electiveA ?? 2);
+        const targetMandatoryB = Number(rules.mandatoryB ?? (isThcs ? 9 : 0));
+        const targetPracticeB = Number(rules.practiceB ?? (isThcs ? 6 : 0));
+        const targetElectiveB = Number(rules.electiveB ?? (isThcs ? 2 : 0));
+        const targetMandatoryC = Number(rules.mandatoryC ?? (isThpt ? 11 : 0));
+        const targetPracticeC = Number(rules.practiceC ?? (isThpt ? 6 : 0));
+        const targetElectiveC = Number(rules.electiveC ?? (isThpt ? 2 : 0));
+
+        const totalEarned = progModules.reduce((s, m) => s + Number(m.credits || 0), 0);
+        const totalTarget = program.totalCreditsRequired || (
+            isThpt
+                ? (targetMandatoryA + targetElectiveA + targetMandatoryC + targetPracticeC + targetElectiveC)
+                : (targetMandatoryA + targetElectiveA + targetMandatoryB + targetPracticeB + targetElectiveB)
+        );
+
+        let candidateBlocks = [];
+        if (isThpt) {
+            // THPT: Khối A và Khối C
+            candidateBlocks = [
+                { id: 'mandatoryA', label: 'Khối A Bắt buộc', current: currentMandatoryA, target: targetMandatoryA, unit: 'TC' },
+                { id: 'electiveA', label: 'Khối A Tự chọn', current: currentElectiveA, target: targetElectiveA, unit: 'TC' },
+                { id: 'mandatoryC', label: 'Khối C Bắt buộc', current: currentMandatoryC, target: targetMandatoryC, unit: 'TC' },
+                { id: 'practiceC', label: 'Khối C Thực hành', current: currentPracticeC, target: targetPracticeC, unit: 'TC' },
+                { id: 'electiveC', label: 'Khối C Tự chọn', current: currentElectiveC, target: targetElectiveC, unit: 'TC' },
+            ];
+            // Nếu có học phần Khối B phát sinh thực tế thì hiển thị bổ sung
+            if (currentMandatoryB > 0 || currentPracticeB > 0 || currentElectiveB > 0) {
+                if (currentMandatoryB > 0 || targetMandatoryB > 0) candidateBlocks.push({ id: 'mandatoryB', label: 'Khối B Bắt buộc', current: currentMandatoryB, target: targetMandatoryB, unit: 'TC' });
+                if (currentPracticeB > 0 || targetPracticeB > 0) candidateBlocks.push({ id: 'practiceB', label: 'Khối B Thực hành', current: currentPracticeB, target: targetPracticeB, unit: 'TC' });
+                if (currentElectiveB > 0 || targetElectiveB > 0) candidateBlocks.push({ id: 'electiveB', label: 'Khối B Tự chọn', current: currentElectiveB, target: targetElectiveB, unit: 'TC' });
+            }
+        } else {
+            // THCS: Khối A và Khối B
+            candidateBlocks = [
+                { id: 'mandatoryA', label: 'Khối A Bắt buộc', current: currentMandatoryA, target: targetMandatoryA, unit: 'TC' },
+                { id: 'electiveA', label: 'Khối A Tự chọn', current: currentElectiveA, target: targetElectiveA, unit: 'TC' },
+                { id: 'mandatoryB', label: 'Khối B Bắt buộc', current: currentMandatoryB, target: targetMandatoryB, unit: 'TC' },
+                { id: 'practiceB', label: 'Khối B Thực hành', current: currentPracticeB, target: targetPracticeB, unit: 'TC' },
+                { id: 'electiveB', label: 'Khối B Tự chọn', current: currentElectiveB, target: targetElectiveB, unit: 'TC' },
+            ];
+            // Nếu có học phần Khối C phát sinh thực tế thì hiển thị bổ sung
+            if (currentMandatoryC > 0 || currentPracticeC > 0 || currentElectiveC > 0) {
+                if (currentMandatoryC > 0 || targetMandatoryC > 0) candidateBlocks.push({ id: 'mandatoryC', label: 'Khối C Bắt buộc', current: currentMandatoryC, target: targetMandatoryC, unit: 'TC' });
+                if (currentPracticeC > 0 || targetPracticeC > 0) candidateBlocks.push({ id: 'practiceC', label: 'Khối C Thực hành', current: currentPracticeC, target: targetPracticeC, unit: 'TC' });
+                if (currentElectiveC > 0 || targetElectiveC > 0) candidateBlocks.push({ id: 'electiveC', label: 'Khối C Tự chọn', current: currentElectiveC, target: targetElectiveC, unit: 'TC' });
+            }
+        }
+
+        const blocks = candidateBlocks.filter(b => b.target > 0 || b.current > 0);
         const missingBlocks = blocks.filter(b => b.target > 0 && b.current < b.target);
         const isComplete = missingBlocks.length === 0 && totalEarned >= totalTarget;
 
         return {
             evalType,
+            programCategory: isThpt ? 'nvsp_thpt' : 'nvsp_thcs',
+            levelLabel: isThpt ? 'NVSP THPT - Khối A & C' : 'NVSP THCS - Khối A & B',
             blocks,
             totalEarned,
             totalTarget,
@@ -160,42 +292,73 @@ export const calculateRuleBreakdown = (program, modules = []) => {
         };
     }
 
+    // 3. Hệ Chuyên đề (modules)
     if (evalType === 'modules') {
-        const passedCount = progModules.filter(m => {
-            const final = calculateModuleFinal(m.grades, m.syllabus?.weights);
-            return (final.score10 && final.score10 >= 5.0) || m.status === 'completed';
-        }).length;
+        const rules = program.rules || { mandatoryA: 4, electiveA: 2 };
+        const targetMandatory = Number(rules.mandatoryA ?? rules.mandatory ?? 0);
+        const targetElective = Number(rules.electiveA ?? rules.elective ?? 0);
+        const currentMandatory = progModules.filter(m => m.type !== 'elective').length;
+        const currentElective = progModules.filter(m => m.type === 'elective').length;
         const totalCount = progModules.length;
-        const targetCount = program.totalCreditsRequired || rules.mandatoryA || 6;
-        const isComplete = passedCount >= targetCount && totalCount >= targetCount;
+        const targetCount = program.totalCreditsRequired || (targetMandatory + targetElective) || 6;
+
+        let blocks = [];
+        if (targetMandatory > 0 || targetElective > 0) {
+            if (targetMandatory > 0 || currentMandatory > 0) {
+                blocks.push({ id: 'modulesMandatory', label: 'Chuyên đề Bắt buộc', current: currentMandatory, target: targetMandatory, unit: 'môn' });
+            }
+            if (targetElective > 0 || currentElective > 0) {
+                blocks.push({ id: 'modulesElective', label: 'Chuyên đề Tự chọn', current: currentElective, target: targetElective, unit: 'môn' });
+            }
+        } else {
+            blocks.push({ id: 'modulesTotal', label: 'Số chuyên đề trong CTĐT', current: totalCount, target: targetCount, unit: 'môn' });
+        }
+
+        const missingBlocks = blocks.filter(b => b.target > 0 && b.current < b.target);
+        const isComplete = missingBlocks.length === 0 && totalCount >= targetCount;
 
         return {
             evalType,
-            blocks: [
-                { id: 'modules', label: 'Số chuyên đề đã hoàn thành', current: passedCount, target: targetCount, unit: 'môn' }
-            ],
-            totalEarned: passedCount,
+            blocks,
+            totalEarned: totalCount,
             totalTarget: targetCount,
             unit: 'môn',
-            missingBlocks: passedCount < targetCount ? [{ label: 'Chuyên đề', current: passedCount, target: targetCount, unit: 'môn' }] : [],
+            missingBlocks,
             isComplete
         };
     }
 
-    // hours
-    const totalHoursLearned = progModules.filter(m => m.status === 'completed' || calculateModuleFinal(m.grades, m.syllabus?.weights).score10 >= 5.0).reduce((s, m) => s + (Number(m.credits || 3) * 15), 0);
-    const targetHours = program.totalCreditsRequired || 120;
-    const isComplete = totalHoursLearned >= targetHours;
+    // 4. Hệ Tiết học (hours)
+    const rules = program.rules || { mandatoryA: 80, electiveA: 40 };
+    const targetMandatoryHours = Number(rules.mandatoryA ?? rules.mandatory ?? 0);
+    const targetElectiveHours = Number(rules.electiveA ?? rules.elective ?? 0);
+    const currentMandatoryHours = progModules.filter(m => m.type !== 'elective').reduce((s, m) => s + (Number(m.credits || 3) * 15), 0);
+    const currentElectiveHours = progModules.filter(m => m.type === 'elective').reduce((s, m) => s + (Number(m.credits || 3) * 15), 0);
+    const totalHours = progModules.reduce((s, m) => s + (Number(m.credits || 3) * 15), 0);
+    const targetHours = program.totalCreditsRequired || (targetMandatoryHours + targetElectiveHours) || 120;
+
+    let blocks = [];
+    if (targetMandatoryHours > 0 || targetElectiveHours > 0) {
+        if (targetMandatoryHours > 0 || currentMandatoryHours > 0) {
+            blocks.push({ id: 'hoursMandatory', label: 'Tiết học Bắt buộc', current: currentMandatoryHours, target: targetMandatoryHours, unit: 'tiết' });
+        }
+        if (targetElectiveHours > 0 || currentElectiveHours > 0) {
+            blocks.push({ id: 'hoursElective', label: 'Tiết học Tự chọn', current: currentElectiveHours, target: targetElectiveHours, unit: 'tiết' });
+        }
+    } else {
+        blocks.push({ id: 'hoursTotal', label: 'Thời lượng tiết học trong CTĐT', current: totalHours, target: targetHours, unit: 'tiết' });
+    }
+
+    const missingBlocks = blocks.filter(b => b.target > 0 && b.current < b.target);
+    const isComplete = missingBlocks.length === 0 && totalHours >= targetHours;
 
     return {
         evalType,
-        blocks: [
-            { id: 'hours', label: 'Thời lượng tích lũy', current: totalHoursLearned, target: targetHours, unit: 'tiết' }
-        ],
-        totalEarned: totalHoursLearned,
+        blocks,
+        totalEarned: totalHours,
         totalTarget: targetHours,
         unit: 'tiết',
-        missingBlocks: totalHoursLearned < targetHours ? [{ label: 'Thời lượng', current: totalHoursLearned, target: targetHours, unit: 'tiết' }] : [],
+        missingBlocks,
         isComplete
     };
 };

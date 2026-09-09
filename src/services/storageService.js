@@ -55,13 +55,19 @@ export const getUserId = (currentUser) => {
 
 // Automatic cleanup of initial demo mock data from LocalStorage
 export const initStorageCleanup = () => {
-    if (typeof window !== 'undefined' && localStorage.getItem('pedagogy_real_data_only') !== 'v1') {
-        ['pedagogy_programs', 'pedagogy_modules', 'pedagogy_events', 'pedagogy_study_logs', 'pedagogy_resources'].forEach(key => {
-            const item = localStorage.getItem(key);
-            if (item && (item.includes('prog_nvsp_thcs_2026') || item.includes('mod_a01'))) {
-                localStorage.removeItem(key);
-            }
-        });
-        localStorage.setItem('pedagogy_real_data_only', 'v1');
+    if (typeof window !== 'undefined') {
+        if (localStorage.getItem('pedagogy_clean_slate_2026_v4') !== 'true') {
+            const keysToPurge = [
+                'pedagogy_practicum_data',
+                'pedagogy_lesson_plans',
+                'pedagogy_micro_sessions',
+                'pedagogy_competencies',
+                'pedagogy_plo_matrix',
+                'pedagogy_graduation_audit',
+                'pedagogy_transcript_info'
+            ];
+            keysToPurge.forEach(key => localStorage.removeItem(key));
+            localStorage.setItem('pedagogy_clean_slate_2026_v4', 'true');
+        }
     }
 };

@@ -16,10 +16,13 @@ import {
 } from 'lucide-react';
 
 // --- CUSTOM EDITORIAL DROPDOWN / SELECT COMPONENT ---
-export const EditorialSelect = ({ label, value, onChange, options = [], className = "", placeholder, direction = "auto", isMulti = false }) => {
+export const EditorialSelect = ({ label, value, onChange, options = [], className = "", placeholder, direction = "auto", isMulti = false, searchable }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [coords, setCoords] = useState({ top: 0, bottom: 0, left: 0, width: 0, openUpward: false });
     const dropdownRef = useRef(null);
+
+    const isSearchable = searchable !== undefined ? searchable : options.length > 8;
 
     // Normalize value array when isMulti is active
     const selectedValues = isMulti
@@ -65,6 +68,7 @@ export const EditorialSelect = ({ label, value, onChange, options = [], classNam
                 !event.target.closest('.editorial-portal-select')
             ) {
                 setIsOpen(false);
+                setSearchQuery('');
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -73,6 +77,7 @@ export const EditorialSelect = ({ label, value, onChange, options = [], classNam
 
     const handleToggle = () => {
         if (!isOpen) {
+            setSearchQuery('');
             updateCoords();
         }
         setIsOpen(!isOpen);
@@ -90,8 +95,16 @@ export const EditorialSelect = ({ label, value, onChange, options = [], classNam
         } else {
             onChange(optValue);
             setIsOpen(false);
+            setSearchQuery('');
         }
     };
+
+    const displayOptions = (isSearchable && searchQuery.trim())
+        ? (options || []).filter(opt => {
+            const text = (opt.label || opt.value || '').toLowerCase();
+            return text.includes(searchQuery.toLowerCase().trim());
+        })
+        : (options || []);
 
     return (
         <div className={`relative ${className}`} ref={dropdownRef}>
@@ -119,11 +132,23 @@ export const EditorialSelect = ({ label, value, onChange, options = [], classNam
                         bottom: coords.openUpward ? `${coords.bottom}px` : 'auto',
                         zIndex: 550
                     }}
-                    className="editorial-portal-select bg-brand-cream border-editorial shadow-2xl max-h-56 overflow-y-auto animate-fade-in-down"
+                    className="editorial-portal-select bg-brand-cream border-editorial shadow-2xl max-h-60 overflow-y-auto animate-fade-in-down"
                 >
-                    {(!options || options.length === 0) ? (
+                    {isSearchable && (
+                        <div className="p-2 border-b border-brand-cerulean/20 bg-brand-cream sticky top-0 z-20 shadow-xs" onClick={e => e.stopPropagation()}>
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                placeholder="Tìm kiếm nhanh..."
+                                className="w-full px-2.5 py-1 text-xs border border-brand-cerulean/30 bg-white font-sans text-brand-ink focus:outline-none focus:border-brand-cerulean"
+                                autoFocus
+                            />
+                        </div>
+                    )}
+                    {(!displayOptions || displayOptions.length === 0) ? (
                         <div className="px-4 py-3 text-xs text-gray-500 italic text-center font-serif-title">
-                            Chưa có học phần nào để chọn
+                            {options.length === 0 ? 'Chưa có mục nào để chọn' : 'Không tìm thấy kết quả phù hợp'}
                         </div>
                     ) : (
                         <>
@@ -142,7 +167,7 @@ export const EditorialSelect = ({ label, value, onChange, options = [], classNam
                                     </button>
                                 </div>
                             )}
-                            {options.map((opt) => {
+                            {displayOptions.map((opt) => {
                                 const isSelected = isMulti 
                                     ? selectedValues.some(v => String(v) === String(opt.value))
                                     : String(value) === String(opt.value);

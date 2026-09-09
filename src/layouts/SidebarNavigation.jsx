@@ -6,13 +6,11 @@ import {
     Calendar,
     Award,
     FolderOpen,
-    Target,
-    TrendingUp,
+    School,
+    Layers,
+    ShieldCheck,
     GraduationCap,
-    PenTool,
-    Mic,
-    Clock,
-    Dumbbell,
+    Printer,
     User,
     LogOut,
     LogIn,
@@ -135,26 +133,24 @@ export const SidebarNavigation = ({
                     })}
                 </div>
 
-                {/* IELTS Academic Preparation Suite */}
+                {/* Nghiệp vụ Sư phạm Suite */}
                 <div className={`pt-2 border-t border-brand-cerulean/15 space-y-1.5 ${isSidebarCollapsed ? 'mt-2' : ''}`}>
                     {!isSidebarCollapsed ? (
                         <span className="px-1 text-[10px] font-serif-title uppercase tracking-widest text-brand-cerulean/70 font-bold block mb-1">
-                            Luyện Thi IELTS
+                            Nghiệp vụ Sư phạm
                         </span>
                     ) : (
-                        <div className="w-full flex justify-center py-1" title="Khối Luyện Thi IELTS">
+                        <div className="w-full flex justify-center py-1" title="Nghiệp vụ Sư phạm">
                             <div className="w-6 h-0.5 bg-brand-cerulean/20 rounded-full" />
                         </div>
                     )}
 
                     {[
-                        { id: 'ielts_methodology', label: 'Phương pháp & Tiêu chí', icon: GraduationCap },
-                        { id: 'ielts_drills', label: 'Kho Drills chuyên sâu', icon: Target },
-                        { id: 'ielts_writing_lab', label: 'Phòng Writing Lab', icon: PenTool },
-                        { id: 'ielts_speaking_lab', label: 'Phòng Speaking Lab', icon: Mic },
-                        { id: 'ielts_simulator', label: 'Phòng Thi thử (Simulator)', icon: Clock },
-                        { id: 'ielts_gym', label: 'Language Gym', icon: Dumbbell },
-                        { id: 'ielts_analytics', label: 'Chẩn đoán & Báo cáo', icon: TrendingUp },
+                        { id: 'practicum', label: 'Thực tập sư phạm', icon: School },
+                        { id: 'lesson_plans', label: 'Giáo án & Giảng thử', icon: Layers },
+                        { id: 'competencies', label: 'Chuẩn nghề nghiệp', icon: ShieldCheck },
+                        { id: 'graduation', label: 'Xét tốt nghiệp', icon: GraduationCap },
+                        { id: 'portfolio_export', label: 'Hồ sơ & Bảng điểm', icon: Printer },
                     ].map(item => {
                         const Icon = item.icon;
                         const isActive = currentView === item.id;

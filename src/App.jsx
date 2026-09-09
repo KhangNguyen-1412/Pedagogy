@@ -36,7 +36,6 @@ import {
 
 // Datasets
 import { DEFAULT_PROGRAMS, DEFAULT_MODULES } from './data/trainingData';
-import { DEFAULT_IELTS_PROFILE } from './data/ieltsData';
 
 // Utils
 import { calculateOverallGPA, calculateModuleFinal } from './utils/gpaCalculators';
@@ -79,15 +78,12 @@ import { ProfileView } from './views/training/ProfileView';
 
 
 
-// IELTS Suite Views
-import { IeltsHubView } from './views/ielts/IeltsHubView';
-import { IeltsMethodologyView } from './views/ielts/IeltsMethodologyView';
-import { IeltsDrillsView } from './views/ielts/IeltsDrillsView';
-import { IeltsWritingLab } from './views/ielts/IeltsWritingLab';
-import { IeltsSpeakingLab } from './views/ielts/IeltsSpeakingLab';
-import { IeltsExamSimulator } from './views/ielts/IeltsExamSimulator';
-import { IeltsLanguageGym } from './views/ielts/IeltsLanguageGym';
-import { IeltsAnalyticsView } from './views/ielts/IeltsAnalyticsView';
+// Pedagogical Training Views
+import { PracticumView } from './views/training/PracticumView';
+import { LessonPlansView } from './views/training/LessonPlansView';
+import { CompetenciesView } from './views/training/CompetenciesView';
+import { GraduationAuditView } from './views/training/GraduationAuditView';
+import { PortfolioExportView } from './views/training/PortfolioExportView';
 
 
 
@@ -103,14 +99,11 @@ export const VALID_VIEWS = [
     'calendar',
     'gradebook',
     'resources',
-    'ielts_hub',
-    'ielts_methodology',
-    'ielts_drills',
-    'ielts_writing_lab',
-    'ielts_speaking_lab',
-    'ielts_simulator',
-    'ielts_gym',
-    'ielts_analytics',
+    'practicum',
+    'lesson_plans',
+    'competencies',
+    'graduation',
+    'portfolio_export',
     'profile'
 ];
 
@@ -296,58 +289,7 @@ export default function App() {
 
 
 
-    // IELTS Academic Suite States
-    const [ieltsProfile, setIeltsProfile] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.IELTS_PROFILE);
-            if (local) try { return JSON.parse(local); } catch (e) {}
-        }
-        return DEFAULT_IELTS_PROFILE;
-    });
-    const [ieltsDrillHistory, setIeltsDrillHistory] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.IELTS_DRILL_HISTORY);
-            if (local) try { return JSON.parse(local); } catch (e) {}
-        }
-        return [];
-    });
-    const [ieltsWritingSubmissions, setIeltsWritingSubmissions] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.IELTS_WRITING_SUBMISSIONS);
-            if (local) try { return JSON.parse(local); } catch (e) {}
-        }
-        return [];
-    });
-    const [ieltsSpeakingRecordings, setIeltsSpeakingRecordings] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.IELTS_SPEAKING_RECORDINGS);
-            if (local) try { return JSON.parse(local); } catch (e) {}
-        }
-        return [];
-    });
-    const [ieltsMockResults, setIeltsMockResults] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const local = localStorage.getItem(STORAGE_KEYS.IELTS_MOCK_RESULTS);
-            if (local) try { return JSON.parse(local); } catch (e) {}
-        }
-        return [];
-    });
 
-    const handleUpdateIeltsProfile = (newProfile) => {
-        setIeltsProfile(newProfile);
-    };
-    const handleCompleteIeltsDrill = (drillRecord) => {
-        setIeltsDrillHistory(prev => [drillRecord, ...prev]);
-    };
-    const handleSaveIeltsEssay = (essayRecord) => {
-        setIeltsWritingSubmissions(prev => [essayRecord, ...prev]);
-    };
-    const handleSaveIeltsRecording = (recordingRecord) => {
-        setIeltsSpeakingRecordings(prev => [recordingRecord, ...prev]);
-    };
-    const handleSaveIeltsMockResult = (mockRecord) => {
-        setIeltsMockResults(prev => [mockRecord, ...prev]);
-    };
 
 
     const handleUpdateProgramStatus = async (programId, newStatus) => {
@@ -449,19 +391,15 @@ export default function App() {
             localStorage.setItem(`${STORAGE_KEYS.EVENTS}_${user.uid}`, JSON.stringify(events));
             localStorage.setItem(`${STORAGE_KEYS.STUDY_LOGS}_${user.uid}`, JSON.stringify(studyLogs));
             localStorage.setItem(`${STORAGE_KEYS.RESOURCES}_${user.uid}`, JSON.stringify(resources));
-            localStorage.setItem(`${STORAGE_KEYS.IELTS_PROFILE}_${user.uid}`, JSON.stringify(ieltsProfile));
-            localStorage.setItem(`${STORAGE_KEYS.IELTS_DRILL_HISTORY}_${user.uid}`, JSON.stringify(ieltsDrillHistory));
-            localStorage.setItem(`${STORAGE_KEYS.IELTS_WRITING_SUBMISSIONS}_${user.uid}`, JSON.stringify(ieltsWritingSubmissions));
-            localStorage.setItem(`${STORAGE_KEYS.IELTS_SPEAKING_RECORDINGS}_${user.uid}`, JSON.stringify(ieltsSpeakingRecordings));
-            localStorage.setItem(`${STORAGE_KEYS.IELTS_MOCK_RESULTS}_${user.uid}`, JSON.stringify(ieltsMockResults));
         } else {
-            localStorage.setItem(STORAGE_KEYS.IELTS_PROFILE, JSON.stringify(ieltsProfile));
-            localStorage.setItem(STORAGE_KEYS.IELTS_DRILL_HISTORY, JSON.stringify(ieltsDrillHistory));
-            localStorage.setItem(STORAGE_KEYS.IELTS_WRITING_SUBMISSIONS, JSON.stringify(ieltsWritingSubmissions));
-            localStorage.setItem(STORAGE_KEYS.IELTS_SPEAKING_RECORDINGS, JSON.stringify(ieltsSpeakingRecordings));
-            localStorage.setItem(STORAGE_KEYS.IELTS_MOCK_RESULTS, JSON.stringify(ieltsMockResults));
+            localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
+            localStorage.setItem(STORAGE_KEYS.PROGRAMS, JSON.stringify(programs));
+            localStorage.setItem(STORAGE_KEYS.MODULES, JSON.stringify(modules));
+            localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+            localStorage.setItem(STORAGE_KEYS.STUDY_LOGS, JSON.stringify(studyLogs));
+            localStorage.setItem(STORAGE_KEYS.RESOURCES, JSON.stringify(resources));
         }
-    }, [user, profile, programs, modules, events, studyLogs, resources, ieltsProfile, ieltsDrillHistory, ieltsWritingSubmissions, ieltsSpeakingRecordings, ieltsMockResults]);
+    }, [user, profile, programs, modules, events, studyLogs, resources]);
 
     // Firestore Realtime Sync Logic (Strict per-account Cloud Sync)
     const syncFirestoreData = async (userId, googleUser) => {
@@ -936,13 +874,19 @@ export default function App() {
                         onClick={() => navigate('dashboard')}
                         className="px-2 py-1 bg-emerald-800 text-white rounded text-xs font-bold shrink-0"
                     >
-                        Nghiệp vụ SP
+                        Tổng quan
                     </button>
                     <button
-                        onClick={() => navigate('ielts_hub')}
+                        onClick={() => navigate('programs')}
                         className="px-2 py-1 bg-brand-cerulean text-white rounded text-xs font-bold shrink-0"
                     >
-                        Luyện thi IELTS
+                        Khóa đào tạo
+                    </button>
+                    <button
+                        onClick={() => navigate('practicum')}
+                        className="px-2 py-1 bg-brand-jasper text-white rounded text-xs font-bold shrink-0"
+                    >
+                        Thực tập SP
                     </button>
                 </div>
             </div>
@@ -1066,22 +1010,20 @@ export default function App() {
                     />
                 )}
 
-                {['ielts_hub', 'ielts_methodology', 'ielts_drills', 'ielts_writing_lab', 'ielts_speaking_lab', 'ielts_simulator', 'ielts_gym', 'ielts_analytics'].includes(currentView) && (
-                    <IeltsHubView
-                        currentSubView={currentView}
-                        navigate={navigate}
-                        profile={ieltsProfile}
-                        drillHistory={ieltsDrillHistory}
-                        writingSubmissions={ieltsWritingSubmissions}
-                        speakingRecordings={ieltsSpeakingRecordings}
-                        mockResults={ieltsMockResults}
-                        onUpdateProfile={handleUpdateIeltsProfile}
-                        onCompleteDrill={handleCompleteIeltsDrill}
-                        onSaveEssay={handleSaveIeltsEssay}
-                        onSaveRecording={handleSaveIeltsRecording}
-                        onSaveMockResult={handleSaveIeltsMockResult}
-                        showToast={showToast}
-                    />
+                {currentView === 'practicum' && (
+                    <PracticumView />
+                )}
+                {currentView === 'lesson_plans' && (
+                    <LessonPlansView profile={profile} />
+                )}
+                {currentView === 'competencies' && (
+                    <CompetenciesView />
+                )}
+                {currentView === 'graduation' && (
+                    <GraduationAuditView profile={profile} />
+                )}
+                {currentView === 'portfolio_export' && (
+                    <PortfolioExportView profile={profile} modules={modules} />
                 )}
 
                 {currentView === 'profile' && (

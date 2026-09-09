@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Award, BookOpen, AlertCircle, Check, Search, RotateCcw, X, Filter } from 'lucide-react';
+import { Award, BookOpen, AlertCircle, Check, Search, RotateCcw, X, Filter, CheckSquare, Square } from 'lucide-react';
 import { EditorialSelect } from '../../components/common/EditorialWidgets';
-import { normalizeProgram, getFilteredModules, getModuleProgramNames, isModuleInProgram, getProgramStatus, getProgramStatusLabel } from "../../utils/ruleValidators";
+import { normalizeProgram, getFilteredModules, getModuleProgramNames, isModuleInProgram, getProgramStatus, getProgramStatusLabel, getSelectedModules } from "../../utils/ruleValidators";
 import { calculateModuleFinal, calculateOverallGPA } from "../../utils/gpaCalculators";
 
 export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) => {
@@ -11,6 +11,7 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [gradeStatusFilter, setGradeStatusFilter] = useState('all'); // 'all' | 'passed' | 'failed' | 'graded' | 'ungraded'
     const [searchQuery, setSearchQuery] = useState('');
+    const [onlySelectedFilter, setOnlySelectedFilter] = useState(true);
 
     const normalizedPrograms = programs.map(normalizeProgram);
 
@@ -40,7 +41,7 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
         }))
     ];
 
-    // Danh sách học phần nền theo CTĐT và trạng thái CTĐT
+    // Danh sách học phần nền theo CTĐT và trạng thái CTĐT (Mặc định chỉ lấy các học phần đã được chọn học)
     const baseModules = useMemo(() => {
         let list = [];
         if (selectedProgramFilter !== 'all') {
@@ -54,12 +55,29 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
 
         // Khử trùng lặp môn dùng chung
         const seen = new Set();
-        return list.filter(m => {
+        let deduplicated = list.filter(m => {
             if (seen.has(m.id)) return false;
             seen.add(m.id);
             return true;
         });
-    }, [modules, selectedProgramFilter, programsMatchingStatus, programStatusFilter]);
+
+        // Chỉ hiển thị các học phần đã chọn học (mặc định: true)
+        // 1. Không bị đánh dấu huỷ chọn (m.isEnrolled !== false)
+        // 2. Môn tự chọn (type === 'elective') phải có isSelected === true hoặc đã có điểm / đang học / hoàn thành
+        if (onlySelectedFilter) {
+            deduplicated = deduplicated.filter(m => {
+                if (m.isEnrolled === false) return false;
+                if (m.type === 'elective') {
+                    const hasGrades = m.grades && (Number(m.grades.final) > 0 || Number(m.grades.midterm) > 0 || Number(m.grades.attendance) > 0);
+                    const isFinishedOrActive = m.status === 'in_progress' || m.status === 'completed';
+                    return !!m.isSelected || hasGrades || isFinishedOrActive;
+                }
+                return true;
+            });
+        }
+
+        return deduplicated;
+    }, [modules, selectedProgramFilter, programsMatchingStatus, programStatusFilter, onlySelectedFilter]);
 
     // Trích xuất danh sách học kỳ có trong danh mục học phần
     const availableSemesters = useMemo(() => {
@@ -155,7 +173,7 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
         });
     }, [baseModules, searchQuery, semesterFilter, categoryFilter, gradeStatusFilter]);
 
-    const isFiltered = selectedProgramFilter !== 'all' || programStatusFilter !== 'all' || semesterFilter !== 'all' || categoryFilter !== 'all' || gradeStatusFilter !== 'all' || searchQuery.trim() !== '';
+    const isFiltered = selectedProgramFilter !== 'all' || programStatusFilter !== 'all' || semesterFilter !== 'all' || categoryFilter !== 'all' || gradeStatusFilter !== 'all' || searchQuery.trim() !== '' || !onlySelectedFilter;
 
     const handleResetFilters = () => {
         setProgramStatusFilter('all');
@@ -164,6 +182,7 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
         setCategoryFilter('all');
         setGradeStatusFilter('all');
         setSearchQuery('');
+        setOnlySelectedFilter(true);
     };
 
     const overall = calculateOverallGPA(filteredModules, normalizedPrograms, selectedProgramFilter);
@@ -206,7 +225,7 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
                             </div>
                         </>
                     ) : (
-                        <div className="bg-emerald-800 text-white border-editorial p-3.5 text-center shadow-editorial min-w-[140px]">
+                        <div className="bg-brand-cerulean text-white border-editorial p-3.5 text-center shadow-editorial min-w-[140px]">
                             <span className="text-[10px] uppercase text-white/80 font-bold block">Đạt Chuyên đề</span>
                             <span className="text-xl font-serif-title font-bold">
                                 {passedCount} / {filteredModules.length}
@@ -237,7 +256,22 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
                             </button>
                         )}
                     </div>
-                    <div className="flex items-center gap-3 justify-between sm:justify-end">
+                    <div className="flex items-center gap-2.5 justify-between sm:justify-end flex-wrap">
+                        {/* Toggle chỉ hiển thị học phần đã chọn học */}
+                        <button
+                            type="button"
+                            onClick={() => setOnlySelectedFilter(!onlySelectedFilter)}
+                            className={`px-3 py-1.5 text-xs font-serif-title font-bold rounded flex items-center gap-1.5 transition-all ${
+                                onlySelectedFilter
+                                    ? 'bg-brand-cerulean text-white shadow-xs'
+                                    : 'bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 hover:bg-white'
+                            }`}
+                            title="Bật/Tắt hiển thị: Chỉ hiển thị các học phần đã chọn học (Bắt buộc & Tự chọn đã chọn)"
+                        >
+                            {onlySelectedFilter ? <CheckSquare size={14} className="text-white" /> : <Square size={14} className="text-gray-400" />}
+                            <span>Chỉ học phần đã chọn</span>
+                        </button>
+
                         <span className="text-xs font-serif-title text-gray-500">
                             Hiển thị <strong className="text-brand-cerulean font-bold text-sm">{filteredModules.length}</strong> / {baseModules.length} học phần
                         </span>
@@ -351,11 +385,11 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <span>{mod.name}</span>
                                                 {mod.type === 'elective' ? (
-                                                    <span className="px-2 py-0.5 text-xs font-serif bg-red-100 text-brand-jasper rounded font-bold">
-                                                        Tự chọn
+                                                    <span className="px-2 py-0.5 text-xs font-serif bg-brand-cream text-brand-jasper border border-brand-jasper/30 rounded font-bold">
+                                                        Tự chọn {mod.isSelected ? '(Đã chọn)' : ''}
                                                     </span>
                                                 ) : mod.type === 'practice' ? (
-                                                    <span className="px-2 py-0.5 text-xs font-serif bg-blue-100 text-blue-800 rounded font-normal">
+                                                    <span className="px-2 py-0.5 text-xs font-serif bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 rounded font-normal">
                                                         Thực hành
                                                     </span>
                                                 ) : null}
@@ -411,12 +445,12 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
                                         <td className="p-4 text-center font-bold whitespace-nowrap">
                                             {evalType === 'credits' ? (
                                                 <span className={`px-2 py-1 rounded text-xs inline-block font-sans ${
-                                                    isPassed ? 'bg-brand-cerulean/10 text-brand-cerulean border border-brand-cerulean/20' : 'bg-red-50 text-red-700 border border-red-200'
+                                                    isPassed ? 'bg-brand-cerulean/10 text-brand-cerulean border border-brand-cerulean/20' : 'bg-brand-cream text-brand-jasper border border-brand-jasper/30'
                                                 }`}>
                                                     {letter} ({gpa4})
                                                 </span>
                                             ) : (
-                                                <span className={`px-2.5 py-1 text-xs rounded font-bold inline-flex items-center gap-1 ${isPassed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                <span className={`px-2.5 py-1 text-xs rounded font-bold inline-flex items-center gap-1 ${isPassed ? 'bg-brand-cerulean/15 text-brand-cerulean' : 'bg-brand-cream text-brand-jasper border border-brand-jasper/30'}`}>
                                                     {isPassed ? <><Check size={12} className="stroke-[2.5]" /> ĐẠT</> : 'CHƯA ĐẠT'}
                                                 </span>
                                             )}

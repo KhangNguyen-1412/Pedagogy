@@ -64,7 +64,7 @@ export const DashboardView = ({
                     </div>
                 </div>
                 <div className="bg-white border-editorial p-6 shadow-editorial flex items-center gap-4">
-                    <div className="p-3 bg-green-100 text-green-800">
+                    <div className="p-3 bg-brand-cerulean/10 text-brand-cerulean">
                         <BookOpen size={28} />
                     </div>
                     <div>
@@ -98,15 +98,15 @@ export const DashboardView = ({
                     </div>
                 </div>
                 <div className="bg-white border-editorial p-6 shadow-editorial flex items-center gap-4">
-                    <div className="p-3 bg-emerald-100 text-emerald-800">
+                    <div className={`p-3 ${isEligible ? 'bg-brand-cerulean/15 text-brand-cerulean' : 'bg-brand-jasper/10 text-brand-jasper'}`}>
                         <Award size={28} />
                     </div>
                     <div>
                         <span className="text-xs uppercase text-gray-400 font-bold tracking-wider block">Cấp chứng chỉ</span>
-                        <h4 className="text-xl font-serif-title text-emerald-800 font-bold flex items-center gap-1.5">
+                        <h4 className={`text-xl font-serif-title ${isEligible ? 'text-brand-cerulean' : 'text-brand-jasper'} font-bold flex items-center gap-1.5`}>
                             {isEligible ? (
                                 <>
-                                    <CheckCircle2 size={18} className="text-emerald-700 shrink-0" />
+                                    <CheckCircle2 size={18} className="text-brand-cerulean shrink-0" />
                                     <span>Đủ điều kiện</span>
                                 </>
                             ) : (
@@ -278,7 +278,7 @@ export const DashboardView = ({
                                     <div key={prog.id} onClick={() => navigate('program_detail', { programId: prog.id })} className="border border-brand-cerulean/30 p-6 bg-brand-cream cursor-pointer hover:border-brand-jasper transition-all">
                                         <div className="flex justify-between items-start gap-2">
                                             <h4 className="text-2xl font-serif-title text-brand-cerulean font-bold">{prog.name}</h4>
-                                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold font-serif-title rounded border border-emerald-300 shrink-0">Hệ Chuyên đề</span>
+                                            <span className="px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/30 shrink-0">Hệ Chuyên đề</span>
                                         </div>
                                         <p className="text-sm text-gray-600 my-2 line-clamp-3">{prog.description}</p>
                                         <ProgressBar current={passedMods.length} total={progModules.length || 1} label={`Chuyên đề đã Đạt: ${passedMods.length}/${progModules.length}`} />
@@ -293,7 +293,7 @@ export const DashboardView = ({
                                 <div key={prog.id} onClick={() => navigate('program_detail', { programId: prog.id })} className="border border-brand-cerulean/30 p-6 bg-brand-cream cursor-pointer hover:border-brand-jasper transition-all">
                                     <div className="flex justify-between items-start gap-2">
                                         <h4 className="text-2xl font-serif-title text-brand-cerulean font-bold">{prog.name}</h4>
-                                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-bold font-serif-title rounded border border-blue-300 shrink-0">Hệ Tiết học</span>
+                                        <span className="px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/30 shrink-0">Hệ Tiết học</span>
                                     </div>
                                     <p className="text-sm text-gray-600 my-2 line-clamp-3">{prog.description}</p>
                                     <ProgressBar current={doneH} total={totalH || 1} label={`Thời lượng đã học: ${doneH}/${totalH} tiết`} />
@@ -325,7 +325,7 @@ export const DashboardView = ({
                                     <h5 className="text-lg font-serif-title text-brand-cerulean">{evt.title}</h5>
                                     <span className="text-xs text-gray-600">{evt.location}</span>
                                 </div>
-                                <span className={`px-3 py-1 text-xs font-bold uppercase ${evt.attendanceStatus === 'present' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                <span className={`px-3 py-1 text-xs font-bold uppercase ${evt.attendanceStatus === 'present' ? 'bg-brand-cerulean text-white' : 'bg-brand-cream text-brand-cerulean border border-brand-cerulean/30'}`}>
                                     {evt.attendanceStatus === 'present' ? 'Có mặt' : 'Kế hoạch'}
                                 </span>
                             </div>

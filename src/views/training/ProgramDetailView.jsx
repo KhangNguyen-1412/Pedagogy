@@ -24,13 +24,15 @@ import {
 } from 'lucide-react';
 import { EditorialSelect, Modal, AlertBox, ProgressBar } from '../../components/common/EditorialWidgets';
 import { RuleValidationPanel } from '../../components/training/RuleValidationPanel';
-import { isModuleInProgram, getModuleProgramNames, calculateRuleBreakdown, normalizeModuleProgramIds, getProgramStatus, getProgramStatusLabel } from "../../utils/ruleValidators";
+import { isModuleInProgram, getModuleProgramNames, calculateRuleBreakdown, normalizeModuleProgramIds, getProgramStatus, getProgramStatusLabel, isThptProgram, isThcsProgram } from "../../utils/ruleValidators";
 import { calculateModuleFinal } from "../../utils/gpaCalculators";
 import { formatModuleName } from "../../utils/seoHelpers";
 
 export const ProgramDetailView = ({ programId, programs, modules, profile, onAddModule, onUpdateModule, onDeleteModule, onUpdateProgram, onUpdateProgramStatus, onDeleteProgram, navigate }) => {
     const program = programs.find(p => p.id === programId) || (programs && programs.length > 0 ? programs[0] : null);
     const isDaiHoc = program?.category === 'dai_hoc' || program?.rules?.general !== undefined;
+    const isThpt = isThptProgram(program);
+    const isThcs = isThcsProgram(program);
 
     const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
     const [editingModule, setEditingModule] = useState(null);
@@ -73,11 +75,21 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
             { label: 'Chuyên ngành', value: 'specialized' },
             { label: 'Thực tập & Khóa luận tốt nghiệp', value: 'internship' },
         ]
-        : [
-            { label: 'Nhánh A', value: 'A' },
-            { label: 'Nhánh B', value: 'B' },
-            { label: 'Nhánh C', value: 'C' },
-        ];
+        : isThpt
+            ? [
+                { label: 'Khối A (Học phần chung)', value: 'A' },
+                { label: 'Khối C (Chuyên ngành THPT)', value: 'C' },
+            ]
+            : isThcs
+                ? [
+                    { label: 'Khối A (Học phần chung)', value: 'A' },
+                    { label: 'Khối B (Chuyên ngành THCS)', value: 'B' },
+                ]
+                : [
+                    { label: 'Khối A (Học phần chung)', value: 'A' },
+                    { label: 'Khối B (Chuyên ngành THCS)', value: 'B' },
+                    { label: 'Khối C (Chuyên ngành THPT)', value: 'C' },
+                ];
 
     const semesterOptions = [
         { label: 'Chưa xếp học kỳ (Xếp sau)', value: 'unassigned' },
@@ -422,7 +434,10 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                 { label: 'Khối Chuyên ngành', value: 'specialized' },
                 { label: 'Khối Thực tập & Tốt nghiệp', value: 'internship' },
             ]
-            : Array.from(new Set(programModules.map(m => m.category))).map(cat => ({ label: `Nhánh ${cat}`, value: cat }))
+            : Array.from(new Set(programModules.map(m => m.category))).map(cat => ({
+                label: cat === 'A' ? 'Khối A (Học phần chung)' : cat === 'B' ? 'Khối B (Chuyên ngành THCS)' : cat === 'C' ? 'Khối C (Chuyên ngành THPT)' : `Khối ${cat}`,
+                value: cat
+            }))
         )
     ];
 
@@ -431,7 +446,10 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
         if (cat === 'fundamental') return 'KHỐI KIẾN THỨC CƠ SỞ NGÀNH & BỔ TRỢ';
         if (cat === 'specialized') return 'KHỐI KIẾN THỨC CHUYÊN NGÀNH';
         if (cat === 'internship') return 'KHỐI THỰC TẬP & TỐT NGHIỆP';
-        return `NHÁNH ${cat}`;
+        if (cat === 'A') return 'KHỐI A - HỌC PHẦN CHUNG (NVSP)';
+        if (cat === 'B') return 'KHỐI B - CHUYÊN NGÀNH THCS';
+        if (cat === 'C') return 'KHỐI C - CHUYÊN NGÀNH THPT';
+        return `KHỐI ${cat}`;
     };
 
     const getSemesterTitle = (sem) => {
@@ -495,13 +513,21 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                     specializedElective: program.rules?.specializedElective ?? 16,
                     internshipGraduation: program.rules?.internshipGraduation ?? 15,
                 }
-                : {
-                    mandatoryA: program.rules?.mandatoryA || 0,
-                    electiveA: program.rules?.electiveA || 0,
-                    mandatoryB: program.rules?.mandatoryB || 0,
-                    practiceB: program.rules?.practiceB || 0,
-                    electiveB: program.rules?.electiveB || 0,
-                }
+                : isThpt
+                    ? {
+                        mandatoryA: program.rules?.mandatoryA ?? 15,
+                        electiveA: program.rules?.electiveA ?? 2,
+                        mandatoryC: program.rules?.mandatoryC ?? 11,
+                        practiceC: program.rules?.practiceC ?? 6,
+                        electiveC: program.rules?.electiveC ?? 2,
+                    }
+                    : {
+                        mandatoryA: program.rules?.mandatoryA ?? 15,
+                        electiveA: program.rules?.electiveA ?? 2,
+                        mandatoryB: program.rules?.mandatoryB ?? 9,
+                        practiceB: program.rules?.practiceB ?? 6,
+                        electiveB: program.rules?.electiveB ?? 2,
+                    }
         });
         setIsProgramEditModalOpen(true);
     };
@@ -547,8 +573,8 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                 </span>
                             )}
                             {progStatus === 'dang_hoc' && (
-                                <span className="px-3 py-1 bg-emerald-50 text-emerald-800 text-xs font-bold font-serif-title rounded border border-emerald-300 flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span className="px-3 py-1 bg-brand-cream text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/40 flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-brand-cerulean animate-pulse"></span>
                                     Đang học
                                 </span>
                             )}
@@ -559,7 +585,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                 </span>
                             )}
                             {isDaiHoc && (
-                                <span className="px-3 py-1 bg-emerald-50 text-emerald-800 text-xs font-bold font-serif-title rounded border border-emerald-300">
+                                <span className="px-3 py-1 bg-brand-cream text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/30">
                                     Bậc Đại học (4 năm &bull; 8 Học kỳ)
                                 </span>
                             )}
@@ -583,8 +609,8 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                     onClick={() => onUpdateProgramStatus && onUpdateProgramStatus(program.id, 'dang_hoc')}
                                     className={`px-2.5 py-1 rounded transition-all flex items-center gap-1 ${
                                         progStatus === 'dang_hoc'
-                                            ? 'bg-emerald-600 text-white font-bold shadow-xs'
-                                            : 'text-gray-500 hover:text-emerald-700'
+                                            ? 'bg-brand-cerulean text-white font-bold shadow-xs'
+                                            : 'text-gray-500 hover:text-brand-cerulean'
                                     }`}
                                 >
                                     Đang học
@@ -741,7 +767,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                 <h3 className="text-2xl font-serif-title text-brand-cerulean uppercase tracking-wider flex items-center gap-2 flex-wrap">
                                                     {getSemesterTitle(semKey)}
                                                     {semKey === 'unassigned' && (
-                                                        <span className="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold font-sans rounded-full normal-case">
+                                                        <span className="px-2.5 py-0.5 bg-brand-cream text-brand-jasper border border-brand-jasper/40 text-xs font-bold font-sans rounded-full normal-case">
                                                             Chưa phân bổ
                                                         </span>
                                                     )}
@@ -761,11 +787,11 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                     </div>
 
                                     {semKey === 'unassigned' && (
-                                        <div className="p-3.5 bg-amber-50 border-2 border-amber-300 rounded flex items-start gap-2.5 text-xs text-amber-950 font-serif-title">
-                                            <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                                        <div className="p-3.5 bg-brand-cream border-2 border-brand-jasper/40 rounded flex items-start gap-2.5 text-xs text-brand-jasper font-serif-title">
+                                            <AlertTriangle size={18} className="text-brand-jasper shrink-0 mt-0.5" />
                                             <div>
                                                 <p className="font-bold">Danh sách học phần cần xếp học kỳ:</p>
-                                                <p className="font-sans text-amber-900 mt-0.5">
+                                                <p className="font-sans text-gray-700 mt-0.5">
                                                     Sử dụng ô chọn <strong>[Chưa xếp kỳ ▾]</strong> trên từng thẻ môn học bên dưới để phân bổ trực tiếp môn học vào Học kỳ 1, 2, 3...
                                                 </p>
                                             </div>
@@ -805,8 +831,8 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                                         title="Phân bổ / Chuyển học kỳ"
                                                                         className={`text-[11px] font-bold font-serif-title py-0.5 px-1.5 rounded border transition-colors cursor-pointer outline-none ${
                                                                             !mod.semester || mod.semester === 'unassigned'
-                                                                                ? 'bg-amber-100 text-amber-900 border-amber-400 hover:bg-amber-200 shadow-xs font-bold'
-                                                                                : 'bg-blue-50 text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
+                                                                                ? 'bg-brand-cream text-brand-jasper border-brand-jasper/50 hover:bg-brand-cream/80 shadow-xs font-bold'
+                                                                                : 'bg-white text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
                                                                         }`}
                                                                     >
                                                                         <option value="unassigned">Chưa xếp kỳ</option>
@@ -830,7 +856,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                                     </span>
                                                                 )}
                                                                 {mod.prerequisites && (
-                                                                    <span className="px-1.5 py-0.5 bg-amber-50 text-amber-900 text-[10px] font-bold font-serif-title rounded border border-amber-300">
+                                                                    <span className="px-1.5 py-0.5 bg-brand-cream text-brand-jasper text-[10px] font-bold font-serif-title rounded border border-brand-jasper/30">
                                                                         Tiên quyết: {mod.prerequisites}
                                                                     </span>
                                                                 )}
@@ -885,7 +911,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                     {electives.length > 0 && (
                                         <div className="space-y-3 pt-2">
                                             <h4 className="text-base font-serif-title text-brand-jasper font-bold flex items-center gap-2 border-b border-brand-jasper/20 pb-1">
-                                                <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                                <span className="w-2.5 h-2.5 rounded-full bg-brand-jasper"></span>
                                                 Học phần Tự chọn trong kỳ ({electives.length}) &bull; {electives.reduce((s, m) => s + Number(m.credits || 0), 0)} TC
                                             </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -897,7 +923,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                             key={mod.id}
                                                             className={`p-4 relative transition-all duration-300 ${
                                                                 isSelected
-                                                                    ? 'bg-amber-50/80 border-2 border-brand-jasper shadow-editorial'
+                                                                    ? 'bg-brand-cream border-2 border-brand-jasper shadow-editorial'
                                                                     : 'bg-white border border-brand-cerulean/30 hover:border-brand-cerulean hover:shadow-sm'
                                                             }`}
                                                         >
@@ -936,8 +962,8 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                                             title="Phân bổ / Chuyển học kỳ"
                                                                             className={`text-[11px] font-bold font-serif-title py-0.5 px-1.5 rounded border transition-colors cursor-pointer outline-none ${
                                                                                 !mod.semester || mod.semester === 'unassigned'
-                                                                                    ? 'bg-amber-100 text-amber-900 border-amber-400 hover:bg-amber-200 font-bold'
-                                                                                    : 'bg-blue-50 text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
+                                                                                    ? 'bg-brand-cream text-brand-jasper border-brand-jasper/50 hover:bg-brand-cream/80 font-bold'
+                                                                                    : 'bg-white text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
                                                                             }`}
                                                                         >
                                                                             <option value="unassigned">Chưa xếp kỳ</option>
@@ -961,12 +987,12 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                                         </span>
                                                                     )}
                                                                     {mod.prerequisites && (
-                                                                        <span className="px-1.5 py-0.5 bg-amber-50 text-amber-900 text-[10px] font-bold font-serif-title rounded border border-amber-300">
+                                                                        <span className="px-1.5 py-0.5 bg-brand-cream text-brand-jasper text-[10px] font-bold font-serif-title rounded border border-brand-jasper/30">
                                                                             Tiên quyết: {mod.prerequisites}
                                                                         </span>
                                                                     )}
                                                                     {mod.programIds && mod.programIds.length > 1 && (
-                                                                        <span className="px-1.5 py-0.5 bg-blue-50/50 text-brand-cerulean/80 text-xs font-bold font-serif-title rounded border border-brand-cerulean/20 flex items-center gap-1">
+                                                                        <span className="px-1.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/20 flex items-center gap-1">
                                                                             <Link2 size={10} /> Dùng chung
                                                                         </span>
                                                                     )}
@@ -1082,8 +1108,8 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                                         title="Phân bổ / Chuyển học kỳ"
                                                                         className={`text-[11px] font-bold font-serif-title py-0.5 px-1.5 rounded border transition-colors cursor-pointer outline-none ${
                                                                             !mod.semester || mod.semester === 'unassigned'
-                                                                                ? 'bg-amber-100 text-amber-900 border-amber-400 hover:bg-amber-200 font-bold'
-                                                                                : 'bg-blue-50 text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
+                                                                                ? 'bg-brand-cream text-brand-jasper border-brand-jasper/50 hover:bg-brand-cream/80 font-bold'
+                                                                                : 'bg-white text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
                                                                         }`}
                                                                     >
                                                                         <option value="unassigned">Chưa xếp kỳ</option>
@@ -1099,7 +1125,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                                     </select>
                                                                 )}
                                                                 {mod.prerequisites && (
-                                                                    <span className="px-1.5 py-0.5 bg-amber-50 text-amber-900 text-[10px] font-bold font-serif-title rounded border border-amber-300">
+                                                                    <span className="px-1.5 py-0.5 bg-brand-cream text-brand-jasper text-[10px] font-bold font-serif-title rounded border border-brand-jasper/30">
                                                                         Tiên quyết: {mod.prerequisites}
                                                                     </span>
                                                                 )}
@@ -1177,7 +1203,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                             key={mod.id}
                                                             className={`p-4 relative transition-all duration-300 ${
                                                                 isSelected
-                                                                    ? 'bg-amber-50/80 border-2 border-brand-jasper shadow-editorial'
+                                                                    ? 'bg-brand-cream border-2 border-brand-jasper shadow-editorial'
                                                                     : isDimmed
                                                                     ? 'bg-gray-100/60 border border-dashed border-gray-300 opacity-45 grayscale hover:opacity-80'
                                                                     : 'bg-white border border-brand-cerulean/30 hover:border-brand-cerulean hover:shadow-sm'
@@ -1218,8 +1244,8 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                                             title="Phân bổ / Chuyển học kỳ"
                                                                             className={`text-[11px] font-bold font-serif-title py-0.5 px-1.5 rounded border transition-colors cursor-pointer outline-none ${
                                                                                 !mod.semester || mod.semester === 'unassigned'
-                                                                                    ? 'bg-amber-100 text-amber-900 border-amber-400 hover:bg-amber-200 font-bold'
-                                                                                    : 'bg-blue-50 text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
+                                                                                    ? 'bg-brand-cream text-brand-jasper border-brand-jasper/50 hover:bg-brand-cream/80 font-bold'
+                                                                                    : 'bg-white text-brand-cerulean border-brand-cerulean/30 hover:border-brand-cerulean'
                                                                             }`}
                                                                         >
                                                                             <option value="unassigned">Chưa xếp kỳ</option>
@@ -1235,12 +1261,12 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                                         </select>
                                                                     )}
                                                                     {mod.prerequisites && (
-                                                                        <span className="px-1.5 py-0.5 bg-amber-50 text-amber-900 text-[10px] font-bold font-serif-title rounded border border-amber-300">
+                                                                        <span className="px-1.5 py-0.5 bg-brand-cream text-brand-jasper text-[10px] font-bold font-serif-title rounded border border-brand-jasper/30">
                                                                             Tiên quyết: {mod.prerequisites}
                                                                         </span>
                                                                     )}
                                                                     {mod.programIds && mod.programIds.length > 1 && (
-                                                                        <span className="px-1.5 py-0.5 bg-blue-50/50 text-brand-cerulean/80 text-xs font-bold font-serif-title rounded border border-brand-cerulean/20 flex items-center gap-1">
+                                                                        <span className="px-1.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-xs font-bold font-serif-title rounded border border-brand-cerulean/20 flex items-center gap-1">
                                                                             <Link2 size={10} /> Dùng chung
                                                                         </span>
                                                                     )}
@@ -1352,16 +1378,16 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
 
                         {/* Duplicate Alert in Current Program */}
                         {duplicateInCurrentProgram && (
-                            <div className="p-3.5 bg-amber-50 border-2 border-amber-300 rounded-sm flex items-start gap-2.5 text-amber-900 animate-fade-in-down shadow-sm">
-                                <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
-                                <div className="text-xs space-y-1 flex-1">
-                                    <p className="font-serif-title font-bold text-amber-950 text-sm flex items-center gap-1.5">
+                            <div className="p-3.5 bg-brand-cream border-2 border-brand-jasper/40 rounded-sm flex items-start gap-2.5 text-brand-jasper animate-fade-in-down shadow-sm">
+                                <AlertTriangle size={18} className="text-brand-jasper shrink-0 mt-0.5" />
+                                <div className="text-xs space-y-1">
+                                    <p className="font-serif-title font-bold text-brand-jasper text-sm flex items-center gap-1.5">
                                         Đã có học phần này trong chương trình!
                                     </p>
-                                    <p className="text-amber-900">
+                                    <p className="text-brand-jasper/90">
                                         Đã có học phần <span className="font-bold font-sans">[{duplicateInCurrentProgram.code}] {duplicateInCurrentProgram.name}</span> ({duplicateInCurrentProgram.credits} TC{duplicateInCurrentProgram.semester ? `, Học kỳ ${duplicateInCurrentProgram.semester}` : ''}) trong CTĐT hiện tại.
                                     </p>
-                                    <p className="text-amber-800/80 italic text-[11px]">
+                                    <p className="text-brand-jasper/70 italic text-[11px]">
                                         Vui lòng kiểm tra lại mã môn hoặc tên học phần để tránh bị tạo trùng lặp.
                                     </p>
                                 </div>
@@ -1370,7 +1396,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
 
                         {/* Duplicate Found in Other Programs -> Link Suggestion */}
                         {duplicateInOtherPrograms && (
-                            <div className="p-3.5 bg-blue-50 border-2 border-brand-cerulean/40 rounded-sm flex items-start gap-2.5 text-brand-cerulean animate-fade-in-down shadow-sm">
+                            <div className="p-3.5 bg-brand-cream border-2 border-brand-cerulean/40 rounded-sm flex items-start gap-2.5 text-brand-cerulean animate-fade-in-down shadow-sm">
                                 <Info size={18} className="text-brand-cerulean shrink-0 mt-0.5" />
                                 <div className="text-xs space-y-1.5 flex-1">
                                     <p className="font-serif-title font-bold text-brand-cerulean text-sm">
@@ -1392,12 +1418,49 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                             </div>
                         )}
 
-
+                        {modForm.category === 'A' && !isDaiHoc && (
+                            <div className="p-3 bg-brand-cream border border-brand-cerulean/30 rounded space-y-2">
+                                <label className="block text-xs font-serif-title font-bold text-brand-cerulean">
+                                    Mẫu học phần chuẩn Khối A (Học phần chung NVSP):
+                                </label>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {[
+                                        { code: 'A01', name: 'Tâm lý học giáo dục', credits: 2, type: 'mandatory' },
+                                        { code: 'A02', name: 'Giáo dục học', credits: 3, type: 'mandatory' },
+                                        { code: 'A03', name: 'Lý luận dạy học', credits: 3, type: 'mandatory' },
+                                        { code: 'A04', name: 'Đánh giá trong giáo dục', credits: 2, type: 'mandatory' },
+                                        { code: 'A05', name: 'Quản lý nhà nước về giáo dục', credits: 2, type: 'mandatory' },
+                                        { code: 'A06', name: 'Ứng dụng CNTT & Chuyển đổi số trong dạy học', credits: 3, type: 'mandatory' },
+                                        { code: 'A07', name: 'Kỹ năng giao tiếp & Ứng xử sư phạm', credits: 2, type: 'elective' },
+                                        { code: 'A08', name: 'Giáo dục giá trị sống & Kỹ năng sống', credits: 2, type: 'elective' },
+                                    ].map(tpl => (
+                                        <button
+                                            key={tpl.code}
+                                            type="button"
+                                            onClick={() => {
+                                                setModForm({
+                                                    ...modForm,
+                                                    code: tpl.code,
+                                                    name: tpl.name,
+                                                    credits: tpl.credits,
+                                                    type: tpl.type,
+                                                    category: 'A',
+                                                    knowledgeBlock: 'A'
+                                                });
+                                            }}
+                                            className="px-2.5 py-1 text-xs bg-white border border-brand-cerulean/30 hover:border-brand-cerulean hover:bg-brand-cerulean hover:text-white text-brand-cerulean font-bold transition-all rounded shadow-xs"
+                                        >
+                                            + Mẫu {tpl.code} ({tpl.credits} TC)
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {modForm.category === 'B' && !isDaiHoc && (
-                            <div className="p-3 bg-blue-50/80 border border-brand-cerulean/30 rounded space-y-2">
+                            <div className="p-3 bg-brand-cream border border-brand-cerulean/30 rounded space-y-2">
                                 <label className="block text-xs font-serif-title font-bold text-brand-cerulean">
-                                    Mẫu học phần chuẩn Nhánh B {profile?.teachingSubject ? `(Áp dụng môn: ${profile.teachingSubject})` : ''}:
+                                    Mẫu học phần chuẩn Khối B (Chuyên ngành THCS) {profile?.teachingSubject ? `(Áp dụng môn: ${profile.teachingSubject})` : ''}:
                                 </label>
                                 <div className="flex flex-wrap gap-1.5">
                                     {[
@@ -1420,10 +1483,50 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                     name: formattedName,
                                                     credits: tpl.credits,
                                                     type: tpl.type,
-                                                    category: 'B'
+                                                    category: 'B',
+                                                    knowledgeBlock: 'B'
                                                 });
                                             }}
-                                            className="px-2.5 py-1 text-xs bg-white border border-brand-cerulean/40 hover:border-brand-cerulean hover:bg-blue-100/80 text-brand-cerulean font-bold transition-all rounded shadow-xs"
+                                            className="px-2.5 py-1 text-xs bg-white border border-brand-cerulean/30 hover:border-brand-cerulean hover:bg-brand-cerulean hover:text-white text-brand-cerulean font-bold transition-all rounded shadow-xs"
+                                        >
+                                            + Mẫu {tpl.code} ({tpl.credits} TC)
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {modForm.category === 'C' && !isDaiHoc && (
+                            <div className="p-3 bg-brand-cream border border-brand-cerulean/30 rounded space-y-2">
+                                <label className="block text-xs font-serif-title font-bold text-brand-cerulean">
+                                    Mẫu học phần chuẩn Khối C (Chuyên ngành THPT) {profile?.teachingSubject ? `(Áp dụng môn: ${profile.teachingSubject})` : ''}:
+                                </label>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {[
+                                        { code: 'C01', name: `Phương pháp dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THPT`, credits: 2, type: 'mandatory' },
+                                        { code: 'C02', name: `Xây dựng kế hoạch dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THPT`, credits: 2, type: 'mandatory' },
+                                        { code: 'C03', name: `Tổ chức dạy học [${profile?.teachingSubject || 'Môn học'}] ở trường THPT`, credits: 2, type: 'mandatory' },
+                                        { code: 'C04', name: `Thực hành dạy học [${profile?.teachingSubject || 'Môn học'}] cấp THPT ở trường sư phạm`, credits: 3, type: 'mandatory' },
+                                        { code: 'C05', name: 'Thực hành kỹ năng giáo dục ở trường THPT', credits: 2, type: 'practice' },
+                                        { code: 'C06', name: 'Thực tập sư phạm 1 ở trường THPT', credits: 2, type: 'practice' },
+                                        { code: 'C07', name: 'Thực tập sư phạm 2 ở trường THPT', credits: 2, type: 'practice' },
+                                    ].map(tpl => (
+                                        <button
+                                            key={tpl.code}
+                                            type="button"
+                                            onClick={() => {
+                                                const formattedName = formatModuleName(tpl.name, profile?.teachingSubject || profile?.major);
+                                                setModForm({
+                                                    ...modForm,
+                                                    code: tpl.code,
+                                                    name: formattedName,
+                                                    credits: tpl.credits,
+                                                    type: tpl.type,
+                                                    category: 'C',
+                                                    knowledgeBlock: 'C'
+                                                });
+                                            }}
+                                            className="px-2.5 py-1 text-xs bg-white border border-brand-cerulean/30 hover:border-brand-cerulean hover:bg-brand-cerulean hover:text-white text-brand-cerulean font-bold transition-all rounded shadow-xs"
                                         >
                                             + Mẫu {tpl.code} ({tpl.credits} TC)
                                         </button>
@@ -1568,13 +1671,13 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2 shrink-0">
-                                                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-900 border border-amber-200 rounded font-bold text-[10px]">
+                                                <span className="px-1.5 py-0.5 bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 rounded font-bold text-[10px]">
                                                     {m.credits} TC
                                                 </span>
                                                 <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px]">
                                                     {m.type === 'mandatory' ? 'Bắt buộc' : m.type === 'practice' ? 'Thực hành' : 'Tự chọn'}
                                                 </span>
-                                                <span className="px-1.5 py-0.5 bg-amber-100/70 text-amber-900 rounded text-[10px] font-bold">
+                                                <span className="px-1.5 py-0.5 bg-brand-cream text-brand-jasper border border-brand-jasper/30 rounded text-[10px] font-bold">
                                                     Chưa xếp kỳ
                                                 </span>
                                             </div>
@@ -1636,7 +1739,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <span className="text-xs font-bold font-sans text-gray-500">{(mod.code || '').toUpperCase()}</span>
-                                                    <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 font-bold">{mod.credits} TC</span>
+                                                    <span className="text-xs bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 px-1.5 py-0.5 font-bold">{mod.credits} TC</span>
                                                     <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5">
                                                         {mod.type === 'mandatory' ? 'Bắt buộc' : mod.type === 'practice' ? 'Thực hành' : 'Tự chọn'}
                                                     </span>
@@ -1695,13 +1798,13 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
 
                         {/* Duplicate Alert in Edit Modal */}
                         {duplicateInEdit && (
-                            <div className="p-3 bg-amber-50 border-2 border-amber-300 rounded-sm flex items-start gap-2.5 text-amber-900 animate-fade-in-down shadow-sm">
-                                <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                            <div className="p-3 bg-brand-cream border-2 border-brand-jasper/40 rounded-sm flex items-start gap-2.5 text-brand-jasper animate-fade-in-down shadow-sm">
+                                <AlertTriangle size={18} className="text-brand-jasper shrink-0 mt-0.5" />
                                 <div className="text-xs space-y-0.5 flex-1">
-                                    <p className="font-serif-title font-bold text-amber-950 text-sm">
+                                    <p className="font-serif-title font-bold text-brand-jasper text-sm">
                                         Cảnh báo trùng với học phần khác!
                                     </p>
-                                    <p className="text-amber-900">
+                                    <p className="text-gray-700">
                                         Mã môn hoặc tên học phần đang trùng với <span className="font-bold font-sans">[{duplicateInEdit.code}] {duplicateInEdit.name}</span> trong cùng chương trình đào tạo.
                                     </p>
                                 </div>
@@ -1919,57 +2022,116 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                         />
                                     </div>
                                 </div>
+                            ) : isThpt ? (
+                                <div className="space-y-3">
+                                    <div className="text-xs font-bold text-brand-cerulean uppercase tracking-wider">Định mức NVSP THPT (Khối A & Khối C):</div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Bắt buộc (TC)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="input-editorial w-full"
+                                                value={programFormData.rules?.mandatoryA ?? 0}
+                                                onChange={e => handleUpdateProgramFormDataRule('mandatoryA', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Tự chọn (TC)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="input-editorial w-full"
+                                                value={programFormData.rules?.electiveA ?? 0}
+                                                onChange={e => handleUpdateProgramFormDataRule('electiveA', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-1">Khối C Bắt buộc (TC)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="input-editorial w-full"
+                                                value={programFormData.rules?.mandatoryC ?? 0}
+                                                onChange={e => handleUpdateProgramFormDataRule('mandatoryC', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-1">Khối C Thực hành (TC)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="input-editorial w-full"
+                                                value={programFormData.rules?.practiceC ?? 0}
+                                                onChange={e => handleUpdateProgramFormDataRule('practiceC', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-1">Khối C Tự chọn (TC)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="input-editorial w-full"
+                                                value={programFormData.rules?.electiveC ?? 0}
+                                                onChange={e => handleUpdateProgramFormDataRule('electiveC', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             ) : (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Bắt buộc (TC)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            className="input-editorial w-full"
-                                            value={programFormData.rules?.mandatoryA ?? 0}
-                                            onChange={e => handleUpdateProgramFormDataRule('mandatoryA', e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Tự chọn (TC)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            className="input-editorial w-full"
-                                            value={programFormData.rules?.electiveA ?? 0}
-                                            onChange={e => handleUpdateProgramFormDataRule('electiveA', e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Bắt buộc (TC)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            className="input-editorial w-full"
-                                            value={programFormData.rules?.mandatoryB ?? 0}
-                                            onChange={e => handleUpdateProgramFormDataRule('mandatoryB', e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Thực hành (TC)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            className="input-editorial w-full"
-                                            value={programFormData.rules?.practiceB ?? 0}
-                                            onChange={e => handleUpdateProgramFormDataRule('practiceB', e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Tự chọn (TC)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            className="input-editorial w-full"
-                                            value={programFormData.rules?.electiveB ?? 0}
-                                            onChange={e => handleUpdateProgramFormDataRule('electiveB', e.target.value)}
-                                        />
+                                <div className="space-y-3">
+                                    <div className="text-xs font-bold text-brand-cerulean uppercase tracking-wider">Định mức NVSP THCS (Khối A & Khối B):</div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Bắt buộc (TC)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="input-editorial w-full"
+                                                value={programFormData.rules?.mandatoryA ?? 0}
+                                                onChange={e => handleUpdateProgramFormDataRule('mandatoryA', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-1">Khối A Tự chọn (TC)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="input-editorial w-full"
+                                                value={programFormData.rules?.electiveA ?? 0}
+                                                onChange={e => handleUpdateProgramFormDataRule('electiveA', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Bắt buộc (TC)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="input-editorial w-full"
+                                                value={programFormData.rules?.mandatoryB ?? 0}
+                                                onChange={e => handleUpdateProgramFormDataRule('mandatoryB', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Thực hành (TC)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="input-editorial w-full"
+                                                value={programFormData.rules?.practiceB ?? 0}
+                                                onChange={e => handleUpdateProgramFormDataRule('practiceB', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-1">Khối B Tự chọn (TC)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="input-editorial w-full"
+                                                value={programFormData.rules?.electiveB ?? 0}
+                                                onChange={e => handleUpdateProgramFormDataRule('electiveB', e.target.value)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -1987,7 +2149,10 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                        (programFormData.rules?.electiveA ?? 0) +
                                        (programFormData.rules?.mandatoryB ?? 0) +
                                        (programFormData.rules?.practiceB ?? 0) +
-                                       (programFormData.rules?.electiveB ?? 0));
+                                       (programFormData.rules?.electiveB ?? 0) +
+                                       (programFormData.rules?.mandatoryC ?? 0) +
+                                       (programFormData.rules?.practiceC ?? 0) +
+                                       (programFormData.rules?.electiveC ?? 0));
 
                                 return (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-brand-cerulean/20">
@@ -2003,7 +2168,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                             </div>
                                             <p className="text-[11px] text-gray-500 italic">Tổng số lượng có trong toàn bộ danh mục chương trình đào tạo</p>
                                         </div>
-                                        <div className="p-3.5 bg-amber-50/80 border border-amber-300 rounded space-y-1">
+                                        <div className="p-3.5 bg-brand-cream border border-brand-jasper/40 rounded space-y-1">
                                             <label className="block text-xs font-bold text-brand-jasper">
                                                 Số {program.evaluationType === 'modules' ? 'chuyên đề' : program.evaluationType === 'hours' ? 'tiết' : 'tín chỉ'} cần học để tốt nghiệp (Định mức) *
                                             </label>

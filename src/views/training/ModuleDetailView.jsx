@@ -137,14 +137,14 @@ export const ModuleDetailView = ({ moduleId, programId, programs, modules, profi
                         <span className="px-2.5 py-1 bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 font-serif-title text-xs font-bold">
                             Nhánh {moduleItem.category || 'A'}
                         </span>
-                        <span className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-300 font-sans text-xs font-bold">
+                        <span className="px-2.5 py-1 bg-brand-cream text-brand-jasper border border-brand-jasper/30 font-sans text-xs font-bold">
                             {moduleItem.credits} Tín chỉ
                         </span>
                         <span className="px-2.5 py-1 bg-gray-100 text-gray-700 font-sans text-xs">
                             {moduleItem.type === 'mandatory' ? 'Bắt buộc' : moduleItem.type === 'practice' ? 'Thực hành' : 'Tự chọn'}
                         </span>
                         {moduleItem.programIds && moduleItem.programIds.length > 1 && (
-                            <span className="px-2.5 py-1 bg-blue-50/50 text-brand-cerulean/80 border border-brand-cerulean/20 font-serif-title text-xs font-bold flex items-center gap-1">
+                            <span className="px-2.5 py-1 bg-brand-cerulean/10 text-brand-cerulean border border-brand-cerulean/20 font-serif-title text-xs font-bold flex items-center gap-1">
                                 <Link2 size={12} /> Dùng chung ({moduleItem.programIds.length} CT)
                             </span>
                         )}
@@ -356,7 +356,7 @@ export const ModuleDetailView = ({ moduleId, programId, programs, modules, profi
                                     key={p.id}
                                     type="button"
                                     onClick={() => handleAddToProgram(p.id)}
-                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-serif-title font-bold bg-blue-50/50 text-brand-cerulean/80 border border-brand-cerulean/20 hover:bg-purple-100 transition-colors"
+                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-serif-title font-bold bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 hover:bg-brand-cerulean hover:text-white transition-colors"
                                 >
                                     <PlusCircle size={12} /> {p.name}
                                 </button>

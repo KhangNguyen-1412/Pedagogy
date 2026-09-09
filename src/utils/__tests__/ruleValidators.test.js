@@ -5,7 +5,10 @@ import {
     getProgramStatusLabel,
     normalizeProgram,
     isModuleInProgram,
-    getCategoryPresets
+    getCategoryPresets,
+    calculateRuleBreakdown,
+    isThptProgram,
+    isThcsProgram
 } from '../ruleValidators';
 
 describe('ruleValidators - Program Status Management', () => {
@@ -86,3 +89,122 @@ describe('ruleValidators - Module and Category Presets', () => {
         expect(isModuleInProgram(mod3, 'prog-any')).toBe(false);
     });
 });
+
+describe('ruleValidators - calculateRuleBreakdown (Curriculum Quota Validation)', () => {
+    it('should calculate existing credits in program curriculum, including unselected electives', () => {
+        const program = {
+            id: 'prog-nvsp',
+            category: 'nhanh_a',
+            evaluationType: 'credits',
+            totalCreditsRequired: 34,
+            rules: { mandatoryA: 15, electiveA: 20, mandatoryB: 9, practiceB: 6, electiveB: 2 }
+        };
+
+        const modules = [
+            // Khối A Bắt buộc: 15 TC
+            { id: 'm1', programId: 'prog-nvsp', category: 'A', type: 'mandatory', credits: 15 },
+            // Khối A Tự chọn: 2 môn x 10 TC = 20 TC, but one has isSelected: false
+            { id: 'm2', programId: 'prog-nvsp', category: 'A', type: 'elective', credits: 10, isSelected: true },
+            { id: 'm3', programId: 'prog-nvsp', category: 'A', type: 'elective', credits: 10, isSelected: false },
+            // Module from another program (should NOT be counted)
+            { id: 'm4', programId: 'prog-other', category: 'A', type: 'elective', credits: 5, isSelected: true }
+        ];
+
+        const breakdown = calculateRuleBreakdown(program, modules);
+        expect(breakdown).not.toBeNull();
+        expect(breakdown.evalType).toBe('credits');
+
+        // Total earned should count both m1 (15) + m2 (10) + m3 (10) = 35 TC, ignoring isSelected: false
+        expect(breakdown.totalEarned).toBe(35);
+
+        const blockA_BB = breakdown.blocks.find(b => b.id === 'mandatoryA');
+        expect(blockA_BB.current).toBe(15);
+        expect(blockA_BB.target).toBe(15);
+
+        const blockA_TC = breakdown.blocks.find(b => b.id === 'electiveA');
+        // Crucial: current should be 20 (both m2 and m3), not just 10 (selected)
+        expect(blockA_TC.current).toBe(20);
+        expect(blockA_TC.target).toBe(20);
+    });
+
+    it('should calculate existing modules for Dai Hoc programs without checking student selection', () => {
+        const program = {
+            id: 'prog-dh',
+            category: 'dai_hoc',
+            evaluationType: 'credits',
+            totalCreditsRequired: 135,
+            rules: { general: 28, fundamentalMandatory: 26, fundamentalElective: 8, specializedMandatory: 42, specializedElective: 16, internshipGraduation: 15 }
+        };
+
+        const modules = [
+            { id: 'm1', programId: 'prog-dh', knowledgeBlock: 'general', credits: 28 },
+            { id: 'm2', programId: 'prog-dh', knowledgeBlock: 'fundamental', type: 'elective', credits: 8, isSelected: false }
+        ];
+
+        const breakdown = calculateRuleBreakdown(program, modules);
+        const blockFundElective = breakdown.blocks.find(b => b.id === 'fundamentalElective');
+        expect(blockFundElective.current).toBe(8);
+    });
+
+    it('should count existing modules in curriculum for nhanh_b (modules)', () => {
+        const program = {
+            id: 'prog-b',
+            category: 'nhanh_b',
+            evaluationType: 'modules',
+            totalCreditsRequired: 6,
+            rules: { mandatoryA: 4, electiveA: 2 }
+        };
+
+        const modules = [
+            { id: 'm1', programId: 'prog-b', type: 'mandatory', status: 'planned' },
+            { id: 'm2', programId: 'prog-b', type: 'mandatory', status: 'in_progress' },
+            { id: 'm3', programId: 'prog-b', type: 'elective', status: 'planned' }
+        ];
+
+        const breakdown = calculateRuleBreakdown(program, modules);
+        expect(breakdown.totalEarned).toBe(3);
+        const mand = breakdown.blocks.find(b => b.id === 'modulesMandatory');
+        const elec = breakdown.blocks.find(b => b.id === 'modulesElective');
+        expect(mand.current).toBe(2);
+        expect(elec.current).toBe(1);
+    });
+
+    it('should distinguish THCS (Khối A & B) and THPT (Khối A & C) correctly', () => {
+        const progThcs = {
+            id: 'prog_nvsp_thcs_2026',
+            name: 'Nghiệp vụ sư phạm THCS 2026',
+            category: 'nvsp_thcs',
+            evaluationType: 'credits'
+        };
+
+        const progThpt = {
+            id: 'prog_nvsp_thpt_2026',
+            name: 'Nghiệp vụ sư phạm THPT 2026',
+            category: 'nvsp_thpt',
+            evaluationType: 'credits'
+        };
+
+        expect(isThcsProgram(progThcs)).toBe(true);
+        expect(isThptProgram(progThcs)).toBe(false);
+
+        expect(isThptProgram(progThpt)).toBe(true);
+        expect(isThcsProgram(progThpt)).toBe(false);
+
+        // Breakdown for THCS: only contains Khối A and Khối B
+        const breakdownThcs = calculateRuleBreakdown(progThcs, []);
+        expect(breakdownThcs.levelLabel).toBe('NVSP THCS - Khối A & B');
+        expect(breakdownThcs.blocks.map(b => b.id)).toEqual([
+            'mandatoryA', 'electiveA', 'mandatoryB', 'practiceB', 'electiveB'
+        ]);
+        expect(breakdownThcs.totalTarget).toBe(34);
+
+        // Breakdown for THPT: only contains Khối A and Khối C
+        const breakdownThpt = calculateRuleBreakdown(progThpt, []);
+        expect(breakdownThpt.levelLabel).toBe('NVSP THPT - Khối A & C');
+        expect(breakdownThpt.blocks.map(b => b.id)).toEqual([
+            'mandatoryA', 'electiveA', 'mandatoryC', 'practiceC', 'electiveC'
+        ]);
+        expect(breakdownThpt.totalTarget).toBe(36);
+    });
+});
+

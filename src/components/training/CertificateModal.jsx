@@ -52,7 +52,7 @@ export const CertificateModal = ({ isOpen, onClose, profile, program, overall })
             {/* Certificate Paper Container */}
             <div className="bg-[#FFFDF5] border-[8px] md:border-[12px] border-[#D4AF37] p-5 md:p-8 w-full max-w-5xl shadow-2xl relative rounded-sm mt-14 mb-4 max-h-[85vh] overflow-y-auto font-serif animate-modal-pop-in">
                 {/* Inner Ornamental Certificate Border */}
-                <div className="border-2 md:border-4 border-[#D4AF37] p-4 md:p-8 relative bg-amber-50/20 shadow-inner min-h-[440px] flex flex-col justify-between">
+                <div className="border-2 md:border-4 border-[#D4AF37] p-4 md:p-8 relative bg-brand-cream/30 shadow-inner min-h-[440px] flex flex-col justify-between">
                     {/* Corner Flourishes */}
                     <div className="absolute top-1.5 left-1.5 w-6 h-6 md:w-7 md:h-7 border-t-4 border-l-4 border-[#D4AF37]"></div>
                     <div className="absolute top-1.5 right-1.5 w-6 h-6 md:w-7 md:h-7 border-t-4 border-r-4 border-[#D4AF37]"></div>
@@ -69,34 +69,34 @@ export const CertificateModal = ({ isOpen, onClose, profile, program, overall })
                         <div className="text-center space-y-1 mb-5">
                             <p className="text-xs md:text-base font-bold uppercase text-gray-800 tracking-wider">HIỆU TRƯỞNG TRƯỜNG ĐẠI HỌC SƯ PHẠM THÀNH PHỐ HỒ CHÍ MINH</p>
                             <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest my-0.5">CẤP</p>
-                            <h1 className="text-3xl md:text-5xl font-serif font-black text-red-700 tracking-widest my-1 drop-shadow-sm">CHỨNG CHỈ</h1>
+                            <h1 className="text-3xl md:text-5xl font-serif font-black text-brand-jasper tracking-widest my-1 drop-shadow-sm">CHỨNG CHỈ</h1>
                             <h2 className="text-lg md:text-2xl font-serif font-bold text-gray-900 uppercase tracking-wide">NGHIỆP VỤ SƯ PHẠM</h2>
                         </div>
                     </div>
 
                     {/* Certificate Body Content */}
                     <div className="space-y-2.5 text-sm md:text-base text-gray-800 leading-relaxed px-2 md:px-12 font-serif my-2">
-                        <div className="flex flex-col sm:flex-row justify-between border-b border-dashed border-amber-400/60 pb-1 gap-2">
+                        <div className="flex flex-col sm:flex-row justify-between border-b border-dashed border-brand-cerulean/30 pb-1 gap-2">
                             <span>Cho: <strong className="text-base md:text-lg text-gray-900 uppercase font-black tracking-wide ml-2">{profile?.fullName || 'NGUYỄN HUỲNH PHÚC KHANG'}</strong></span>
                             <span>Giới tính: <strong className="font-bold ml-2">{profile?.gender || 'Nam'}</strong></span>
                         </div>
-                        <div className="flex flex-col sm:flex-row justify-between border-b border-dashed border-amber-400/60 pb-1 gap-2">
+                        <div className="flex flex-col sm:flex-row justify-between border-b border-dashed border-brand-cerulean/30 pb-1 gap-2">
                             <span>Sinh ngày: <strong className="font-bold ml-2">{profile?.dob || '01/01/2000'}</strong></span>
                             <span>Nơi sinh: <strong className="font-bold ml-2">{profile?.province || 'Thành phố Hồ Chí Minh'}</strong></span>
                         </div>
-                        <div className="border-b border-dashed border-amber-400/60 pb-1">
+                        <div className="border-b border-dashed border-brand-cerulean/30 pb-1">
                             <span>Đã hoàn thành chương trình: <em className="font-bold text-brand-cerulean text-base md:text-lg ml-2">{program?.name || profile?.major || 'Nghiệp vụ sư phạm THCS 2026'}</em></span>
                         </div>
-                        <div className="flex flex-col sm:flex-row justify-between border-b border-dashed border-amber-400/60 pb-1 gap-2">
-                            <span>Điểm trung bình: <strong className="text-base text-red-700 font-bold ml-2">{overall?.gpa10 || '8.15'}</strong></span>
-                            <span>Xếp loại: <strong className="text-base text-red-700 font-black uppercase tracking-wider ml-2">{overall?.rank || 'GIỎI'}</strong></span>
+                        <div className="flex flex-col sm:flex-row justify-between border-b border-dashed border-brand-cerulean/30 pb-1 gap-2">
+                            <span>Điểm trung bình: <strong className="text-base text-brand-jasper font-bold ml-2">{overall?.gpa10 || '8.15'}</strong></span>
+                            <span>Xếp loại: <strong className="text-base text-brand-jasper font-black uppercase tracking-wider ml-2">{overall?.rank || 'GIỎI'}</strong></span>
                         </div>
                     </div>
 
                     {/* Certificate Footer: Date, Signature & Red Seal */}
                     <div className="mt-4 flex flex-col sm:flex-row justify-between items-center sm:items-end px-2 md:px-12 gap-4">
                         <div className="text-[11px] md:text-xs text-gray-600 space-y-1 text-center sm:text-left">
-                            <p>Số hiệu: <strong className="text-red-700 text-sm font-mono font-bold">{certNo}</strong></p>
+                            <p>Số hiệu: <strong className="text-brand-jasper text-sm font-mono font-bold">{certNo}</strong></p>
                             <p>Số vào sổ cấp chứng chỉ: <span className="font-mono text-gray-700">{issueNo}</span></p>
                         </div>
 
@@ -105,10 +105,10 @@ export const CertificateModal = ({ isOpen, onClose, profile, program, overall })
                             <p className="text-xs md:text-sm font-bold text-gray-800 uppercase">TL. HIỆU TRƯỞNG</p>
                             <p className="text-[11px] md:text-xs font-bold text-gray-700 uppercase">TRƯỞNG PHÒNG ĐÀO TẠO</p>
                             <div className="h-16 md:h-20 flex items-center justify-center my-1 relative">
-                                <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-red-600 flex items-center justify-center text-red-600 text-[9px] md:text-[10px] font-bold text-center leading-tight rotate-[-12deg] p-1.5 shadow-sm opacity-90 border-dashed">
+                                <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-brand-jasper flex items-center justify-center text-brand-jasper text-[9px] md:text-[10px] font-bold text-center leading-tight rotate-[-12deg] p-1.5 shadow-sm opacity-90 border-dashed">
                                     ĐẠI HỌC SƯ PHẠM THÀNH PHỐ HỒ CHÍ MINH ★
                                 </div>
-                                <span className="absolute font-serif italic text-blue-900 text-xl md:text-2xl font-bold rotate-[-10deg] pointer-events-none select-none drop-shadow">
+                                <span className="absolute font-serif italic text-brand-cerulean text-xl md:text-2xl font-bold rotate-[-10deg] pointer-events-none select-none drop-shadow">
                                     Nguyễn Văn A
                                 </span>
                             </div>
