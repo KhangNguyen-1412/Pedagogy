@@ -1023,7 +1023,7 @@ export default function App() {
                         )}
                         {currentView === 'resources' && (
                             <ResourcesStudyLogView
-                                modules={filteredModules.length > 0 ? filteredModules : modules}
+                                modules={(filteredModules.length > 0 ? filteredModules : modules).filter(m => m.status === 'in_progress')}
                                 studyLogs={studyLogs}
                                 resources={resources}
                                 events={events}
