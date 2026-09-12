@@ -689,6 +689,12 @@ export default function App() {
         try { await setDoc(getDocRef(userId, 'resources', newRes.id), newRes); } catch (err) {}
     };
 
+    const handleUpdateResource = async (updatedRes) => {
+        setResources(prev => prev.map(r => r.id === updatedRes.id ? updatedRes : r));
+        const userId = getUserId(user);
+        try { await setDoc(getDocRef(userId, 'resources', updatedRes.id), updatedRes); } catch (err) {}
+    };
+
     const handleDeleteResource = async (resId) => {
         setResources(prev => prev.filter(r => r.id !== resId));
         const userId = getUserId(user);
@@ -1023,7 +1029,8 @@ export default function App() {
                         )}
                         {currentView === 'resources' && (
                             <ResourcesStudyLogView
-                                modules={(filteredModules.length > 0 ? filteredModules : modules).filter(m => m.status === 'in_progress')}
+                                programs={programs}
+                                modules={modules}
                                 studyLogs={studyLogs}
                                 resources={resources}
                                 events={events}
@@ -1031,6 +1038,7 @@ export default function App() {
                                 onUpdateStudyLog={handleUpdateStudyLog}
                                 onDeleteStudyLog={handleDeleteStudyLog}
                                 onAddResource={handleAddResource}
+                                onUpdateResource={handleUpdateResource}
                                 onDeleteResource={handleDeleteResource}
                                 navigate={navigate}
                             />
