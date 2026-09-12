@@ -123,7 +123,7 @@ export const IeltsDrillsView = ({ onCompleteDrill, showToast }) => {
                         Danh Sách Bài Drills ({filteredDrills.length})
                     </span>
 
-                    <div className="space-y-2 max-h-[680px] overflow-y-auto pr-1">
+                    <div className={`space-y-2 ${filteredDrills.length > 3 ? 'max-h-[680px] overflow-y-auto editor-scrollbar pr-1' : ''}`}>
                         {filteredDrills.map((drill) => {
                             const isSelected = drill.id === activeDrillId;
                             return (

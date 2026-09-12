@@ -1,3 +1,5 @@
+import { NVSP_MODULES } from './nvspSyllabusData';
+
 // Default Programs Dataset
 export const DEFAULT_PROGRAMS = [
     {
@@ -205,7 +207,8 @@ export const DEFAULT_MODULES = [
         semester: "8",
         type: "mandatory",
         status: "planned"
-    }
+    },
+    ...NVSP_MODULES
 ];
 
 // ==========================================

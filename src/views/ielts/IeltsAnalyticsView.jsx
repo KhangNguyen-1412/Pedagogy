@@ -359,7 +359,7 @@ export const IeltsAnalyticsView = ({
                                     Chưa có bài drill nào được ghi nhận. Hãy vào mục "Kho Drills" để luyện tập ngay!
                                 </p>
                             ) : (
-                                <div className="space-y-2">
+                                <div className={`space-y-2 ${drillHistory.length > 3 ? 'max-h-[360px] overflow-y-auto pr-1.5 editor-scrollbar' : ''}`}>
                                     {drillHistory.map((d, i) => (
                                         <div key={i} className="p-3 bg-brand-cream/40 border border-brand-cerulean/15 flex items-center justify-between text-xs font-sans">
                                             <div className="space-y-0.5">
@@ -385,7 +385,7 @@ export const IeltsAnalyticsView = ({
                                     Chưa có bài viết nào được lưu. Hãy vào "Phòng Writing Lab" để thực hành viết!
                                 </p>
                             ) : (
-                                <div className="space-y-2">
+                                <div className={`space-y-2 ${writingSubmissions.length > 3 ? 'max-h-[360px] overflow-y-auto pr-1.5 editor-scrollbar' : ''}`}>
                                     {writingSubmissions.map((w, i) => (
                                         <div key={i} className="p-3 bg-brand-cream/40 border border-brand-cerulean/15 flex items-center justify-between text-xs font-sans">
                                             <div className="space-y-0.5">

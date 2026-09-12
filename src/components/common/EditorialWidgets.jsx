@@ -132,7 +132,7 @@ export const EditorialSelect = ({ label, value, onChange, options = [], classNam
                         bottom: coords.openUpward ? `${coords.bottom}px` : 'auto',
                         zIndex: 550
                     }}
-                    className="editorial-portal-select bg-brand-cream border-editorial shadow-2xl max-h-60 overflow-y-auto animate-fade-in-down"
+                    className={`editorial-portal-select bg-brand-cream border-editorial shadow-2xl ${displayOptions.length > 3 ? 'max-h-56' : 'max-h-72'} overflow-y-auto editor-scrollbar animate-fade-in-down`}
                 >
                     {isSearchable && (
                         <div className="p-2 border-b border-brand-cerulean/20 bg-brand-cream sticky top-0 z-20 shadow-xs" onClick={e => e.stopPropagation()}>
@@ -141,7 +141,7 @@ export const EditorialSelect = ({ label, value, onChange, options = [], classNam
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
                                 placeholder="Tìm kiếm nhanh..."
-                                className="w-full px-2.5 py-1 text-xs border border-brand-cerulean/30 bg-white font-sans text-brand-ink focus:outline-none focus:border-brand-cerulean"
+                                className="w-full px-2.5 py-1 text-xs border border-brand-cerulean/30 bg-white font-sans text-brand-ink focus:outline-none focus:border-brand-cerulean rounded-md"
                                 autoFocus
                             />
                         </div>
@@ -582,7 +582,7 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-2xl'
     if (!isOpen) return null;
     return createPortal(
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-3 sm:p-4 bg-brand-ink/60 backdrop-blur-md animate-backdrop-in">
-            <div className={`bg-brand-cream border-editorial p-4 sm:p-6 w-full ${maxWidth} max-h-[92vh] overflow-y-auto shadow-editorial relative animate-modal-pop-in`}>
+            <div className={`bg-brand-cream border-editorial p-4 sm:p-6 w-full ${maxWidth} max-h-[92vh] overflow-y-auto shadow-editorial relative rounded-xl animate-modal-pop-in`}>
                 <button onClick={onClose} className="absolute top-3 right-3 sm:top-4 sm:right-4 text-brand-cerulean hover:text-brand-jasper transition-colors p-1.5 cursor-pointer z-10" aria-label="Đóng">
                     <X size={20} />
                 </button>
@@ -610,7 +610,7 @@ export const ToastNotification = ({ toast, onClose }) => {
                     : isError 
                         ? 'bg-brand-jasper text-white border-brand-jasper' 
                         : 'bg-gray-900 text-white border-gray-800'
-            } rounded-sm min-w-[320px] font-sans relative overflow-hidden group`}>
+            } rounded-xl min-w-[320px] font-sans relative overflow-hidden group`}>
                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
                     isSuccess ? 'bg-emerald-400' : isError ? 'bg-amber-400' : 'bg-blue-400'
                 }`}></div>
@@ -643,7 +643,7 @@ export const AlertBox = ({ type = "info", message, onClose }) => {
         success: "bg-green-50 border-green-700 text-green-700"
     };
     return (
-        <div className={`p-4 border ${colors[type]} flex justify-between items-start mb-4 shadow-sm`}>
+        <div className={`p-4 border ${colors[type]} flex justify-between items-start mb-4 shadow-sm rounded-lg`}>
             <span className="font-body text-lg">{message}</span>
             {onClose && <button onClick={onClose}><X size={16} /></button>}
         </div>

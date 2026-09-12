@@ -261,7 +261,7 @@ export const DashboardView = ({
                         <button onClick={() => navigate('programs')} className="px-6 py-2 bg-brand-cerulean text-white font-serif-title">Xem danh sách chương trình</button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${activePrograms.length > 3 ? 'max-h-[680px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                         {activePrograms.map(prog => {
                             const pEval = prog.evaluationType || (prog.category === 'nhanh_b' ? 'modules' : prog.category === 'nhanh_c' ? 'hours' : 'credits');
                             const progModules = modules.filter(m => isModuleInProgram(m, prog.id));
@@ -338,7 +338,7 @@ export const DashboardView = ({
                 {upcomingEvents.length === 0 ? (
                     <p className="text-gray-500 italic text-sm">Chưa có lịch học/thi nào được lên kế hoạch.</p>
                 ) : (
-                    <div className="space-y-3">
+                    <div className={`space-y-3 ${upcomingEvents.length > 3 ? 'max-h-[480px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                         {upcomingEvents.map(evt => (
                             <div key={evt.id} className="p-3 sm:p-4 border-l-4 border-brand-cerulean bg-brand-cream flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
                                 <div>

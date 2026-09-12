@@ -245,7 +245,7 @@ export const GraduationAuditView = ({ profile }) => {
                     </div>
 
                     {/* 5 Pillars Requirement Cards */}
-                    <div className="space-y-4">
+                    <div className={`space-y-4 ${auditData.requirements.length > 3 ? 'max-h-[680px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                         {auditData.requirements.map((req, idx) => {
                             return (
                                 <div
@@ -260,7 +260,7 @@ export const GraduationAuditView = ({ profile }) => {
                                 >
                                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-2">
                                         <div className="flex items-center gap-2.5">
-                                            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-none bg-brand-cerulean/10 text-brand-cerulean font-mono text-xs font-bold flex items-center justify-center border border-brand-cerulean/20 shrink-0">
+                                            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-brand-cerulean/10 text-brand-cerulean font-mono text-xs font-bold flex items-center justify-center border border-brand-cerulean/20 shrink-0">
                                                 {idx + 1}
                                             </div>
                                             <h4 className="font-serif-title font-bold text-stone-900 text-base sm:text-lg">

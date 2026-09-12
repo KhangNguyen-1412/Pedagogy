@@ -465,7 +465,7 @@ export const PracticumView = () => {
                     </div>
 
                     {/* Danh sách biên bản dự giờ */}
-                    <div className="space-y-4">
+                    <div className={`space-y-4 ${practicumData.observationLogs?.length > 3 ? 'max-h-[720px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                         {practicumData.observationLogs?.length === 0 ? (
                             <div className="bg-white border-editorial shadow-editorial p-12 text-center space-y-3">
                                 <ClipboardCheck className="w-12 h-12 mx-auto text-stone-300" />
@@ -598,7 +598,7 @@ export const PracticumView = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className={`space-y-4 ${practicumData.homeroomLogs?.length > 3 ? 'max-h-[640px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                             {practicumData.homeroomLogs?.length === 0 ? (
                                 <div className="p-12 text-center border border-dashed border-stone-300 bg-white space-y-3">
                                     <Users className="w-12 h-12 mx-auto text-stone-300" />

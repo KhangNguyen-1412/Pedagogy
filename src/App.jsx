@@ -36,6 +36,7 @@ import {
 
 // Datasets
 import { DEFAULT_PROGRAMS, DEFAULT_MODULES } from './data/trainingData';
+import { enrichModuleWithNvspSyllabus } from './data/nvspSyllabusData';
 
 // Utils
 import { calculateOverallGPA, calculateModuleFinal } from './utils/gpaCalculators';
@@ -314,7 +315,7 @@ export default function App() {
     const firestoreSubscriptionsRef = useRef([]);
     const [profile, setProfile] = useState(() => DEFAULT_PROFILE);
     const [programs, setPrograms] = useState(() => DEFAULT_PROGRAMS);
-    const [modules, setModules] = useState(() => DEFAULT_MODULES);
+    const [modules, setModules] = useState(() => (DEFAULT_MODULES || []).map(enrichModuleWithNvspSyllabus));
     const [events, setEvents] = useState(() => []);
     const [studyLogs, setStudyLogs] = useState(() => []);
     const [resources, setResources] = useState(() => []);
@@ -489,7 +490,24 @@ export default function App() {
 
             unsubs.push(
                 onSnapshot(getCollectionRef(userId, 'modules'), (snapshot) => {
-                    setModules(snapshot.docs.map(d => normalizeModuleProgramIds({ id: d.id, ...d.data() })));
+                    const firestoreMods = snapshot.docs.map(d => normalizeModuleProgramIds({ id: d.id, ...d.data() }));
+                    const enrichedMods = firestoreMods.map(enrichModuleWithNvspSyllabus);
+                    setModules(enrichedMods);
+
+                    // Tự động bổ sung đề cương chi tiết chuẩn HCMUE vào Firestore nếu tài khoản đám mây chưa có
+                    firestoreMods.forEach(rawMod => {
+                        const enriched = enrichModuleWithNvspSyllabus(rawMod);
+                        if (
+                            (!rawMod.syllabus?.learningStages || rawMod.syllabus.learningStages.length === 0) &&
+                            enriched.syllabus?.learningStages?.length > 0
+                        ) {
+                            try {
+                                setDoc(getDocRef(userId, 'modules', rawMod.id), enriched, { merge: true });
+                            } catch (e) {
+                                console.warn("Auto-sync enriched syllabus error:", e);
+                            }
+                        }
+                    });
                 }, (err) => handleFirestoreError('modules-sync', err))
             );
 

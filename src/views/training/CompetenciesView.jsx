@@ -408,7 +408,7 @@ export const CompetenciesView = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${ploMatrix.length > 3 ? 'max-h-[680px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                         {ploMatrix.map((plo) => {
                             const isAchieved = plo.status === 'achieved';
                             const isInProgress = plo.status === 'in_progress';

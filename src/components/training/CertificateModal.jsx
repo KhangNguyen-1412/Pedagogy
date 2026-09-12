@@ -50,9 +50,9 @@ export const CertificateModal = ({ isOpen, onClose, profile, program, overall })
             </div>
 
             {/* Certificate Paper Container */}
-            <div className="bg-[#FFFDF5] border-[8px] md:border-[12px] border-[#D4AF37] p-5 md:p-8 w-full max-w-5xl shadow-2xl relative rounded-sm mt-14 mb-4 max-h-[85vh] overflow-y-auto font-serif animate-modal-pop-in">
+            <div className="bg-[#FFFDF5] border-[8px] md:border-[12px] border-[#D4AF37] p-5 md:p-8 w-full max-w-5xl shadow-2xl relative rounded-xl mt-14 mb-4 max-h-[85vh] overflow-y-auto font-serif animate-modal-pop-in">
                 {/* Inner Ornamental Certificate Border */}
-                <div className="border-2 md:border-4 border-[#D4AF37] p-4 md:p-8 relative bg-brand-cream/30 shadow-inner min-h-[440px] flex flex-col justify-between">
+                <div className="border-2 md:border-4 border-[#D4AF37] p-4 md:p-8 relative bg-brand-cream/30 shadow-inner min-h-[440px] flex flex-col justify-between rounded-lg">
                     {/* Corner Flourishes */}
                     <div className="absolute top-1.5 left-1.5 w-6 h-6 md:w-7 md:h-7 border-t-4 border-l-4 border-[#D4AF37]"></div>
                     <div className="absolute top-1.5 right-1.5 w-6 h-6 md:w-7 md:h-7 border-t-4 border-r-4 border-[#D4AF37]"></div>

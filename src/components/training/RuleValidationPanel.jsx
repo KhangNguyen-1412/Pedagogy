@@ -8,7 +8,7 @@ export const RuleValidationPanel = ({ program, modules }) => {
     const { evalType, levelLabel, blocks, totalEarned, totalTarget, unit, missingBlocks, isComplete } = breakdown;
 
     return (
-        <div className="bg-white border-editorial p-3.5 sm:p-6 shadow-editorial space-y-4 sm:space-y-5">
+        <div className="bg-white border-editorial p-3.5 sm:p-6 shadow-editorial space-y-4 sm:space-y-5 rounded-xl">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 border-b border-brand-cerulean/20 pb-3 sm:pb-4">
                 <div className="flex items-center gap-3">
                     <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shrink-0 border transition-all ${
@@ -37,12 +37,12 @@ export const RuleValidationPanel = ({ program, modules }) => {
                         </div>
                     </div>
                 </div>
-                <div className="w-full sm:w-auto text-center px-3 py-1.5 sm:px-4 sm:py-2 font-serif-title text-xs sm:text-sm border rounded-sm shrink-0 shadow-xs bg-brand-cream text-brand-cerulean border-brand-cerulean/30">
+                <div className="w-full sm:w-auto text-center px-3 py-1.5 sm:px-4 sm:py-2 font-serif-title text-xs sm:text-sm border rounded-md shrink-0 shadow-xs bg-brand-cream text-brand-cerulean border-brand-cerulean/30">
                     Hiện có trong CTĐT: <span className={`font-bold ${isComplete ? 'text-brand-cerulean' : 'text-brand-jasper'}`}>{totalEarned}</span> / {totalTarget} {unit}
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3.5">
+            <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3.5 ${blocks.length > 3 ? 'max-h-[320px] overflow-y-auto pr-1 editor-scrollbar' : ''}`}>
                 {blocks.map(b => {
                     const isOk = b.current >= b.target && b.target > 0;
                     const isShort = b.current < b.target && b.target > 0;
@@ -50,7 +50,7 @@ export const RuleValidationPanel = ({ program, modules }) => {
                     const diff = b.target - b.current;
 
                     return (
-                        <div key={b.id || b.label} className={`p-2.5 sm:p-4 border rounded-sm text-xs font-sans space-y-1.5 sm:space-y-2 transition-all ${
+                        <div key={b.id || b.label} className={`p-2.5 sm:p-4 border rounded-md text-xs font-sans space-y-1.5 sm:space-y-2 transition-all ${
                             isShort 
                                 ? 'bg-brand-cream/90 border-brand-jasper/40 text-gray-800 shadow-xs hover:border-brand-jasper' 
                                 : isOk 

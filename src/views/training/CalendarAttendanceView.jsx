@@ -917,7 +917,7 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
 
                                 {/* Selected Day Cards */}
                                 {selectedDayEvents.length > 0 ? (
-                                    <div className="space-y-3">
+                                    <div className={`space-y-3 ${selectedDayEvents.length > 3 ? 'max-h-[520px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                                         {selectedDayEvents.map(evt => renderEventCard(evt))}
                                     </div>
                                 ) : (
@@ -1333,7 +1333,7 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
                         </div>
 
                         {monthSelectedDateEvents.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 ${monthSelectedDateEvents.length > 3 ? 'max-h-[520px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                                 {monthSelectedDateEvents.map(evt => renderEventCard(evt))}
                             </div>
                         ) : (
@@ -1404,112 +1404,105 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
                     </div>
 
                     {/* Events List */}
-                    {filteredListEvents.map(evt => {
-                        const mod = modules.find(m => m.id === evt.moduleId);
-                        const session = getEventSession(evt);
-                        const sessionMeta = SESSIONS.find(s => s.id === session) || SESSIONS[0];
-                        const SessionIcon = sessionMeta.icon;
-                        const isBoth = session === 'both';
+                    <div className={`space-y-4 ${filteredListEvents.length > 3 ? 'max-h-[720px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
+                        {filteredListEvents.map(evt => {
+                            const mod = modules.find(m => m.id === evt.moduleId);
+                            const session = getEventSession(evt);
+                            const sessionMeta = SESSIONS.find(s => s.id === session) || SESSIONS[0];
+                            const SessionIcon = sessionMeta.icon;
+                            const isBoth = session === 'both';
 
-                        return (
-                            <div key={evt.id} className="bg-white border-editorial p-4 sm:p-6 shadow-editorial flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6">
-                                <div className="flex-1 space-y-2 w-full">
-                                    <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-                                        <span className="px-2.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-[11px] sm:text-xs font-bold font-sans">
-                                            {mod?.code || 'Học phần'}
-                                        </span>
-                                        <span className={`px-2.5 py-0.5 rounded text-[11px] sm:text-xs font-serif-title font-bold flex items-center gap-1.5 ${sessionMeta.badgeClass}`}>
-                                            <SessionIcon size={13} className={sessionMeta.iconColor} />
-                                            {sessionMeta.label} ({evt.startTime} - {evt.endTime})
-                                            {isBoth && <span className="font-mono text-[10px] text-brand-jasper font-bold">&bull; Tiết 1 - 10</span>}
-                                        </span>
-                                        <span className="text-xs sm:text-sm font-sans text-gray-500 font-bold">{evt.date}</span>
-                                    </div>
-
-                                    <h4 className="text-xl sm:text-2xl font-serif-title text-brand-cerulean font-bold">{evt.title}</h4>
-
-                                    <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm font-body text-gray-600 items-center">
-                                        <span className="flex items-center gap-1.5">
-                                            <MapPin size={14} className="text-brand-jasper shrink-0" />
-                                            {evt.location || 'Chưa cập nhật địa điểm'}
-                                        </span>
-                                        {mod?.instructor && (
-                                            <span className="flex items-center gap-1.5 text-brand-cerulean font-serif-title font-semibold">
-                                                <GraduationCap size={14} className="text-brand-cerulean shrink-0" />
-                                                GV: {mod.instructor}
+                            return (
+                                <div key={evt.id} className="bg-white border-editorial p-4 sm:p-6 shadow-editorial flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6">
+                                    <div className="flex-1 space-y-2 w-full">
+                                        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                                            <span className="px-2.5 py-0.5 bg-brand-cerulean/10 text-brand-cerulean text-[11px] sm:text-xs font-bold font-sans">
+                                                {mod?.code || 'Học phần'}
                                             </span>
-                                        )}
-                                        {evt.meetLink && (
-                                            <a href={evt.meetLink} target="_blank" rel="noreferrer" className="text-brand-jasper flex items-center gap-1 hover:underline font-bold">
-                                                <ExternalLink size={14} /> Link Google Meet / Zoom
-                                            </a>
-                                        )}
-                                    </div>
+                                            <span className={`px-2.5 py-0.5 rounded text-[11px] sm:text-xs font-serif-title font-bold flex items-center gap-1.5 ${sessionMeta.badgeClass}`}>
+                                                <SessionIcon size={13} className={sessionMeta.iconColor} />
+                                                {sessionMeta.label} ({evt.startTime} - {evt.endTime})
+                                                {isBoth && <span className="font-mono text-[10px] text-brand-jasper font-bold">&bull; Tiết 1 - 10</span>}
+                                            </span>
+                                            <span className="text-xs sm:text-sm font-sans text-gray-500 font-bold">{evt.date}</span>
+                                        </div>
 
-                                    {evt.notes && (
-                                        <p className="text-xs bg-brand-cream text-brand-cerulean p-2 border-l-2 border-brand-cerulean italic flex items-start gap-1.5">
-                                            <FileText size={13} className="text-brand-cerulean shrink-0 mt-0.5" />
-                                            <span>Ghi chú: {evt.notes}</span>
-                                        </p>
-                                    )}
+                                        <h4 className="text-xl sm:text-2xl font-serif-title text-brand-cerulean font-bold">{evt.title}</h4>
 
-                                    {/* SỔ GHI CHÉP BÀI HỌC CỦA BUỔI HỌC NÀY */}
-                                    {(() => {
-                                        const relatedLog = (studyLogs || []).find(l => l.eventId === evt.id || (l.date === evt.date && l.moduleId === evt.moduleId));
-                                        if (relatedLog) {
-                                            return (
-                                                <div className="flex items-center justify-between gap-2 p-2 bg-brand-cream/70 border border-brand-cerulean/30 rounded-xs text-xs">
-                                                    <div className="flex items-center gap-1.5 text-brand-cerulean overflow-hidden">
-                                                        <StickyNote size={14} className="text-brand-jasper shrink-0" />
-                                                        <span className="font-serif-title font-bold shrink-0">Ghi chép:</span>
-                                                        <span className="font-sans font-semibold text-gray-800 truncate">{relatedLog.title}</span>
+                                        <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm font-body text-gray-600 items-center">
+                                            <span className="flex items-center gap-1.5">
+                                                <MapPin size={14} className="text-brand-jasper shrink-0" />
+                                                {evt.location || 'Chưa cập nhật địa điểm'}
+                                            </span>
+                                            {mod?.instructor && (
+                                                <span className="flex items-center gap-1.5 text-brand-cerulean font-serif-title font-semibold">
+                                                    <GraduationCap size={14} className="text-brand-cerulean shrink-0" />
+                                                    GV: {mod.instructor}
+                                                </span>
+                                            )}
+                                            {evt.meetLink && (
+                                                <a href={evt.meetLink} target="_blank" rel="noreferrer" className="text-brand-jasper flex items-center gap-1 hover:underline font-bold">
+                                                    <ExternalLink size={14} /> Link Google Meet / Zoom
+                                                </a>
+                                            )}
+                                        </div>
+
+                                        {/* SỔ GHI CHÉP BÀI HỌC CỦA BUỔI HỌC NÀY */}
+                                        {(() => {
+                                            const relatedLog = getLinkedStudyLog(evt);
+                                            if (relatedLog) {
+                                                return (
+                                                    <div className="flex items-center justify-between gap-2 p-2 bg-brand-cream/70 border border-brand-cerulean/30 rounded-xs text-xs">
+                                                        <div className="flex items-center gap-1.5 text-brand-cerulean overflow-hidden">
+                                                            <StickyNote size={14} className="text-brand-jasper shrink-0" />
+                                                            <span className="font-serif-title font-bold shrink-0">Ghi chép:</span>
+                                                            <span className="font-sans font-semibold text-gray-800 truncate">{relatedLog.title}</span>
+                                                        </div>
+                                                        {navigate && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (typeof window !== 'undefined') {
+                                                                        sessionStorage.setItem('pedagogy_view_log_id', relatedLog.id);
+                                                                        sessionStorage.setItem('pedagogy_resources_tab', 'logs');
+                                                                    }
+                                                                    navigate('resources');
+                                                                }}
+                                                                className="text-xs font-serif-title font-bold text-brand-jasper hover:underline shrink-0 ml-2"
+                                                            >
+                                                                Mở sổ &rarr;
+                                                            </button>
+                                                        )}
                                                     </div>
-                                                    {navigate && (
+                                                );
+                                            }
+                                            if (navigate) {
+                                                return (
+                                                    <div className="pt-0.5">
                                                         <button
                                                             type="button"
                                                             onClick={() => {
                                                                 if (typeof window !== 'undefined') {
-                                                                    sessionStorage.setItem('pedagogy_view_log_id', relatedLog.id);
+                                                                    sessionStorage.setItem('pedagogy_open_log_modal', 'true');
+                                                                    sessionStorage.setItem('pedagogy_prefill_module_id', evt.moduleId || '');
+                                                                    sessionStorage.setItem('pedagogy_prefill_date', evt.date || '');
                                                                     sessionStorage.setItem('pedagogy_resources_tab', 'logs');
                                                                 }
                                                                 navigate('resources');
                                                             }}
-                                                            className="text-xs font-serif-title font-bold text-brand-jasper hover:underline shrink-0 ml-2"
+                                                            className="inline-flex items-center gap-1 text-xs font-serif-title font-bold text-brand-cerulean/80 hover:text-brand-cerulean hover:underline"
                                                         >
-                                                            Mở sổ &rarr;
+                                                            <BookOpen size={12} /> Tạo ghi chép cho buổi học này &rarr;
                                                         </button>
-                                                    )}
-                                                </div>
-                                            );
-                                        }
-                                        if (navigate) {
-                                            return (
-                                                <div className="pt-0.5">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            if (typeof window !== 'undefined') {
-                                                                sessionStorage.setItem('pedagogy_prefill_event', JSON.stringify(evt));
-                                                                sessionStorage.setItem('pedagogy_study_log_editor_active', 'true');
-                                                                sessionStorage.setItem('pedagogy_resources_tab', 'logs');
-                                                            }
-                                                            navigate('resources');
-                                                        }}
-                                                        className="text-xs font-serif-title text-gray-500 hover:text-brand-cerulean inline-flex items-center gap-1 hover:underline font-medium"
-                                                    >
-                                                        <Plus size={12} /> Ghi chép bài học cho buổi này
-                                                    </button>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    })()}
-                                </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+                                    </div>
 
-                                <div className="flex flex-col sm:items-end items-stretch gap-2 w-full md:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-                                    <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-                                        <span className="text-xs font-serif-title text-gray-400 uppercase tracking-widest mr-1">Thao tác</span>
-                                        <div className="flex items-center gap-1.5">
+                                    <div className="flex flex-col sm:flex-row md:flex-col items-end sm:items-center md:items-end justify-between gap-3 w-full md:w-auto shrink-0 border-t md:border-t-0 pt-3 md:pt-0">
+                                        <div className="flex items-center gap-2">
                                             <button
                                                 type="button"
                                                 onClick={() => handleOpenEdit(evt)}
@@ -1531,31 +1524,31 @@ export const CalendarAttendanceView = ({ modules = [], events = [], studyLogs = 
                                                 <Trash2 size={15} />
                                             </button>
                                         </div>
-                                    </div>
-                                    <div className="flex gap-1 bg-brand-cream p-1 border border-brand-cerulean/20 w-full sm:w-auto justify-around sm:justify-start">
-                                        <button
-                                            onClick={() => handleCheckin(evt, 'present')}
-                                            className={`flex-1 sm:flex-none text-center px-3 py-1 text-xs font-serif-title ${evt.attendanceStatus === 'present' ? 'bg-brand-cerulean text-white font-bold' : 'text-gray-600 hover:bg-white'}`}
-                                        >
-                                            Có mặt
-                                        </button>
-                                        <button
-                                            onClick={() => handleCheckin(evt, 'late')}
-                                            className={`flex-1 sm:flex-none text-center px-3 py-1 text-xs font-serif-title ${evt.attendanceStatus === 'late' ? 'bg-brand-jasper/80 text-white font-bold' : 'text-gray-600 hover:bg-white'}`}
-                                        >
-                                            Trễ
-                                        </button>
-                                        <button
-                                            onClick={() => handleCheckin(evt, 'absent')}
-                                            className={`flex-1 sm:flex-none text-center px-3 py-1 text-xs font-serif-title ${evt.attendanceStatus === 'absent' ? 'bg-brand-jasper text-white font-bold' : 'text-gray-600 hover:bg-white'}`}
-                                        >
-                                            Vắng
-                                        </button>
+                                        <div className="flex gap-1 bg-brand-cream p-1 border border-brand-cerulean/20 w-full sm:w-auto justify-around sm:justify-start">
+                                            <button
+                                                onClick={() => handleCheckin(evt, 'present')}
+                                                className={`flex-1 sm:flex-none text-center px-3 py-1 text-xs font-serif-title ${evt.attendanceStatus === 'present' ? 'bg-brand-cerulean text-white font-bold' : 'text-gray-600 hover:bg-white'}`}
+                                            >
+                                                Có mặt
+                                            </button>
+                                            <button
+                                                onClick={() => handleCheckin(evt, 'late')}
+                                                className={`flex-1 sm:flex-none text-center px-3 py-1 text-xs font-serif-title ${evt.attendanceStatus === 'late' ? 'bg-brand-jasper/80 text-white font-bold' : 'text-gray-600 hover:bg-white'}`}
+                                            >
+                                                Trễ
+                                            </button>
+                                            <button
+                                                onClick={() => handleCheckin(evt, 'absent')}
+                                                className={`flex-1 sm:flex-none text-center px-3 py-1 text-xs font-serif-title ${evt.attendanceStatus === 'absent' ? 'bg-brand-jasper text-white font-bold' : 'text-gray-600 hover:bg-white'}`}
+                                            >
+                                                Vắng
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
 
                     {filteredListEvents.length === 0 && (
                         <div className="p-12 text-center border border-dashed border-brand-cerulean/40 text-gray-500 font-serif-title bg-white">

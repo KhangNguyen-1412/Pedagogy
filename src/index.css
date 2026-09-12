@@ -37,52 +37,108 @@
 ::-webkit-scrollbar-thumb { background: #124874; opacity: 0.5; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #124874; }
 
-.border-editorial {
-    border: 1px solid #124874;
+.editor-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #124874 rgba(248, 245, 240, 0.7);
+}
+.editor-scrollbar::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+.editor-scrollbar::-webkit-scrollbar-track {
+    background: rgba(248, 245, 240, 0.7);
+    border-radius: 4px;
+}
+.editor-scrollbar::-webkit-scrollbar-thumb {
+    background: #124874;
+    border-radius: 4px;
+}
+.editor-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #0d3454;
 }
 
-.btn-editorial {
-    border: 1px solid #124874;
-    transition: all 0.2s ease;
+@layer components {
+    .border-editorial {
+        border: 1px solid #124874;
+        border-radius: 10px;
+    }
+
+    .btn-editorial {
+        border: 1px solid #124874;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-editorial:hover {
+        background-color: #124874;
+        color: #FDFBF7;
+        box-shadow: 4px 4px 0px 0px rgba(207, 55, 61, 0.3);
+    }
+
+    .input-editorial {
+        background-color: transparent;
+        border: none;
+        border-bottom: 1px solid #124874;
+        border-radius: 6px;
+        padding: 8px 8px;
+        font-family: 'Newsreader', serif;
+    }
+
+    .input-editorial:focus {
+        outline: none;
+        border-bottom: 2px solid #CF373D;
+    }
+
+    select.input-editorial {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23124874%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 10px;
+        padding-right: 28px;
+        cursor: pointer;
+        border-radius: 6px;
+    }
+
+    select.input-editorial option {
+        background-color: #FDFBF7;
+        color: #124874;
+        font-family: 'Newsreader', serif;
+        padding: 8px;
+    }
 }
 
-.btn-editorial:hover {
-    background-color: #124874;
-    color: #FDFBF7;
-    box-shadow: 4px 4px 0px 0px rgba(207, 55, 61, 0.3);
+/* Explicit protection for inputs with leading icons (search, etc.) */
+.input-editorial.pl-9,
+.input-editorial.pl-10,
+.input-with-icon-left {
+    padding-left: 2.6rem !important;
 }
 
-.input-editorial {
-    background-color: transparent;
-    border: none;
-    border-bottom: 1px solid #124874;
-    border-radius: 0;
-    padding: 8px 0;
-    font-family: 'Newsreader', serif;
+.input-editorial.pr-8,
+.input-editorial.pr-9,
+.input-editorial.pr-10 {
+    padding-right: 2.25rem !important;
 }
 
-.input-editorial:focus {
-    outline: none;
-    border-bottom: 2px solid #CF373D;
+/* Ensure all elements with rounded-xs class across the app get smooth rounded corners */
+.rounded-xs {
+    border-radius: 6px !important;
 }
 
-select.input-editorial {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23124874%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    background-size: 10px;
-    padding-right: 28px;
-    cursor: pointer;
+/* Floating Portals (Dropdowns, Pickers, Modals) */
+.editorial-portal-select {
+    border-radius: 10px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 
-select.input-editorial option {
-    background-color: #FDFBF7;
-    color: #124874;
-    font-family: 'Newsreader', serif;
-    padding: 8px;
+.editorial-portal-datepicker,
+.editorial-portal-timepicker {
+    border-radius: 10px !important;
+    overflow: hidden;
 }
 
 /* --- EDITORIAL ANIMATIONS & TRANSITIONS --- */
@@ -242,6 +298,30 @@ select.input-editorial option {
 }
 
 /* --- WORD RICH TEXT STYLES (CORNELL NOTES & EXPORTS) --- */
+.word-content {
+    font-family: 'Newsreader', Georgia, serif;
+}
+
+/* Force system primary font (Newsreader for body, Playfair Display for headings) */
+.word-content *:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6):not(code):not(pre):not(.font-mono) {
+    font-family: 'Newsreader', Georgia, serif !important;
+}
+
+.word-content h1,
+.word-content h2,
+.word-content h3,
+.word-content h4,
+.word-content h5,
+.word-content h6 {
+    font-family: 'Playfair Display', Georgia, serif !important;
+}
+
+.word-content code,
+.word-content pre,
+.word-content .font-mono {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
 .word-content:empty:before {
     content: attr(data-placeholder);
     color: #94a3b8;
@@ -256,7 +336,6 @@ select.input-editorial option {
     color: #124874;
     margin-top: 1rem;
     margin-bottom: 0.5rem;
-    font-family: 'Playfair Display', Georgia, serif;
     line-height: 1.3;
 }
 
@@ -266,7 +345,6 @@ select.input-editorial option {
     color: #124874;
     margin-top: 0.85rem;
     margin-bottom: 0.4rem;
-    font-family: 'Playfair Display', Georgia, serif;
     line-height: 1.3;
 }
 
@@ -276,7 +354,6 @@ select.input-editorial option {
     color: #CF373D;
     margin-top: 0.75rem;
     margin-bottom: 0.35rem;
-    font-family: 'Playfair Display', Georgia, serif;
     line-height: 1.3;
 }
 

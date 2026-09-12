@@ -845,7 +845,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                 <span className="w-2.5 h-2.5 rounded-full bg-brand-jasper"></span>
                                                 Học phần Bắt buộc & Thực hành ({mandatoryAndPractice.length}) &bull; {mandatoryAndPractice.reduce((s, m) => s + Number(m.credits || 0), 0)} TC
                                             </h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${mandatoryAndPractice.length > 3 ? 'max-h-[520px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                                                 {mandatoryAndPractice.map(mod => (
                                                     <div
                                                         key={mod.id}
@@ -954,7 +954,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                                 <span className="w-2.5 h-2.5 rounded-full bg-brand-jasper"></span>
                                                 Học phần Tự chọn trong kỳ ({electives.length}) &bull; {electives.reduce((s, m) => s + Number(m.credits || 0), 0)} TC
                                             </h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${electives.length > 3 ? 'max-h-[520px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                                                 {electives.map(mod => {
                                                     const isSelected = !!mod.isSelected;
 
@@ -1122,7 +1122,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                         {mandatoryAndPractice.length === 0 ? (
                                             <p className="text-sm text-gray-400 italic py-2">Chưa có học phần bắt buộc/thực hành nào.</p>
                                         ) : (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[460px] overflow-y-auto pr-2">
+                                            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${mandatoryAndPractice.length > 3 ? 'max-h-[520px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                                                 {mandatoryAndPractice.map(mod => (
                                                     <div
                                                         key={mod.id}
@@ -1233,7 +1233,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                         {electives.length === 0 ? (
                                             <p className="text-sm text-gray-400 italic py-2">Chưa có học phần tự chọn nào trong khối này.</p>
                                         ) : (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[460px] overflow-y-auto pr-2">
+                                            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${electives.length > 3 ? 'max-h-[520px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                                                 {electives.map(mod => {
                                                     const isSelected = !!mod.isSelected;
                                                     const isDimmed = !isDaiHoc && selectedElectiveId && !isSelected;
@@ -1463,16 +1463,24 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                 <label className="block text-xs font-serif-title font-bold text-brand-cerulean">
                                     Mẫu học phần chuẩn Khối A (Học phần chung NVSP):
                                 </label>
-                                <div className="flex flex-wrap gap-1.5">
+                                <div className="flex flex-wrap gap-1.5 max-h-[110px] overflow-y-auto pr-1 editor-scrollbar">
                                     {[
-                                        { code: 'A01', name: 'Tâm lý học giáo dục', credits: 2, type: 'mandatory' },
-                                        { code: 'A02', name: 'Giáo dục học', credits: 3, type: 'mandatory' },
-                                        { code: 'A03', name: 'Lý luận dạy học', credits: 3, type: 'mandatory' },
-                                        { code: 'A04', name: 'Đánh giá trong giáo dục', credits: 2, type: 'mandatory' },
-                                        { code: 'A05', name: 'Quản lý nhà nước về giáo dục', credits: 2, type: 'mandatory' },
-                                        { code: 'A06', name: 'Ứng dụng CNTT & Chuyển đổi số trong dạy học', credits: 3, type: 'mandatory' },
-                                        { code: 'A07', name: 'Kỹ năng giao tiếp & Ứng xử sư phạm', credits: 2, type: 'elective' },
-                                        { code: 'A08', name: 'Giáo dục giá trị sống & Kỹ năng sống', credits: 2, type: 'elective' },
+                                        { code: 'A1', name: 'Tâm lý học giáo dục', credits: 2, type: 'mandatory' },
+                                        { code: 'A2', name: 'Giáo dục học', credits: 3, type: 'mandatory' },
+                                        { code: 'A3', name: 'Lý luận dạy học', credits: 3, type: 'mandatory' },
+                                        { code: 'A4', name: 'Đánh giá trong giáo dục', credits: 2, type: 'mandatory' },
+                                        { code: 'A5', name: 'Quản lý nhà nước về giáo dục và đào tạo', credits: 2, type: 'mandatory' },
+                                        { code: 'A6', name: 'Giao tiếp sư phạm', credits: 2, type: 'mandatory' },
+                                        { code: 'A07', name: 'Rèn luyện nghiệp vụ sư phạm', credits: 3, type: 'practice' },
+                                        { code: 'A08', name: 'Hoạt động giáo dục ở trường phổ thông', credits: 2, type: 'elective' },
+                                        { code: 'A9', name: 'Kỷ luật tích cực', credits: 2, type: 'elective' },
+                                        { code: 'A10', name: 'Quản lý lớp học', credits: 2, type: 'elective' },
+                                        { code: 'A11', name: 'Kỹ thuật dạy học tích cực', credits: 2, type: 'elective' },
+                                        { code: 'A12', name: 'Ứng dụng công nghệ thông tin trong dạy học', credits: 2, type: 'elective' },
+                                        { code: 'A14', name: 'Tổ chức hoạt động giáo dục STEM ở trường phổ thông', credits: 2, type: 'elective' },
+                                        { code: 'A15', name: 'Giáo dục giá trị sống và kỹ năng sống', credits: 2, type: 'elective' },
+                                        { code: 'A16', name: 'Giáo dục vì sự phát triển bền vững', credits: 2, type: 'elective' },
+                                        { code: 'A17', name: 'Xây dựng môi trường giáo dục', credits: 2, type: 'elective' },
                                     ].map(tpl => (
                                         <button
                                             key={tpl.code}
@@ -1754,10 +1762,10 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                 {modalTab === 'link' && (
                     <div className="space-y-4">
                         <div className="relative">
-                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                             <input
                                 type="text"
-                                className="input-editorial w-full pl-10 text-base"
+                                className="input-editorial w-full pl-10 pr-9 text-base"
                                 placeholder="Tìm học phần theo tên hoặc mã môn..."
                                 value={linkSearch}
                                 onChange={e => setLinkSearch(e.target.value)}
@@ -1771,7 +1779,7 @@ export const ProgramDetailView = ({ programId, programs, modules, profile, onAdd
                                 <p className="text-xs text-gray-400 mt-1">Tất cả học phần đã thuộc chương trình này, hoặc chưa có học phần nào ở chương trình khác.</p>
                             </div>
                         ) : (
-                            <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+                            <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 editor-scrollbar">
                                 {linkableModules.map(mod => {
                                     const belongsTo = getModuleProgramNames(mod, programs);
                                     return (

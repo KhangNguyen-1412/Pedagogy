@@ -286,13 +286,13 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
             <section className="bg-white border-editorial p-3.5 sm:p-5 shadow-editorial space-y-3 sm:space-y-4">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
                     <div className="relative flex-1 max-w-md">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Tìm theo mã học phần, tên môn học..."
-                            className="input-editorial w-full pl-9 pr-8 text-sm"
+                            className="input-editorial w-full pl-10 pr-9 text-sm"
                         />
                         {searchQuery && (
                             <button
@@ -386,7 +386,7 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
             </section>
 
             {/* DANH SÁCH THẺ ĐIỂM DÀNH CHO MOBILE / MÀN HÌNH DỌC (md:hidden) */}
-            <div className="md:hidden space-y-3">
+            <div className={`md:hidden space-y-3 ${filteredModules.length > 3 ? 'max-h-[640px] overflow-y-auto pr-1 editor-scrollbar' : ''}`}>
                 {filteredModules.length === 0 ? (
                     <div className="p-8 text-center text-gray-500 bg-white border-editorial shadow-editorial space-y-2">
                         <Filter size={28} className="text-gray-400 mx-auto stroke-1" />
@@ -499,7 +499,7 @@ export const GradebookView = ({ modules = [], programs = [], onUpdateModule }) =
             </div>
 
             {/* BẢNG ĐIỂM HỌC PHẦN DÀNH CHO DESKTOP (hidden md:block) */}
-            <div className="hidden md:block bg-white border-editorial shadow-editorial overflow-x-auto max-h-[600px] overflow-y-auto pr-1">
+            <div className={`hidden md:block bg-white border-editorial shadow-editorial overflow-x-auto ${filteredModules.length > 3 ? 'max-h-[600px] overflow-y-auto pr-1 editor-scrollbar' : ''}`}>
                 <table className="w-full text-left font-body relative border-collapse">
                     <thead className="bg-brand-cream border-b border-brand-cerulean text-brand-cerulean font-serif-title sticky top-0 z-10 shadow-sm">
                         <tr>

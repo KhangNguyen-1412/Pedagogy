@@ -23,7 +23,9 @@ import {
     Sparkles,
     Check,
     ChevronDown,
-    FileText
+    FileText,
+    Maximize2,
+    Minimize2
 } from 'lucide-react';
 import mammoth from 'mammoth';
 
@@ -55,11 +57,111 @@ const escapeHtml = (text) => {
         .replace(/'/g, '&#039;');
 };
 
+export const sanitizePastedHtml = (html) => {
+    if (!html) return '';
+    if (typeof DOMParser !== 'undefined') {
+        try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            const allElements = doc.body.querySelectorAll('*');
+            allElements.forEach(el => {
+                // Strip font-family and face attribute
+                el.style.removeProperty('font-family');
+                el.style.removeProperty('font-family-name');
+                el.removeAttribute('face');
+
+                // Don't let pasted text override base font-size unless it's a heading
+                const isHeading = /^H[1-6]$/i.test(el.tagName);
+                if (!isHeading) {
+                    el.style.removeProperty('font-size');
+                }
+                el.style.removeProperty('line-height');
+
+                // Strip white or transparent background from pasted rich text
+                const bg = (el.style.backgroundColor || '').toLowerCase().trim();
+                if (
+                    bg === 'white' ||
+                    bg === '#fff' ||
+                    bg === '#ffffff' ||
+                    bg.includes('255, 255, 255') ||
+                    bg.includes('rgba(0, 0, 0, 0)') ||
+                    bg === 'transparent'
+                ) {
+                    el.style.removeProperty('background-color');
+                    el.style.removeProperty('background');
+                }
+
+                // Strip Microsoft Word styles (mso-*) and lingering font-family from style attribute
+                const styleAttr = el.getAttribute('style');
+                if (styleAttr) {
+                    const cleanedStyle = styleAttr
+                        .split(';')
+                        .map(s => s.trim())
+                        .filter(s => {
+                            if (!s) return false;
+                            const lower = s.toLowerCase();
+                            return (
+                                !lower.startsWith('mso-') &&
+                                !lower.startsWith('font-family') &&
+                                !lower.startsWith('line-height') &&
+                                !lower.startsWith('tab-stops') &&
+                                !lower.startsWith('page-break')
+                            );
+                        })
+                        .join('; ');
+
+                    if (cleanedStyle.trim()) {
+                        el.setAttribute('style', cleanedStyle);
+                    } else {
+                        el.removeAttribute('style');
+                    }
+                }
+
+                // Clean Microsoft Word classes (e.g. MsoNormal)
+                if (el.className) {
+                    const classes = el.className
+                        .split(/\s+/)
+                        .filter(c => !c.toLowerCase().startsWith('mso'));
+                    if (classes.length > 0) {
+                        el.className = classes.join(' ');
+                    } else {
+                        el.removeAttribute('class');
+                    }
+                }
+            });
+
+            // Remove Microsoft Word junk tags
+            const unwanted = doc.body.querySelectorAll('meta, style, link, xml, o\\:p, script');
+            unwanted.forEach(node => node.remove());
+
+            return doc.body.innerHTML;
+        } catch (e) {
+            console.warn('DOMParser sanitization error, fallback to regex:', e);
+        }
+    }
+
+    // Fallback: Regex-based sanitization for environments without DOMParser
+    return html
+        // Strip font-family including mso-*font-family
+        .replace(/(?:[a-zA-Z0-9_-]+-)?font-family\s*:\s*[^;"]+;?/gi, '')
+        // Strip font face attributes
+        .replace(/\bface\s*=\s*["'][^"']*["']/gi, '')
+        // Strip white background-colors
+        .replace(/(?:background-color|background)\s*:\s*(?:#fff(?:fff)?|white|rgba?\(\s*255\s*,\s*255\s*,\s*255[^)]*\))\s*;?/gi, '')
+        // Strip mso-* styles
+        .replace(/\bmso-[a-zA-Z0-9_-]+\s*:\s*[^;"]+;?/gi, '')
+        // Strip Mso classes: class="MsoNormal"
+        .replace(/\bclass\s*=\s*["'][^"']*\bMso[a-zA-Z0-9_-]*\b[^"']*["']/gi, '')
+        // Strip empty style attributes
+        .replace(/\bstyle\s*=\s*["']\s*["']/gi, '');
+};
+
 export const formatInitialContent = (content) => {
     if (!content) return '';
-    // If content already contains HTML tags, return as is
+    // If content already contains HTML tags, return as is (sanitizing foreign fonts)
     if (/<[a-z][\s\S]*>/i.test(content)) {
-        return content;
+        return sanitizePastedHtml(content);
     }
     // Convert plain text with newlines into HTML paragraphs
     return content
@@ -72,7 +174,10 @@ export const WordRichTextEditor = ({
     value = '',
     onChange,
     placeholder = 'Bắt đầu soạn thảo nội dung ghi chép như trong Microsoft Word...',
-    minHeight = '380px'
+    minHeight = '220px',
+    maxHeight,
+    compact = false,
+    hideImport = false
 }) => {
     const editorRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -82,6 +187,7 @@ export const WordRichTextEditor = ({
     const [showHighlightPicker, setShowHighlightPicker] = useState(false);
     const [showHeadingMenu, setShowHeadingMenu] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     // Sync content from outside (initial or external change) without resetting cursor while user types
     useEffect(() => {
@@ -181,7 +287,8 @@ export const WordRichTextEditor = ({
             const result = await mammoth.convertToHtml({ arrayBuffer });
             if (result && result.value) {
                 if (editorRef.current) {
-                    editorRef.current.innerHTML = result.value;
+                    const clean = sanitizePastedHtml(result.value);
+                    editorRef.current.innerHTML = clean;
                     handleInput();
                 }
             } else {
@@ -198,6 +305,47 @@ export const WordRichTextEditor = ({
         }
     };
 
+    // Handle Paste: Strip foreign font-family, sizes and word junk, keeping system Newsreader/Playfair typography
+    const handlePaste = (e) => {
+        const clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+
+        const pastedHtml = clipboardData.getData('text/html');
+        const pastedText = clipboardData.getData('text/plain');
+
+        if (pastedHtml) {
+            e.preventDefault();
+            const cleanedHtml = sanitizePastedHtml(pastedHtml);
+            if (cleanedHtml) {
+                if (document.queryCommandSupported('insertHTML')) {
+                    document.execCommand('insertHTML', false, cleanedHtml);
+                } else {
+                    const selection = window.getSelection();
+                    if (selection && selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        range.deleteContents();
+                        const div = document.createElement('div');
+                        div.innerHTML = cleanedHtml;
+                        const frag = document.createDocumentFragment();
+                        let node;
+                        while ((node = div.firstChild)) {
+                            frag.appendChild(node);
+                        }
+                        range.insertNode(frag);
+                    }
+                }
+                handleInput();
+                return;
+            }
+        }
+
+        if (pastedText) {
+            e.preventDefault();
+            document.execCommand('insertText', false, pastedText);
+            handleInput();
+        }
+    };
+
     // Handle Keyboard shortcuts
     const handleKeyDown = (e) => {
         if (e.key === 'Tab') {
@@ -209,12 +357,14 @@ export const WordRichTextEditor = ({
     return (
         <div className="border border-brand-cerulean/30 rounded-xs bg-white shadow-xs overflow-hidden flex flex-col font-sans">
             {/* MICROSOFT WORD STYLE RIBBON TOOLBAR */}
-            <div className="bg-slate-50 border-b border-brand-cerulean/20 p-1.5 sm:p-2 select-none flex flex-wrap items-center gap-1 sm:gap-1.5 text-slate-700">
+            <div className={`bg-slate-50 border-b border-brand-cerulean/20 ${compact ? 'p-1' : 'p-1.5 sm:p-2'} select-none flex flex-wrap items-center gap-1 sm:gap-1.5 text-slate-700`}>
                 {/* TOOLBAR HEADER BADGE */}
-                <div className="flex items-center gap-1.5 pr-2 mr-1 border-r border-slate-300 hidden md:flex text-brand-cerulean font-serif-title font-bold text-xs">
-                    <FileText size={15} className="text-brand-cerulean" />
-                    <span>Word Ribbon</span>
-                </div>
+                {!compact && (
+                    <div className="flex items-center gap-1.5 pr-2 mr-1 border-r border-slate-300 hidden md:flex text-brand-cerulean font-serif-title font-bold text-xs">
+                        <FileText size={15} className="text-brand-cerulean" />
+                        <span>Word Ribbon</span>
+                    </div>
+                )}
 
                 {/* UNDO / REDO */}
                 <div className="flex items-center gap-0.5 pr-1.5 border-r border-slate-300">
@@ -479,63 +629,90 @@ export const WordRichTextEditor = ({
                 </div>
 
                 {/* IMPORT WORD (.DOCX) FILE BUTTON */}
-                <div className="flex items-center gap-1.5 ml-auto">
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".docx"
-                        onChange={handleWordFileUpload}
-                        className="hidden"
-                    />
-                    <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isImporting}
-                        className="px-2.5 py-1 text-xs font-serif-title font-bold text-brand-cerulean bg-brand-cream/80 hover:bg-brand-cerulean hover:text-white border border-brand-cerulean/30 rounded flex items-center gap-1 transition-all"
-                        title="Tải lên tệp Word (.docx) để tự động chuyển thành ghi chép"
-                    >
-                        <FileUp size={13} />
-                        <span>{isImporting ? 'Đang đọc Word...' : 'Nhập file Word (.docx)'}</span>
-                    </button>
+                {!hideImport && (
+                    <div className="flex items-center gap-1.5 ml-auto">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".docx"
+                            onChange={handleWordFileUpload}
+                            className="hidden"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isImporting}
+                            className="px-2.5 py-1 text-xs font-serif-title font-bold text-brand-cerulean bg-brand-cream/80 hover:bg-brand-cerulean hover:text-white border border-brand-cerulean/30 rounded flex items-center gap-1 transition-all"
+                            title="Tải lên tệp Word (.docx) để tự động chuyển thành ghi chép"
+                        >
+                            <FileUp size={13} />
+                            <span>{isImporting ? 'Đang đọc Word...' : 'Nhập file Word (.docx)'}</span>
+                        </button>
+                    </div>
+                )}
 
-                    <button
-                        type="button"
-                        onMouseDown={e => { e.preventDefault(); exec('removeFormat'); }}
-                        className="p-1.5 hover:bg-slate-200 rounded text-slate-500 hover:text-red-600 transition-colors"
-                        title="Xóa tất cả định dạng về mặc định"
-                    >
-                        <Eraser size={14} />
-                    </button>
-                </div>
+                <button
+                    type="button"
+                    onMouseDown={e => { e.preventDefault(); exec('removeFormat'); }}
+                    className={`p-1.5 hover:bg-slate-200 rounded text-slate-500 hover:text-red-600 transition-colors ${hideImport ? 'ml-auto' : ''}`}
+                    title="Xóa tất cả định dạng về mặc định"
+                >
+                    <Eraser size={14} />
+                </button>
             </div>
 
             {/* WORD DOCUMENT EDITABLE CANVAS */}
-            <div className="relative bg-white p-6 sm:p-8 cursor-text overflow-y-auto" style={{ minHeight }}>
+            <div
+                className={`relative bg-white ${compact ? 'p-4 sm:p-5' : 'p-6 sm:p-8'} cursor-text overflow-y-scroll editor-scrollbar`}
+                style={{
+                    minHeight: isExpanded ? '380px' : (minHeight || (compact ? '200px' : '280px')),
+                    maxHeight: isExpanded ? '620px' : (maxHeight || (compact ? '360px' : '450px'))
+                }}
+                onClick={() => {
+                    if (editorRef.current && document.activeElement !== editorRef.current) {
+                        editorRef.current.focus();
+                    }
+                }}
+            >
                 <div
                     ref={editorRef}
                     contentEditable
                     suppressContentEditableWarning
                     onInput={handleInput}
                     onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
                     data-placeholder={placeholder}
-                    className="word-content outline-none text-base font-body text-slate-800 leading-relaxed min-h-[300px] focus:outline-none"
+                    className="word-content outline-none text-base font-body text-slate-800 leading-relaxed min-h-[140px] focus:outline-none"
                 />
             </div>
 
             {/* WORD STATUS BAR (BOTTOM) */}
-            <div className="bg-slate-100 border-t border-slate-200 px-3 py-1.5 text-[11px] text-slate-600 flex flex-wrap items-center justify-between gap-2 select-none">
-                <div className="flex items-center gap-3">
+            <div className="bg-slate-100 border-t border-slate-200 px-3 py-1 text-[11px] text-slate-600 flex flex-wrap items-center justify-between gap-2 select-none">
+                <div className="flex items-center gap-2">
                     <span className="flex items-center gap-1 font-semibold text-brand-cerulean">
                         <FileText size={12} />
-                        <span>Chế độ Word Soạn thảo</span>
+                        <span>{compact ? 'Ghi chép' : 'Chế độ Word Soạn thảo'}</span>
                     </span>
                     <span>&bull;</span>
                     <span><strong>{wordCount}</strong> từ</span>
                     <span>&bull;</span>
                     <span><strong>{charCount}</strong> ký tự</span>
                 </div>
-                <div className="flex items-center gap-3 text-slate-500">
-                    <span>Phím tắt: <strong>Ctrl+B</strong> In đậm, <strong>Ctrl+I</strong> In nghiêng, <strong>Ctrl+U</strong> Gạch chân</span>
+                <div className="flex items-center gap-3 ml-auto">
+                    {!compact && (
+                        <div className="hidden sm:flex items-center gap-3 text-slate-500">
+                            <span>Phím tắt: <strong>Ctrl+B</strong> In đậm, <strong>Ctrl+I</strong> In nghiêng, <strong>Ctrl+U</strong> Gạch chân</span>
+                        </div>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="text-[11px] font-sans font-medium text-brand-cerulean hover:text-brand-jasper flex items-center gap-1 px-1.5 py-0.5 hover:bg-slate-200/80 rounded transition-colors"
+                        title={isExpanded ? "Thu gọn chiều cao khung soạn thảo về mặc định" : "Mở rộng chiều cao khung soạn thảo"}
+                    >
+                        {isExpanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+                        <span>{isExpanded ? 'Thu gọn (360px)' : 'Mở rộng (620px)'}</span>
+                    </button>
                 </div>
             </div>
         </div>

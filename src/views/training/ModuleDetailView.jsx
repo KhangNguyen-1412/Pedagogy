@@ -256,7 +256,7 @@ export const ModuleDetailView = ({ moduleId, programId, programs, modules, profi
                     {moduleItem.syllabus?.clos && moduleItem.syllabus.clos.length > 0 && (
                         <div>
                             <h5 className="text-sm font-serif-title text-brand-cerulean font-bold mb-2">Chuẩn đầu ra (CLOs)</h5>
-                            <ul className="space-y-1 text-sm text-gray-700 font-body">
+                            <ul className={`space-y-1 text-sm text-gray-700 font-body ${moduleItem.syllabus.clos.length > 3 ? 'max-h-48 overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                                 {moduleItem.syllabus.clos.map((clo, idx) => (
                                     <li key={idx} className="flex items-start gap-2">
                                         <span className="text-brand-jasper font-bold">•</span>
@@ -270,9 +270,9 @@ export const ModuleDetailView = ({ moduleId, programId, programs, modules, profi
                     {moduleItem.syllabus?.schedule && moduleItem.syllabus.schedule.length > 0 && (
                         <div className="pt-2 border-t border-gray-100 space-y-2">
                             <h5 className="text-sm font-serif-title text-brand-cerulean font-bold">Khung bài học theo tuần/buổi</h5>
-                            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                            <div className={`space-y-2 ${moduleItem.syllabus.schedule.length > 3 ? 'max-h-56 overflow-y-auto editor-scrollbar pr-1' : ''}`}>
                                 {moduleItem.syllabus.schedule.map((item, idx) => (
-                                    <div key={idx} className="p-2.5 bg-brand-cream/50 border border-brand-cerulean/15 text-xs font-body flex justify-between items-start gap-3">
+                                    <div key={idx} className="p-2.5 bg-brand-cream/50 border border-brand-cerulean/15 text-xs font-body flex justify-between items-start gap-3 rounded-lg">
                                         <div className="font-bold text-brand-cerulean whitespace-nowrap">Tuần {item.week || idx + 1}:</div>
                                         <div className="flex-1">
                                             <div className="font-serif-title font-bold text-brand-jasper text-sm">{item.title}</div>

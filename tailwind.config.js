@@ -26,6 +26,16 @@ export default {
       boxShadow: {
         'editorial': '4px 4px 0px 0px rgba(18,72,116,0.1)',
         'editorial-hover': '6px 6px 0px 0px rgba(18,72,116,0.2)',
+      },
+      borderRadius: {
+        'xs': '4px',
+        'sm': '6px',
+        DEFAULT: '8px',
+        'md': '10px',
+        'lg': '12px',
+        'xl': '16px',
+        '2xl': '20px',
+        '3xl': '24px',
       }
     },
   },

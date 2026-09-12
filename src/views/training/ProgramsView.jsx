@@ -107,7 +107,7 @@ export const ProgramsView = ({ programs, modules = [], onAddProgram, onDeletePro
                 }
             />
 
-            <div className="space-y-6">
+            <div className={`space-y-6 ${filteredPrograms.length > 3 ? 'max-h-[720px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                 {filteredPrograms.length === 0 ? (
                     <div className="border-editorial p-8 sm:p-12 bg-white text-center space-y-4 shadow-sm">
                         <p className="text-gray-500 font-serif-title text-base sm:text-lg">Chưa có chương trình đào tạo nào phù hợp.</p>

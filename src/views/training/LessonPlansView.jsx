@@ -317,7 +317,7 @@ export const LessonPlansView = ({ profile }) => {
                             </button>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className={`space-y-3 ${lessonPlans.length > 3 ? 'max-h-[640px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                             {lessonPlans.length === 0 ? (
                                 <div className="p-8 text-center border-2 border-dashed border-stone-200 bg-stone-50/50 space-y-2">
                                     <FileText className="w-8 h-8 mx-auto text-stone-300" />
@@ -476,16 +476,16 @@ export const LessonPlansView = ({ profile }) => {
                                         {activePlan.activities?.map((act, index) => (
                                             <div
                                                 key={index}
-                                                className="border border-stone-200 overflow-hidden bg-white shadow-xs"
+                                                className="border border-stone-200 rounded-lg overflow-hidden bg-white shadow-xs"
                                             >
                                                 <div className="bg-brand-cream/60 px-4 py-2.5 border-b border-stone-200 flex items-center justify-between">
                                                     <span className="font-serif-title font-bold text-stone-800 text-sm flex items-center gap-2">
-                                                        <span className="w-5 h-5 rounded-none bg-brand-cerulean text-white flex items-center justify-center text-xs font-mono">
+                                                        <span className="w-5 h-5 rounded-md bg-brand-cerulean text-white flex items-center justify-center text-xs font-mono">
                                                             {act.number}
                                                         </span>
                                                         {act.name}
                                                     </span>
-                                                    <span className="text-xs font-mono text-stone-600 bg-white px-2 py-0.5 border border-stone-200">
+                                                    <span className="text-xs font-mono text-stone-600 bg-white px-2 py-0.5 border border-stone-200 rounded-md">
                                                         {act.time}
                                                     </span>
                                                 </div>
@@ -574,7 +574,7 @@ export const LessonPlansView = ({ profile }) => {
                             </button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${microSessions.length > 3 ? 'max-h-[680px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                             {microSessions.map(session => (
                                 <div
                                     key={session.id}

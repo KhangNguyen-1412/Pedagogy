@@ -131,7 +131,7 @@ export const IeltsMethodologyView = ({ onSelectZone }) => {
                             </div>
                         </div>
 
-                        <div className="p-4 md:p-6 space-y-4">
+                        <div className={`p-4 md:p-6 space-y-4 ${(selectedSkill === 'writing' ? IELTS_RUBRICS.writing.band_descriptors : IELTS_RUBRICS.speaking.band_descriptors).length > 3 ? 'max-h-[720px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
                             {(selectedSkill === 'writing' ? IELTS_RUBRICS.writing.band_descriptors : IELTS_RUBRICS.speaking.band_descriptors).map((bandItem, idx) => (
                                 <div
                                     key={idx}
