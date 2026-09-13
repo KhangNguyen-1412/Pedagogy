@@ -54,6 +54,7 @@ import { EditorialSelect, EditorialDatePicker, Modal } from '../../components/co
 import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHeader';
 import { WordRichTextEditor } from '../../components/common/WordRichTextEditor';
 import { getProgramStatus, isModuleInProgram } from '../../utils/ruleValidators';
+import { StudyLogNotebookPdfModal } from '../../components/training/StudyLogNotebookPdfModal';
 
 const DRAFT_STORAGE_KEY = 'pedagogy_study_log_draft';
 const PREFILL_EVENT_KEY = 'pedagogy_prefill_event';
@@ -65,6 +66,7 @@ export const ResourcesStudyLogView = ({
     studyLogs = [],
     resources = [],
     events = [],
+    profile = {},
     onAddStudyLog,
     onUpdateStudyLog,
     onDeleteStudyLog,
@@ -182,6 +184,51 @@ export const ResourcesStudyLogView = ({
     // Reading Focus Modal State
     const [viewingLog, setViewingLog] = useState(null);
     const [logToDelete, setLogToDelete] = useState(null);
+
+    // Multi-selection & Notebook PDF Export State
+    const [selectedLogIds, setSelectedLogIds] = useState(() => new Set());
+    const [notebookExportLogs, setNotebookExportLogs] = useState(null);
+
+    const handleToggleSelectLog = (logId) => {
+        setSelectedLogIds(prev => {
+            const next = new Set(prev);
+            if (next.has(logId)) {
+                next.delete(logId);
+            } else {
+                next.add(logId);
+            }
+            return next;
+        });
+    };
+
+    const handleSelectAllFilteredLogs = () => {
+        if (selectedLogIds.size === filteredLogs.length && filteredLogs.length > 0) {
+            setSelectedLogIds(new Set());
+        } else {
+            setSelectedLogIds(new Set(filteredLogs.map(l => l.id)));
+        }
+    };
+
+    const handleClearSelectedLogs = () => {
+        setSelectedLogIds(new Set());
+    };
+
+    const handleOpenSingleLogPdf = (log) => {
+        setNotebookExportLogs([log]);
+    };
+
+    const handleOpenBatchLogsPdf = () => {
+        const targetLogs = studyLogs.filter(l => selectedLogIds.has(l.id));
+        if (targetLogs.length > 0) {
+            targetLogs.sort((a, b) => {
+                const numA = parseInt(a.sessionNumber, 10) || 0;
+                const numB = parseInt(b.sessionNumber, 10) || 0;
+                if (numA !== numB) return numA - numB;
+                return (a.date || '').localeCompare(b.date || '');
+            });
+            setNotebookExportLogs(targetLogs);
+        }
+    };
 
     // Helper to create a new content item (Phần nội dung có từ khóa riêng)
     const createContentItem = (cues = '', note = '') => ({
@@ -1958,22 +2005,64 @@ export const ResourcesStudyLogView = ({
 
                     {/* STUDY LOGS LIST (MINIMALIST CLEAN LIST) */}
                     <div className="space-y-2">
-                        {/* LIST SUB-HEADER */}
+                        {/* LIST SUB-HEADER & BATCH ACTION BAR */}
                         {filteredLogs.length > 0 && (
-                            <div className="flex items-center justify-between gap-2 px-1 pt-0.5 pb-1 flex-wrap">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs uppercase font-serif-title font-bold text-gray-500 tracking-wider">
-                                        Danh sách bài ghi ({filteredLogs.length})
-                                    </span>
-                                    {searchQuery && (
-                                        <span className="text-[11px] px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean font-medium rounded-full">
-                                            Khớp: "{searchQuery}"
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between gap-2 px-1 pt-0.5 pb-1 flex-wrap">
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={handleSelectAllFilteredLogs}
+                                            className="p-1 text-gray-500 hover:text-brand-cerulean transition-colors rounded-xs"
+                                            title={selectedLogIds.size === filteredLogs.length && filteredLogs.length > 0 ? "Bỏ chọn tất cả" : "Chọn tất cả bài ghi"}
+                                        >
+                                            {selectedLogIds.size === filteredLogs.length && filteredLogs.length > 0 ? (
+                                                <CheckSquare size={16} className="text-brand-cerulean" />
+                                            ) : (
+                                                <Square size={16} />
+                                            )}
+                                        </button>
+                                        <span className="text-xs uppercase font-serif-title font-bold text-gray-500 tracking-wider">
+                                            Danh sách bài ghi ({filteredLogs.length})
                                         </span>
-                                    )}
+                                        {searchQuery && (
+                                            <span className="text-[11px] px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean font-medium rounded-full">
+                                                Khớp: "{searchQuery}"
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="text-[11px] text-gray-400 font-sans italic hidden sm:inline">
+                                        Nhấp vào bài ghi để mở sổ Cornell toàn màn hình
+                                    </span>
                                 </div>
-                                <span className="text-[11px] text-gray-400 font-sans italic hidden sm:inline">
-                                    Nhấp vào bài ghi để mở sổ Cornell toàn màn hình
-                                </span>
+
+                                {/* BULK ACTION FLOATING / DOCKED BAR */}
+                                {selectedLogIds.size > 0 && (
+                                    <div className="flex items-center justify-between gap-3 p-2.5 bg-brand-cerulean/5 border border-brand-cerulean/30 rounded-xs flex-wrap transition-all shadow-2xs">
+                                        <div className="flex items-center gap-2 text-xs font-serif-title font-bold text-brand-cerulean">
+                                            <CheckCircle2 size={16} className="text-brand-cerulean" />
+                                            <span>Đã chọn {selectedLogIds.size} / {filteredLogs.length} bài ghi</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={handleOpenBatchLogsPdf}
+                                                className="px-3 py-1.5 bg-brand-cerulean text-white font-serif-title font-bold text-xs hover:bg-brand-cerulean/90 rounded-xs flex items-center gap-1.5 shadow-2xs transition-all"
+                                                title="Tải tập bài ghi học sinh đã chọn thành 1 file PDF duy nhất"
+                                            >
+                                                <Printer size={13} />
+                                                <span>Tải Tập Ghi Bài PDF ({selectedLogIds.size} bài)</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={handleClearSelectedLogs}
+                                                className="px-2.5 py-1.5 text-xs text-gray-600 hover:text-gray-900 border border-gray-300 hover:bg-white rounded-xs transition-colors"
+                                            >
+                                                Bỏ chọn
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -1981,53 +2070,76 @@ export const ResourcesStudyLogView = ({
                             const mod = (modules || []).find(m => m.id === log.moduleId);
                             const homeworkItems = parseHomeworkItems(log.homework);
                             const completedTasks = Array.isArray(log.completedTasks) ? log.completedTasks : [];
+                            const isSelected = selectedLogIds.has(log.id);
 
                             return (
                                 <article
                                     key={log.id}
-                                    className="bg-white border border-stone-200 hover:border-brand-cerulean/50 hover:shadow-xs transition-all p-3 sm:p-3.5 rounded-xs group relative"
+                                    className={`bg-white border ${
+                                        isSelected
+                                            ? 'border-brand-cerulean ring-1 ring-brand-cerulean/30 bg-brand-cerulean/5'
+                                            : 'border-stone-200 hover:border-brand-cerulean/50'
+                                    } hover:shadow-xs transition-all p-3 sm:p-3.5 rounded-xs group relative`}
                                 >
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-                                        {/* LEFT / MAIN INFO */}
-                                        <div className="flex-1 min-w-0 space-y-1">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean font-serif-title font-bold text-xs rounded-2xs shrink-0">
-                                                    Buổi {log.sessionNumber || '01'}
-                                                </span>
-
-                                                <span className="px-2 py-0.5 bg-brand-cream text-brand-jasper border border-brand-jasper/25 text-xs font-bold font-serif-title rounded-2xs shrink-0">
-                                                    {mod?.code || 'HP'}
-                                                </span>
-
-                                                <h3
-                                                    onClick={() => setViewingLog(log)}
-                                                    className="text-sm sm:text-base font-serif-title font-bold text-gray-900 group-hover:text-brand-cerulean transition-colors cursor-pointer truncate"
-                                                    title={log.title}
-                                                >
-                                                    {log.title}
-                                                </h3>
-                                            </div>
-
-                                            {/* SUBTITLE / PREVIEW */}
-                                            <div className="flex items-center gap-2 text-xs text-gray-500 truncate">
-                                                {log.summary ? (
-                                                    <span className="italic text-gray-600 truncate font-body">
-                                                        "{log.summary}"
-                                                    </span>
+                                        {/* LEFT / CHECKBOX & MAIN INFO */}
+                                        <div className="flex items-start sm:items-center gap-2.5 flex-1 min-w-0">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleToggleSelectLog(log.id);
+                                                }}
+                                                className="mt-0.5 sm:mt-0 text-stone-400 hover:text-brand-cerulean transition-colors shrink-0"
+                                                title={isSelected ? "Bỏ chọn bài ghi này" : "Chọn bài ghi này để xuất PDF"}
+                                            >
+                                                {isSelected ? (
+                                                    <CheckSquare size={16} className="text-brand-cerulean" />
                                                 ) : (
-                                                    <span className="text-gray-400 font-sans truncate">
-                                                        {mod?.name || 'Học phần sư phạm'} &bull; {log.date}
-                                                    </span>
+                                                    <Square size={16} />
                                                 )}
+                                            </button>
 
-                                                {homeworkItems.length > 0 && (
-                                                    <span className={`inline-flex items-center gap-0.5 text-[11px] font-medium shrink-0 ml-1 ${
-                                                        completedTasks.length === homeworkItems.length ? 'text-emerald-700' : 'text-amber-800'
-                                                    }`}>
-                                                        <ListChecks size={12} />
-                                                        <span>{completedTasks.length}/{homeworkItems.length} việc</span>
+                                            <div className="flex-1 min-w-0 space-y-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean font-serif-title font-bold text-xs rounded-2xs shrink-0">
+                                                        Buổi {log.sessionNumber || '01'}
                                                     </span>
-                                                )}
+
+                                                    <span className="px-2 py-0.5 bg-brand-cream text-brand-jasper border border-brand-jasper/25 text-xs font-bold font-serif-title rounded-2xs shrink-0">
+                                                        {mod?.code || 'HP'}
+                                                    </span>
+
+                                                    <h3
+                                                        onClick={() => setViewingLog(log)}
+                                                        className="text-sm sm:text-base font-serif-title font-bold text-gray-900 group-hover:text-brand-cerulean transition-colors cursor-pointer truncate"
+                                                        title={log.title}
+                                                    >
+                                                        {log.title}
+                                                    </h3>
+                                                </div>
+
+                                                {/* SUBTITLE / PREVIEW */}
+                                                <div className="flex items-center gap-2 text-xs text-gray-500 truncate">
+                                                    {log.summary ? (
+                                                        <span className="italic text-gray-600 truncate font-body">
+                                                            "{log.summary}"
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-gray-400 font-sans truncate">
+                                                            {mod?.name || 'Học phần sư phạm'} &bull; {log.date}
+                                                        </span>
+                                                    )}
+
+                                                    {homeworkItems.length > 0 && (
+                                                        <span className={`inline-flex items-center gap-0.5 text-[11px] font-medium shrink-0 ml-1 ${
+                                                            completedTasks.length === homeworkItems.length ? 'text-emerald-700' : 'text-amber-800'
+                                                        }`}>
+                                                            <ListChecks size={12} />
+                                                            <span>{completedTasks.length}/{homeworkItems.length} việc</span>
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 
@@ -2059,6 +2171,16 @@ export const ResourcesStudyLogView = ({
                                                 >
                                                     <BookOpen size={12} />
                                                     <span>Đọc</span>
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleOpenSingleLogPdf(log)}
+                                                    className="px-2 py-1 text-xs font-serif-title font-medium text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xs transition-colors flex items-center gap-1"
+                                                    title="Tải bài ghi này dạng Tập ghi bài (PDF/Word)"
+                                                >
+                                                    <Printer size={12} />
+                                                    <span className="hidden md:inline">Tập ghi (PDF)</span>
                                                 </button>
 
                                                 <button
@@ -2394,6 +2516,15 @@ export const ResourcesStudyLogView = ({
                                     >
                                         <Pencil size={12} />
                                         <span>Sửa</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleOpenSingleLogPdf(viewingLog)}
+                                        className="px-2.5 py-1 text-xs font-serif-title font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xs flex items-center gap-1 transition-colors"
+                                        title="Xem và tải dạng Tập ghi bài học sinh (PDF / Word)"
+                                    >
+                                        <Printer size={12} />
+                                        <span>Tập ghi bài (PDF)</span>
                                     </button>
                                     <button
                                         type="button"
@@ -2901,7 +3032,17 @@ export const ResourcesStudyLogView = ({
                         </div>
                     );
                 })()}
-            </Modal>
+                </Modal>
+
+            {/* STUDENT NOTEBOOK PDF EXPORT MODAL (SINGLE / BATCH) */}
+            <StudyLogNotebookPdfModal
+                isOpen={!!notebookExportLogs}
+                onClose={() => setNotebookExportLogs(null)}
+                logs={notebookExportLogs || []}
+                modules={modules}
+                programs={programs}
+                profile={profile}
+            />
         </div>
     );
 };

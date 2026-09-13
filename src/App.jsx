@@ -1047,6 +1047,7 @@ export default function App() {
                         )}
                         {currentView === 'resources' && (
                             <ResourcesStudyLogView
+                                profile={profile}
                                 programs={programs}
                                 modules={modules}
                                 studyLogs={studyLogs}
