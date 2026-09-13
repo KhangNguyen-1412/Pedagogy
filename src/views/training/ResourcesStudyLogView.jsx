@@ -28,6 +28,7 @@ import {
     X,
     CalendarDays,
     ChevronRight,
+    ChevronDown,
     StickyNote,
     ArrowLeft,
     Save,
@@ -159,6 +160,19 @@ export const ResourcesStudyLogView = ({
     // Study Log Filter & Search State
     const [selectedModuleFilter, setSelectedModuleFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [expandedLogIds, setExpandedLogIds] = useState(() => new Set());
+
+    const toggleExpandLog = (logId) => {
+        setExpandedLogIds(prev => {
+            const next = new Set(prev);
+            if (next.has(logId)) {
+                next.delete(logId);
+            } else {
+                next.add(logId);
+            }
+            return next;
+        });
+    };
 
     // Tab 2 (Resources) Filter & Search State
     const [resourceProgramFilter, setResourceProgramFilter] = useState('all');
@@ -2129,8 +2143,41 @@ export const ResourcesStudyLogView = ({
                         </div>
                     </div>
 
-                    {/* STUDY LOGS CARDS LIST (CORNELL STYLE CARDS) */}
-                    <div className={`space-y-6 ${filteredLogs.length > 3 ? 'max-h-[850px] overflow-y-auto pr-2 editor-scrollbar' : ''}`}>
+                    {/* STUDY LOGS CARDS LIST (COMPACT EDITORIAL CORNELL CARDS) */}
+                    <div className="space-y-3 sm:space-y-4">
+                        {/* LIST SUB-HEADER & BULK EXPAND/COLLAPSE */}
+                        {filteredLogs.length > 0 && (
+                            <div className="flex items-center justify-between gap-2 px-1 pt-1 pb-0.5 flex-wrap">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs uppercase font-serif-title font-bold text-gray-700 tracking-wider">
+                                        Danh sách bài ghi ({filteredLogs.length})
+                                    </span>
+                                    {searchQuery && (
+                                        <span className="text-[11px] px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean font-medium rounded-full">
+                                            Khớp: "{searchQuery}"
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (expandedLogIds.size === filteredLogs.length) {
+                                                setExpandedLogIds(new Set());
+                                            } else {
+                                                setExpandedLogIds(new Set(filteredLogs.map(l => l.id)));
+                                            }
+                                        }}
+                                        className="px-2.5 py-1 border border-brand-cerulean/25 bg-white text-brand-cerulean hover:bg-brand-cream rounded-xs text-xs font-serif-title font-bold transition-all flex items-center gap-1.5 shadow-2xs"
+                                        title={expandedLogIds.size === filteredLogs.length ? "Thu gọn tất cả bài ghi" : "Mở rộng xem chi tiết tất cả"}
+                                    >
+                                        <Layers size={13} className="text-brand-jasper" />
+                                        <span>{expandedLogIds.size === filteredLogs.length ? 'Thu gọn tất cả' : 'Mở rộng tất cả'}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         {filteredLogs.map(log => {
                             const mod = (modules || []).find(m => m.id === log.moduleId);
                             const sessionMeta = getSessionMeta(log.sessionTime);
@@ -2138,321 +2185,158 @@ export const ResourcesStudyLogView = ({
                             const homeworkItems = parseHomeworkItems(log.homework);
                             const keyItems = parseKeyTakeaways(log.keyTakeaways);
                             const completedTasks = Array.isArray(log.completedTasks) ? log.completedTasks : [];
+                            const isExpanded = expandedLogIds.has(log.id);
 
                             return (
                                 <article
                                     key={log.id}
-                                    className="bg-white border-editorial shadow-editorial transition-all hover:shadow-lg relative overflow-hidden"
+                                    className="bg-white border-editorial shadow-editorial hover:shadow-md transition-all relative overflow-hidden rounded-xs"
                                 >
                                     {/* TOP COLOR ACCENT BAR */}
-                                    <div className="h-1.5 bg-gradient-to-r from-brand-cerulean via-brand-cerulean/80 to-brand-jasper w-full"></div>
+                                    <div className="h-1 bg-gradient-to-r from-brand-cerulean via-brand-cerulean/80 to-brand-jasper w-full"></div>
 
-                                    <div className="p-4 sm:p-6 space-y-4">
-                                        {/* HEADER METADATA: SESSION BADGE, CORNELL BADGE, MODULE, DATE, CA HỌC, GIẢNG VIÊN */}
-                                        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-brand-cerulean/15">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="px-3 py-1 bg-brand-cerulean text-white font-serif-title font-bold text-xs shadow-xs tracking-wider uppercase">
+                                    <div className="p-3.5 sm:p-4 space-y-2.5">
+                                        {/* HEADER ROW: SESSION BADGE, MODULE BADGE, CA HỌC, DATE, INSTRUCTOR */}
+                                        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-brand-cerulean/15">
+                                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                                <span className="px-2.5 py-0.5 bg-brand-cerulean text-white font-serif-title font-bold text-xs shadow-2xs tracking-wider uppercase rounded-2xs">
                                                     Buổi {log.sessionNumber || '01'}
                                                 </span>
 
-                                                <span className="px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean border border-brand-cerulean/20 text-[11px] font-bold font-serif-title uppercase tracking-wider rounded-xs">
-                                                    Cornell Note
+                                                <span className="px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean border border-brand-cerulean/20 text-[11px] font-bold font-serif-title uppercase tracking-wider rounded-2xs">
+                                                    Cornell
                                                 </span>
 
-                                                <span className="px-2.5 py-0.5 bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 text-xs font-bold font-serif-title">
+                                                <span className="px-2 py-0.5 bg-brand-cream text-brand-cerulean border border-brand-cerulean/30 text-xs font-bold font-serif-title rounded-2xs truncate max-w-[200px] sm:max-w-xs">
                                                     {mod?.code || 'HP'}: {mod?.name || 'Học phần sư phạm'}
-                                                </span>
-                                            </div>
-
-                                            <div className="flex items-center gap-3 text-xs font-serif-title flex-wrap">
-                                                <span className="flex items-center gap-1.5 text-gray-600 font-sans font-semibold">
-                                                    <Calendar size={14} className="text-brand-cerulean" />
-                                                    <span>{log.date}</span>
                                                 </span>
 
                                                 <span className={`px-2 py-0.5 rounded text-[11px] font-bold flex items-center gap-1 ${sessionMeta.badge}`}>
                                                     <SIcon size={12} className={sessionMeta.color} />
                                                     <span>{sessionMeta.label}</span>
                                                 </span>
+                                            </div>
+
+                                            <div className="flex items-center gap-2.5 text-xs font-serif-title flex-wrap">
+                                                <span className="flex items-center gap-1 text-gray-600 font-sans font-medium text-[11px] sm:text-xs">
+                                                    <Calendar size={13} className="text-brand-cerulean" />
+                                                    <span>{log.date}</span>
+                                                </span>
 
                                                 {(log.instructor || mod?.instructor) && (
-                                                    <span className="flex items-center gap-1 text-brand-cerulean font-serif-title font-bold bg-brand-cerulean/5 px-2 py-0.5 border border-brand-cerulean/20">
-                                                        <GraduationCap size={13} className="text-brand-cerulean" />
+                                                    <span className="flex items-center gap-1 text-brand-cerulean font-serif-title font-bold bg-brand-cerulean/5 px-2 py-0.5 border border-brand-cerulean/20 text-[11px] rounded-2xs">
+                                                        <GraduationCap size={12} className="text-brand-cerulean" />
                                                         <span>GV: {log.instructor || mod?.instructor}</span>
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
 
-                                        {/* LESSON TITLE */}
-                                        <div>
+                                        {/* LESSON TITLE & PREVIEW */}
+                                        <div className="space-y-1">
                                             <h3
                                                 onClick={() => setViewingLog(log)}
-                                                className="text-2xl sm:text-3xl font-serif-title text-brand-cerulean font-bold hover:text-brand-jasper transition-colors cursor-pointer leading-tight flex items-start justify-between gap-4 group"
+                                                className="text-base sm:text-lg font-serif-title text-brand-cerulean font-bold hover:text-brand-jasper transition-colors cursor-pointer leading-snug flex items-center justify-between gap-3 group"
                                             >
-                                                <span>{log.title}</span>
-                                                <span className="text-xs font-sans text-gray-400 font-normal group-hover:text-brand-jasper flex items-center gap-1 shrink-0 pt-1">
-                                                    <Eye size={14} /> Xem chuẩn Cornell
+                                                <span className="line-clamp-1">{log.title}</span>
+                                                <span className="text-[11px] font-sans text-brand-cerulean/70 font-normal group-hover:text-brand-jasper flex items-center gap-1 shrink-0 opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                    <Eye size={13} /> Đọc Cornell đầy đủ
                                                 </span>
                                             </h3>
-                                        </div>
 
-                                        {/* CORNELL 2-COLUMN SHEET BODY */}
-                                        <div className="border border-brand-cerulean/25 rounded-xs overflow-hidden shadow-xs">
-                                            {Array.isArray(log.sections) && log.sections.length > 0 ? (
-                                                <div className="divide-y divide-brand-cerulean/20">
-                                                    {log.sections.map((sec, sIdx) => (
-                                                        <div key={sec.id || sIdx}>
-                                                            {/* Section Header if title exists or multiple sections */}
-                                                            {(sec.title || log.sections.length > 1) && (
-                                                                <div className="bg-brand-cream/60 px-4 py-1.5 border-b border-brand-cerulean/15 flex items-center gap-2">
-                                                                    <span className="px-2 py-0.2 bg-brand-cerulean text-white font-serif-title font-bold text-[10px] uppercase rounded-xs">
-                                                                        Mục {sIdx + 1}
-                                                                    </span>
-                                                                    {sec.title && (
-                                                                        <span className="text-xs font-serif-title font-bold text-brand-cerulean truncate">
-                                                                            {sec.title}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                            {/* PARTS LIST IN CARD VIEW */}
-                                                            {(() => {
-                                                                const secParts = getSectionItems(sec);
-                                                                return (
-                                                                    <div className="divide-y divide-brand-cerulean/20">
-                                                                        {secParts.map((part, pIdx) => (
-                                                                            <div key={part.id || pIdx}>
-                                                                                {secParts.length > 1 && (
-                                                                                    <div className="bg-brand-cream/40 px-3.5 py-1 border-b border-brand-cerulean/15 flex items-center gap-2">
-                                                                                        <span className="text-[10px] font-serif-title font-bold text-brand-cerulean uppercase px-1.5 py-0.2 bg-white border border-brand-cerulean/20 rounded-2xs">
-                                                                                            Phần {pIdx + 1}
-                                                                                        </span>
-                                                                                        <span className="text-[11px] font-sans text-gray-600 italic">
-                                                                                            Từ khóa & Nội dung riêng
-                                                                                        </span>
-                                                                                    </div>
-                                                                                )}
-                                                                                <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-brand-cerulean/20">
-                                                                                    {/* CUES / KEYWORDS */}
-                                                                                    <div className="md:col-span-4 p-3.5 bg-brand-cream/35 space-y-1.5 flex flex-col">
-                                                                                        <div className="flex items-center gap-1.5 text-xs font-serif-title font-bold text-brand-jasper uppercase tracking-wider pb-1 border-b border-brand-cerulean/20 shrink-0">
-                                                                                            <Lightbulb size={13} />
-                                                                                            <span>Cues & Từ khóa {secParts.length > 1 ? `(Phần ${pIdx + 1})` : `(Mục ${sIdx + 1})`}</span>
-                                                                                        </div>
-                                                                                        <div className="max-h-56 sm:max-h-72 overflow-y-auto pr-1">
-                                                                                            {part.cues ? (
-                                                                                                <div className="text-xs sm:text-sm font-body text-gray-700 leading-relaxed whitespace-pre-line">
-                                                                                                    {part.cues}
-                                                                                                </div>
-                                                                                            ) : (
-                                                                                                <div className="text-xs text-gray-400 italic">
-                                                                                                    Chưa ghi từ khóa gợi nhớ.
-                                                                                                </div>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    </div>
-
-                                                                                    {/* NOTES / CONTENT */}
-                                                                                    <div className="md:col-span-8 p-3.5 bg-white space-y-1.5 flex flex-col">
-                                                                                        <div className="flex items-center gap-1.5 text-xs font-serif-title font-bold text-brand-cerulean uppercase tracking-wider pb-1 border-b border-brand-cerulean/20 shrink-0">
-                                                                                            <FileText size={13} />
-                                                                                            <span>Notes / Ghi chép chi tiết {secParts.length > 1 ? `(Phần ${pIdx + 1})` : ''}</span>
-                                                                                        </div>
-                                                                                        <div className="text-gray-800 font-body text-sm sm:text-base leading-relaxed max-h-56 sm:max-h-72 overflow-y-auto editor-scrollbar pr-2">
-                                                                                            {part.note ? (
-                                                                                                /<[a-z][\s\S]*>/i.test(part.note) ? (
-                                                                                                    <div className="word-content" dangerouslySetInnerHTML={{ __html: part.note }} />
-                                                                                                ) : (
-                                                                                                    <div className="whitespace-pre-line">{part.note}</div>
-                                                                                                )
-                                                                                            ) : (
-                                                                                                <span className="text-gray-400 italic">Chưa có nội dung ghi chép cho phần này.</span>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                );
-                                                            })()}
-
-                                                            {/* PHẦN KẾT LUẬN CỦA MỤC TRONG THẺ */}
-                                                            {sec.conclusion && (
-                                                                <div className="p-3 bg-amber-50/70 border-t border-brand-cerulean/20 flex items-start gap-2 text-xs sm:text-sm">
-                                                                    <Sparkles size={14} className="text-brand-jasper shrink-0 mt-0.5" />
-                                                                    <div className="space-y-0.5 flex-1">
-                                                                        <span className="font-serif-title font-bold text-brand-cerulean block uppercase text-[10px] tracking-wider">
-                                                                            Kết luận Mục {sIdx + 1}:
-                                                                        </span>
-                                                                        <p className="text-gray-800 font-body leading-relaxed italic">
-                                                                            "{sec.conclusion}"
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-brand-cerulean/20">
-                                                    {/* CUES / KEYWORDS / REVIEW QUESTIONS COLUMN (~35% or 4/12 cols) */}
-                                                    <div className="md:col-span-4 p-4 bg-brand-cream/35 space-y-2 flex flex-col">
-                                                        <div className="flex items-center gap-1.5 text-xs font-serif-title font-bold text-brand-jasper uppercase tracking-wider pb-1 border-b border-brand-cerulean/20 shrink-0">
-                                                            <Lightbulb size={14} />
-                                                            <span>Cues & Câu hỏi gợi nhớ</span>
-                                                        </div>
-
-                                                        <div className="max-h-64 sm:max-h-80 overflow-y-auto pr-1">
-                                                            {log.cues ? (
-                                                                <div className="text-xs sm:text-sm font-body text-gray-700 leading-relaxed whitespace-pre-line">
-                                                                    {log.cues}
-                                                                </div>
-                                                            ) : keyItems.length > 0 || log.questions ? (
-                                                                <div className="space-y-2">
-                                                                    {keyItems.length > 0 && (
-                                                                        <div className="flex flex-wrap gap-1.5 pt-1">
-                                                                            {keyItems.map((k, idx) => (
-                                                                                <span key={idx} className="px-2 py-0.5 bg-white border border-brand-cerulean/30 text-[11px] font-serif-title text-brand-cerulean font-medium rounded-xs">
-                                                                                    #{k}
-                                                                                </span>
-                                                                            ))}
-                                                                        </div>
-                                                                    )}
-                                                                    {log.questions && (
-                                                                        <div className="text-xs text-gray-600 italic bg-white/70 p-2 border border-brand-cerulean/15 rounded-xs">
-                                                                            <strong>Thắc mắc:</strong> {log.questions}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            ) : (
-                                                                <div className="text-xs text-gray-400 italic">
-                                                                    Chưa ghi chú từ khóa gợi nhớ.
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* NOTES / DETAILED LECTURE CONTENT (~65% or 8/12 cols) */}
-                                                    <div className="md:col-span-8 p-4 bg-white space-y-2 flex flex-col">
-                                                        <div className="flex items-center gap-1.5 text-xs font-serif-title font-bold text-brand-cerulean uppercase tracking-wider pb-1 border-b border-brand-cerulean/20 shrink-0">
-                                                            <FileText size={14} />
-                                                            <span>Notes / Ghi chép chi tiết</span>
-                                                        </div>
-                                                        <div className="text-gray-800 font-body text-base leading-relaxed max-h-64 sm:max-h-80 overflow-y-auto editor-scrollbar pr-2">
-                                                            {log.content ? (
-                                                                /<[a-z][\s\S]*>/i.test(log.content) ? (
-                                                                    <div className="word-content" dangerouslySetInnerHTML={{ __html: log.content }} />
-                                                                ) : (
-                                                                    <div className="whitespace-pre-line">{log.content}</div>
-                                                                )
-                                                            ) : (
-                                                                <span className="text-gray-400 italic">Chưa có nội dung ghi chép chi tiết.</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* BOTTOM CORNELL SUMMARY ROW */}
-                                            {log.summary && (
-                                                <div className="p-3.5 bg-amber-50/50 border-t border-brand-cerulean/20 flex items-start gap-2.5 text-xs sm:text-sm">
-                                                    <Sparkles size={16} className="text-brand-jasper shrink-0 mt-0.5" />
-                                                    <div className="space-y-0.5">
-                                                        <span className="font-serif-title font-bold text-brand-cerulean block uppercase text-[11px] tracking-wider">
-                                                            Summary / Tóm tắt cốt lõi bài học:
+                                            {/* Summary snippet preview if present */}
+                                            {log.summary ? (
+                                                <p className="text-xs text-gray-700 bg-amber-50/60 border-l-2 border-brand-jasper/70 pl-2.5 py-1 italic rounded-r line-clamp-2 font-body">
+                                                    "{log.summary}"
+                                                </p>
+                                            ) : keyItems.length > 0 ? (
+                                                <div className="flex flex-wrap gap-1 pt-0.5">
+                                                    {keyItems.slice(0, 5).map((k, idx) => (
+                                                        <span key={idx} className="px-1.5 py-0.2 bg-stone-100 text-gray-600 text-[10px] font-mono rounded">
+                                                            #{k}
                                                         </span>
-                                                        <p className="font-body text-gray-800 leading-relaxed italic">
-                                                            {log.summary}
-                                                        </p>
-                                                    </div>
+                                                    ))}
+                                                    {keyItems.length > 5 && (
+                                                        <span className="text-[10px] text-gray-400 self-center">+{keyItems.length - 5}</span>
+                                                    )}
                                                 </div>
-                                            )}
+                                            ) : null}
                                         </div>
 
-                                        {/* HOMEWORK & ACTION ITEMS (INTERACTIVE CHECKLIST) */}
-                                        {homeworkItems.length > 0 && (
-                                            <div className="p-4 bg-amber-50/50 border border-amber-200/80 rounded-sm space-y-2.5">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-serif-title font-bold text-amber-900 flex items-center gap-1.5 uppercase tracking-wider">
-                                                        <ListChecks size={15} className="text-brand-jasper" />
-                                                        <span>Dặn dò & Việc cần làm trước buổi sau ({completedTasks.length}/{homeworkItems.length} hoàn thành)</span>
-                                                    </span>
-                                                </div>
-                                                <div className="space-y-1.5">
-                                                    {homeworkItems.map((hw, idx) => {
-                                                        const isDone = completedTasks.includes(idx);
-                                                        return (
-                                                            <div
-                                                                key={idx}
-                                                                onClick={() => handleToggleHomeworkTask(log, idx)}
-                                                                className="flex items-start gap-2.5 text-sm cursor-pointer select-none group/item py-0.5"
-                                                            >
-                                                                <button
-                                                                    type="button"
-                                                                    className="mt-0.5 text-gray-500 hover:text-brand-jasper transition-colors"
-                                                                >
-                                                                    {isDone ? (
-                                                                        <CheckSquare size={16} className="text-brand-cerulean" />
-                                                                    ) : (
-                                                                        <Square size={16} className="text-gray-400 group-hover/item:text-brand-jasper" />
-                                                                    )}
-                                                                </button>
-                                                                <span className={`font-sans leading-snug ${
-                                                                    isDone ? 'line-through text-gray-400 italic' : 'text-gray-800'
-                                                                }`}>
-                                                                    {hw}
-                                                                </span>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        )}
+                                        {/* METADATA CHIPS & QUICK ACTIONS */}
+                                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+                                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                                {/* Count of Cornell sections */}
+                                                <span className="inline-flex items-center gap-1 text-[11px] font-serif-title font-semibold text-brand-cerulean bg-brand-cream/80 px-2 py-0.5 border border-brand-cerulean/20 rounded-2xs">
+                                                    <FileText size={11} className="text-brand-jasper" />
+                                                    <span>{Array.isArray(log.sections) && log.sections.length > 0 ? `${log.sections.length} mục Cornell` : 'Ghi chép chuẩn'}</span>
+                                                </span>
 
-                                        {/* ATTACHMENTS / SLIDE LINK */}
-                                        {log.attachments && (
-                                            <div className="pt-2 flex items-center gap-2">
-                                                <span className="text-xs text-gray-500 font-serif-title font-semibold">Tài liệu buổi học:</span>
-                                                <a
-                                                    href={log.attachments}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="inline-flex items-center gap-1 text-xs font-serif-title font-bold text-brand-jasper hover:underline bg-brand-cream px-2.5 py-1 border border-brand-jasper/30"
-                                                >
-                                                    <ExternalLink size={13} /> Mở Slide / Tài liệu liên kết
-                                                </a>
-                                            </div>
-                                        )}
-
-                                        {/* FOOTER ACTIONS */}
-                                        <div className="pt-4 border-t border-brand-cerulean/15 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                            <div className="text-xs font-sans text-gray-400">
-                                                {log.eventId ? (
-                                                    <span className="flex items-center gap-1 text-brand-cerulean/80">
-                                                        <CheckCircle2 size={12} className="text-emerald-600" /> Đã đồng bộ với Lịch biểu
+                                                {/* Homework checklist progress */}
+                                                {homeworkItems.length > 0 && (
+                                                    <span className={`inline-flex items-center gap-1 text-[11px] font-serif-title font-bold px-2 py-0.5 rounded-2xs border ${
+                                                        completedTasks.length === homeworkItems.length
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                                            : 'bg-amber-50 text-amber-800 border-amber-300'
+                                                    }`}>
+                                                        <ListChecks size={11} />
+                                                        <span>{completedTasks.length}/{homeworkItems.length} việc cần làm</span>
                                                     </span>
-                                                ) : (
-                                                    <span>Ghi chép độc lập</span>
+                                                )}
+
+                                                {/* Attachments link */}
+                                                {log.attachments && (
+                                                    <a
+                                                        href={log.attachments}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="inline-flex items-center gap-1 text-[11px] font-serif-title font-bold text-brand-jasper hover:underline bg-brand-cream px-2 py-0.5 border border-brand-jasper/30 rounded-2xs"
+                                                    >
+                                                        <ExternalLink size={10} /> Slide / Link
+                                                    </a>
+                                                )}
+
+                                                {log.eventId && (
+                                                    <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-2xs border border-emerald-200">
+                                                        <CheckCircle2 size={11} /> TKB
+                                                    </span>
                                                 )}
                                             </div>
 
-                                            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                            {/* Action buttons */}
+                                            <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleExpandLog(log.id)}
+                                                    className={`px-2 py-1 text-xs font-serif-title font-bold border rounded-2xs transition-all flex items-center gap-1 ${
+                                                        isExpanded
+                                                            ? 'bg-brand-cerulean text-white border-brand-cerulean'
+                                                            : 'text-brand-cerulean hover:text-brand-jasper hover:bg-brand-cream border-brand-cerulean/25'
+                                                    }`}
+                                                    title={isExpanded ? "Thu gọn chi tiết bài ghi" : "Xem nhanh nội dung Cornell"}
+                                                >
+                                                    <ChevronDown size={13} className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                                                    <span>{isExpanded ? 'Thu gọn' : 'Xem nhanh'}</span>
+                                                </button>
+
                                                 <button
                                                     type="button"
                                                     onClick={() => setViewingLog(log)}
-                                                    className="px-3 py-1.5 text-xs font-serif-title font-bold text-brand-cerulean border border-brand-cerulean/30 hover:bg-brand-cerulean hover:text-white transition-all flex items-center gap-1"
+                                                    className="px-2.5 py-1 text-xs font-serif-title font-bold text-white bg-brand-cerulean hover:bg-brand-jasper rounded-2xs transition-all flex items-center gap-1 shadow-2xs"
+                                                    title="Mở cửa sổ đọc Cornell đầy đủ"
                                                 >
-                                                    <BookOpen size={13} /> Đọc Cornell
+                                                    <BookOpen size={12} />
+                                                    <span className="hidden xs:inline">Đọc Cornell</span>
                                                 </button>
 
                                                 <button
                                                     type="button"
                                                     onClick={() => handleOpenEditLog(log)}
-                                                    className="px-3 py-1.5 text-xs font-serif-title font-bold text-brand-cerulean bg-brand-cream border border-brand-cerulean/30 hover:bg-brand-cerulean hover:text-white transition-all flex items-center gap-1"
+                                                    className="px-2 py-1 text-xs font-serif-title font-bold text-brand-cerulean bg-brand-cream border border-brand-cerulean/30 hover:bg-brand-cerulean hover:text-white rounded-2xs transition-all flex items-center gap-1"
+                                                    title="Chỉnh sửa bài ghi chép"
                                                 >
-                                                    <Pencil size={13} /> Sửa
+                                                    <Pencil size={11} />
+                                                    <span className="hidden sm:inline">Sửa</span>
                                                 </button>
 
                                                 <button
@@ -2462,12 +2346,227 @@ export const ResourcesStudyLogView = ({
                                                             onDeleteStudyLog(log.id);
                                                         }
                                                     }}
-                                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                    className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                                     title="Xóa bài ghi chép"
                                                 >
-                                                    <Trash2 size={15} />
+                                                    <Trash2 size={13} />
                                                 </button>
                                             </div>
+                                        </div>
+
+                                        {/* INLINE CORNELL DETAIL (EXPANDABLE) */}
+                                        <div className={`pt-2.5 border-t border-brand-cerulean/15 space-y-2.5 ${isExpanded ? 'block animate-fade-in' : 'hidden'}`}>
+                                            {/* CORNELL 2-COLUMN SHEET BODY */}
+                                            <div className="border border-brand-cerulean/25 rounded-xs overflow-hidden shadow-xs">
+                                                {Array.isArray(log.sections) && log.sections.length > 0 ? (
+                                                    <div className="divide-y divide-brand-cerulean/20">
+                                                        {log.sections.map((sec, sIdx) => (
+                                                            <div key={sec.id || sIdx}>
+                                                                {/* Section Header if title exists or multiple sections */}
+                                                                {(sec.title || log.sections.length > 1) && (
+                                                                    <div className="bg-brand-cream/60 px-3 py-1 border-b border-brand-cerulean/15 flex items-center gap-2">
+                                                                        <span className="px-1.5 py-0.2 bg-brand-cerulean text-white font-serif-title font-bold text-[10px] uppercase rounded-xs">
+                                                                            Mục {sIdx + 1}
+                                                                        </span>
+                                                                        {sec.title && (
+                                                                            <span className="text-xs font-serif-title font-bold text-brand-cerulean truncate">
+                                                                                {sec.title}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                                {/* PARTS LIST IN CARD VIEW */}
+                                                                {(() => {
+                                                                    const secParts = getSectionItems(sec);
+                                                                    return (
+                                                                        <div className="divide-y divide-brand-cerulean/20">
+                                                                            {secParts.map((part, pIdx) => (
+                                                                                <div key={part.id || pIdx}>
+                                                                                    {secParts.length > 1 && (
+                                                                                        <div className="bg-brand-cream/40 px-3 py-0.5 border-b border-brand-cerulean/15 flex items-center gap-2">
+                                                                                            <span className="text-[10px] font-serif-title font-bold text-brand-cerulean uppercase px-1.5 py-0.2 bg-white border border-brand-cerulean/20 rounded-2xs">
+                                                                                                Phần {pIdx + 1}
+                                                                                            </span>
+                                                                                            <span className="text-[10px] font-sans text-gray-600 italic">
+                                                                                                Từ khóa &amp; Nội dung riêng
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    )}
+                                                                                    <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-brand-cerulean/20">
+                                                                                        {/* CUES / KEYWORDS */}
+                                                                                        <div className="md:col-span-4 p-2.5 bg-brand-cream/35 space-y-1 flex flex-col">
+                                                                                            <div className="flex items-center gap-1.5 text-[11px] font-serif-title font-bold text-brand-jasper uppercase tracking-wider pb-0.5 border-b border-brand-cerulean/20 shrink-0">
+                                                                                                <Lightbulb size={12} />
+                                                                                                <span>Cues &amp; Từ khóa {secParts.length > 1 ? `(Phần ${pIdx + 1})` : `(Mục ${sIdx + 1})`}</span>
+                                                                                            </div>
+                                                                                            <div className="max-h-40 overflow-y-auto pr-1">
+                                                                                                {part.cues ? (
+                                                                                                    <div className="text-xs font-body text-gray-700 leading-relaxed whitespace-pre-line">
+                                                                                                        {part.cues}
+                                                                                                    </div>
+                                                                                                ) : (
+                                                                                                    <div className="text-[11px] text-gray-400 italic">
+                                                                                                        Chưa ghi từ khóa gợi nhớ.
+                                                                                                    </div>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </div>
+
+                                                                                        {/* NOTES / CONTENT */}
+                                                                                        <div className="md:col-span-8 p-2.5 bg-white space-y-1 flex flex-col">
+                                                                                            <div className="flex items-center gap-1.5 text-[11px] font-serif-title font-bold text-brand-cerulean uppercase tracking-wider pb-0.5 border-b border-brand-cerulean/20 shrink-0">
+                                                                                                <FileText size={12} />
+                                                                                                <span>Notes / Ghi chép chi tiết {secParts.length > 1 ? `(Phần ${pIdx + 1})` : ''}</span>
+                                                                                            </div>
+                                                                                            <div className="text-gray-800 font-body text-xs sm:text-sm leading-relaxed max-h-40 overflow-y-auto editor-scrollbar pr-1.5">
+                                                                                                {part.note ? (
+                                                                                                    /<[a-z][\s\S]*>/i.test(part.note) ? (
+                                                                                                        <div className="word-content" dangerouslySetInnerHTML={{ __html: part.note }} />
+                                                                                                    ) : (
+                                                                                                        <div className="whitespace-pre-line">{part.note}</div>
+                                                                                                    )
+                                                                                                ) : (
+                                                                                                    <span className="text-gray-400 italic">Chưa có nội dung ghi chép cho phần này.</span>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    );
+                                                                })()}
+
+                                                                {/* PHẦN KẾT LUẬN CỦA MỤC TRONG THẺ */}
+                                                                {sec.conclusion && (
+                                                                    <div className="p-2.5 bg-amber-50/70 border-t border-brand-cerulean/20 flex items-start gap-2 text-xs">
+                                                                        <Sparkles size={13} className="text-brand-jasper shrink-0 mt-0.5" />
+                                                                        <div className="space-y-0.5 flex-1">
+                                                                            <span className="font-serif-title font-bold text-brand-cerulean block uppercase text-[10px] tracking-wider">
+                                                                                Kết luận Mục {sIdx + 1}:
+                                                                            </span>
+                                                                            <p className="text-gray-800 font-body leading-relaxed italic">
+                                                                                "{sec.conclusion}"
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-brand-cerulean/20">
+                                                        {/* CUES / KEYWORDS */}
+                                                        <div className="md:col-span-4 p-2.5 bg-brand-cream/35 space-y-1 flex flex-col">
+                                                            <div className="flex items-center gap-1.5 text-[11px] font-serif-title font-bold text-brand-jasper uppercase tracking-wider pb-0.5 border-b border-brand-cerulean/20 shrink-0">
+                                                                <Lightbulb size={12} />
+                                                                <span>Cues &amp; Câu hỏi gợi nhớ</span>
+                                                            </div>
+
+                                                            <div className="max-h-40 overflow-y-auto pr-1">
+                                                                {log.cues ? (
+                                                                    <div className="text-xs font-body text-gray-700 leading-relaxed whitespace-pre-line">
+                                                                        {log.cues}
+                                                                    </div>
+                                                                ) : keyItems.length > 0 || log.questions ? (
+                                                                    <div className="space-y-1.5">
+                                                                        {keyItems.length > 0 && (
+                                                                            <div className="flex flex-wrap gap-1 pt-0.5">
+                                                                                {keyItems.map((k, idx) => (
+                                                                                    <span key={idx} className="px-1.5 py-0.2 bg-white border border-brand-cerulean/30 text-[10px] font-serif-title text-brand-cerulean font-medium rounded-xs">
+                                                                                        #{k}
+                                                                                    </span>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                        {log.questions && (
+                                                                            <div className="text-xs text-gray-600 italic bg-white/70 p-1.5 border border-brand-cerulean/15 rounded-xs">
+                                                                                <strong>Thắc mắc:</strong> {log.questions}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="text-xs text-gray-400 italic">
+                                                                        Chưa ghi chú từ khóa gợi nhớ.
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* NOTES */}
+                                                        <div className="md:col-span-8 p-2.5 bg-white space-y-1 flex flex-col">
+                                                            <div className="flex items-center gap-1.5 text-[11px] font-serif-title font-bold text-brand-cerulean uppercase tracking-wider pb-0.5 border-b border-brand-cerulean/20 shrink-0">
+                                                                <FileText size={12} />
+                                                                <span>Notes / Ghi chép chi tiết</span>
+                                                            </div>
+                                                            <div className="text-gray-800 font-body text-xs sm:text-sm leading-relaxed max-h-40 overflow-y-auto editor-scrollbar pr-1.5">
+                                                                {log.content ? (
+                                                                    /<[a-z][\s\S]*>/i.test(log.content) ? (
+                                                                        <div className="word-content" dangerouslySetInnerHTML={{ __html: log.content }} />
+                                                                    ) : (
+                                                                        <div className="whitespace-pre-line">{log.content}</div>
+                                                                    )
+                                                                ) : (
+                                                                    <span className="text-gray-400 italic">Chưa có nội dung ghi chép chi tiết.</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* BOTTOM CORNELL SUMMARY ROW */}
+                                                {log.summary && (
+                                                    <div className="p-2.5 bg-amber-50/50 border-t border-brand-cerulean/20 flex items-start gap-2 text-xs">
+                                                        <Sparkles size={14} className="text-brand-jasper shrink-0 mt-0.5" />
+                                                        <div className="space-y-0.5">
+                                                            <span className="font-serif-title font-bold text-brand-cerulean block uppercase text-[10px] tracking-wider">
+                                                                Summary / Tóm tắt cốt lõi bài học:
+                                                            </span>
+                                                            <p className="font-body text-gray-800 leading-relaxed italic">
+                                                                {log.summary}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* HOMEWORK & ACTION ITEMS */}
+                                            {homeworkItems.length > 0 && (
+                                                <div className="p-3 bg-amber-50/50 border border-amber-200/80 rounded-xs space-y-1.5">
+                                                    <span className="text-xs font-serif-title font-bold text-amber-900 flex items-center gap-1.5 uppercase tracking-wider">
+                                                        <ListChecks size={13} className="text-brand-jasper" />
+                                                        <span>Dặn dò &amp; Việc cần làm ({completedTasks.length}/{homeworkItems.length} hoàn thành)</span>
+                                                    </span>
+                                                    <div className="space-y-1">
+                                                        {homeworkItems.map((hw, idx) => {
+                                                            const isDone = completedTasks.includes(idx);
+                                                            return (
+                                                                <div
+                                                                    key={idx}
+                                                                    onClick={() => handleToggleHomeworkTask(log, idx)}
+                                                                    className="flex items-start gap-2 text-xs cursor-pointer select-none group/item py-0.5"
+                                                                >
+                                                                    <button
+                                                                        type="button"
+                                                                        className="mt-0.5 text-gray-500 hover:text-brand-jasper transition-colors"
+                                                                    >
+                                                                        {isDone ? (
+                                                                            <CheckSquare size={14} className="text-brand-cerulean" />
+                                                                        ) : (
+                                                                            <Square size={14} className="text-gray-400 group-hover/item:text-brand-jasper" />
+                                                                        )}
+                                                                    </button>
+                                                                    <span className={`font-sans leading-snug ${
+                                                                        isDone ? 'line-through text-gray-400 italic' : 'text-gray-800'
+                                                                    }`}>
+                                                                        {hw}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </article>
