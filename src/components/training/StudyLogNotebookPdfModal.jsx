@@ -140,11 +140,11 @@ export const StudyLogNotebookPdfModal = ({
         >
             {/* INJECT A4 PRINT STYLE RULES */}
             <style>{`
+                @page {
+                    size: A4 portrait;
+                    margin: 10mm 12mm 12mm 12mm;
+                }
                 @media print {
-                    @page {
-                        size: A4 portrait;
-                        margin: 10mm 12mm 12mm 12mm;
-                    }
                     body {
                         background: white !important;
                         color: black !important;
@@ -166,17 +166,20 @@ export const StudyLogNotebookPdfModal = ({
                         border: none !important;
                         box-shadow: none !important;
                         background: white !important;
+                        min-height: auto !important;
                     }
                     .notebook-break-before {
                         page-break-before: always !important;
                         break-before: page !important;
                     }
                     .notebook-ruled-bg {
-                        background-image: repeating-linear-gradient(transparent, transparent 27px, #cbd5e1 28px) !important;
+                        background-color: #ffffff !important;
+                        background-image: repeating-linear-gradient(#ffffff, #ffffff 27px, #cbd5e1 28px) !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
                     .notebook-grid-bg {
+                        background-color: #ffffff !important;
                         background-size: 20px 20px !important;
                         background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px) !important;
                         -webkit-print-color-adjust: exact !important;
@@ -191,7 +194,7 @@ export const StudyLogNotebookPdfModal = ({
             `}</style>
 
             {/* TOP CONTROLS & TOOLBAR */}
-            <div className="w-full max-w-4xl bg-white border border-stone-300 shadow-xl rounded-t-sm px-4 py-3 sticky top-2 z-40 print:hidden flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="w-full max-w-4xl bg-white border border-stone-300 shadow-xl rounded-md px-4 py-3 sticky top-2 z-50 print:hidden flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-2">
                 <div className="flex items-center gap-2.5 min-w-0">
                     <span className="p-1.5 bg-amber-50 text-brand-jasper border border-amber-200 rounded shrink-0">
                         <BookOpen size={18} />
@@ -258,7 +261,7 @@ export const StudyLogNotebookPdfModal = ({
             </div>
 
             {/* CUSTOMIZATION OPTIONS BAR */}
-            <div className="w-full max-w-4xl bg-stone-50 border-x border-b border-stone-300 px-4 py-2 print:hidden flex flex-wrap items-center justify-between gap-2.5 text-xs text-stone-700">
+            <div className="w-full max-w-4xl bg-stone-50 border border-stone-300 rounded-md px-4 py-2 print:hidden flex flex-wrap items-center justify-between gap-2.5 text-xs text-stone-700 mb-4 shadow-2xs">
                 <div className="flex items-center gap-4 flex-wrap">
                     <label className="flex items-center gap-1.5 cursor-pointer select-none">
                         <input
@@ -303,7 +306,7 @@ export const StudyLogNotebookPdfModal = ({
 
             {/* EDIT STUDENT INFO DRAWER (OPTIONAL) */}
             {isEditingInfo && (
-                <div className="w-full max-w-4xl bg-amber-50 border-x border-b border-amber-300 p-3.5 print:hidden space-y-2.5 text-xs animate-fade-in-down">
+                <div className="w-full max-w-4xl bg-amber-50 border border-amber-300 rounded-md p-3.5 print:hidden space-y-2.5 text-xs animate-fade-in-down mb-4 shadow-2xs">
                     <div className="flex items-center justify-between font-serif-title font-bold text-amber-900">
                         <span>Thông tin hiển thị trên Nhãn Vở tập học sinh:</span>
                         <button
@@ -360,99 +363,106 @@ export const StudyLogNotebookPdfModal = ({
             {/* ========================================================================= */}
             <div
                 id="study-log-notebook-document"
-                className="w-full max-w-4xl bg-white shadow-2xl rounded-b-sm p-6 sm:p-10 md:p-12 space-y-12 font-serif text-gray-900 leading-relaxed notebook-page-sheet"
-                style={{ minHeight: '297mm' }}
+                className="w-full max-w-4xl space-y-8 print:space-y-0"
             >
-                {/* 1. TRANG BÌA TẬP GHI BÀI HỌC SINH (COVER PAGE) */}
+                {/* 1. TRANG BÌA TẬP GHI BÀI HỌC SINH (COVER PAGE SHEET) */}
                 {includeCover && (
-                    <div className="border-4 border-double border-stone-800 p-8 sm:p-12 min-h-[250mm] flex flex-col justify-between items-center text-center relative bg-[#faf8f5] shadow-xs">
-                        {/* School & Department Header */}
-                        <div className="space-y-1.5 w-full border-b-2 border-stone-700 pb-5">
-                            <p className="text-xs sm:text-sm uppercase tracking-widest font-bold text-stone-700">
-                                BỘ GIÁO DỤC VÀ ĐÀO TẠO
-                            </p>
-                            <h2 className="text-base sm:text-xl font-bold uppercase tracking-wider text-brand-cerulean">
-                                TRƯỜNG ĐẠI HỌC SƯ PHẠM THÀNH PHỐ HỒ CHÍ MINH
-                            </h2>
-                            <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-brand-jasper">
-                                {currentProgram.name || 'CHƯƠNG TRÌNH ĐÀO TẠO NGHIỆP VỤ SƯ PHẠM'}
-                            </p>
-                        </div>
+                    <div
+                        className="notebook-page-sheet w-full bg-white text-gray-900 border border-stone-300 shadow-2xl rounded-sm p-6 sm:p-10 md:p-12 relative font-serif"
+                        style={{ backgroundColor: '#ffffff', minHeight: '270mm' }}
+                    >
+                        <div className="border-4 border-double border-stone-800 p-8 sm:p-12 min-h-[245mm] flex flex-col justify-between items-center text-center relative bg-[#faf8f5] shadow-xs">
+                            {/* School & Department Header */}
+                            <div className="space-y-1.5 w-full border-b-2 border-stone-700 pb-5">
+                                <p className="text-xs sm:text-sm uppercase tracking-widest font-bold text-stone-700">
+                                    BỘ GIÁO DỤC VÀ ĐÀO TẠO
+                                </p>
+                                <h2 className="text-base sm:text-xl font-bold uppercase tracking-wider text-brand-cerulean">
+                                    TRƯỜNG ĐẠI HỌC SƯ PHẠM THÀNH PHỐ HỒ CHÍ MINH
+                                </h2>
+                                <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-brand-jasper">
+                                    {currentProgram.name || 'CHƯƠNG TRÌNH ĐÀO TẠO NGHIỆP VỤ SƯ PHẠM'}
+                                </p>
+                            </div>
 
-                        {/* CENTER ICONIC STUDENT NOTEBOOK LABEL (NHÃN VỞ HỌC SINH) */}
-                        <div className="my-8 w-full max-w-lg bg-white border-2 border-stone-800 p-6 sm:p-8 rounded shadow-md relative">
-                            {/* Decorative corner staples */}
-                            <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-stone-500"></div>
-                            <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-stone-500"></div>
-                            <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-stone-500"></div>
-                            <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-stone-500"></div>
+                            {/* CENTER ICONIC STUDENT NOTEBOOK LABEL (NHÃN VỞ HỌC SINH) */}
+                            <div className="my-8 w-full max-w-lg bg-white border-2 border-stone-800 p-6 sm:p-8 rounded shadow-md relative">
+                                {/* Decorative corner staples */}
+                                <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-stone-500"></div>
+                                <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-stone-500"></div>
+                                <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-stone-500"></div>
+                                <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-stone-500"></div>
 
-                            <div className="space-y-3">
-                                <div className="border-b border-stone-300 pb-2">
-                                    <span className="text-[11px] font-sans uppercase tracking-widest font-bold text-stone-500 block">
-                                        VỞ GHI BÀI HỌC VIÊN
-                                    </span>
-                                    <h1 className="text-xl sm:text-2xl font-bold text-brand-cerulean uppercase mt-1">
-                                        TẬP BÀI GHI HỌC PHẦN
-                                    </h1>
-                                </div>
+                                <div className="space-y-3">
+                                    <div className="border-b border-stone-300 pb-2">
+                                        <span className="text-[11px] font-sans uppercase tracking-widest font-bold text-stone-500 block">
+                                            VỞ GHI BÀI HỌC VIÊN
+                                        </span>
+                                        <h1 className="text-xl sm:text-2xl font-bold text-brand-cerulean uppercase mt-1">
+                                            TẬP BÀI GHI HỌC PHẦN
+                                        </h1>
+                                    </div>
 
-                                <div className="text-left space-y-2.5 text-sm pt-2">
-                                    <div className="flex items-baseline justify-between border-b border-dotted border-stone-400 pb-1">
-                                        <span className="text-stone-600 font-bold shrink-0">Học phần:</span>
-                                        <span className="font-bold text-brand-cerulean text-right truncate pl-2">
-                                            {currentModule.name ? `${currentModule.code || 'HP'} - ${currentModule.name}` : 'Nghiệp vụ sư phạm'}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-baseline justify-between border-b border-dotted border-stone-400 pb-1">
-                                        <span className="text-stone-600 font-bold shrink-0">Giảng viên:</span>
-                                        <span className="font-semibold text-gray-900 text-right truncate pl-2">
-                                            {studentInfo.instructor || 'Tập thể Giảng viên'}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-baseline justify-between border-b border-dotted border-stone-400 pb-1">
-                                        <span className="text-stone-600 font-bold shrink-0">Họ và tên học viên:</span>
-                                        <span className="font-bold text-brand-jasper text-right truncate pl-2">
-                                            {studentInfo.studentName}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-baseline justify-between border-b border-dotted border-stone-400 pb-1">
-                                        <span className="text-stone-600 font-bold shrink-0">Mã số học viên:</span>
-                                        <span className="font-semibold text-gray-900 text-right truncate pl-2">
-                                            {studentInfo.studentId}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-baseline justify-between border-b border-dotted border-stone-400 pb-1">
-                                        <span className="text-stone-600 font-bold shrink-0">Lớp / Khóa học:</span>
-                                        <span className="font-semibold text-gray-900 text-right truncate pl-2">
-                                            {studentInfo.studentClass}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-baseline justify-between border-b border-dotted border-stone-400 pb-1">
-                                        <span className="text-stone-600 font-bold shrink-0">Số lượng bài ghi:</span>
-                                        <span className="font-bold text-stone-800 text-right truncate pl-2">
-                                            {sortedLogs.length} buổi học ghi chép
-                                        </span>
+                                    <div className="text-left space-y-2.5 text-sm pt-2">
+                                        <div className="flex items-baseline justify-between border-b border-dotted border-stone-400 pb-1">
+                                            <span className="text-stone-600 font-bold shrink-0">Học phần:</span>
+                                            <span className="font-bold text-brand-cerulean text-right truncate pl-2">
+                                                {currentModule.name ? `${currentModule.code || 'HP'} - ${currentModule.name}` : 'Nghiệp vụ sư phạm'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-baseline justify-between border-b border-dotted border-stone-400 pb-1">
+                                            <span className="text-stone-600 font-bold shrink-0">Giảng viên:</span>
+                                            <span className="font-semibold text-gray-900 text-right truncate pl-2">
+                                                {studentInfo.instructor || 'Tập thể Giảng viên'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-baseline justify-between border-b border-dotted border-stone-400 pb-1">
+                                            <span className="text-stone-600 font-bold shrink-0">Họ và tên học viên:</span>
+                                            <span className="font-bold text-brand-jasper text-right truncate pl-2">
+                                                {studentInfo.studentName}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-baseline justify-between border-b border-dotted border-stone-400 pb-1">
+                                            <span className="text-stone-600 font-bold shrink-0">Mã số học viên:</span>
+                                            <span className="font-semibold text-gray-900 text-right truncate pl-2">
+                                                {studentInfo.studentId}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-baseline justify-between border-b border-dotted border-stone-400 pb-1">
+                                            <span className="text-stone-600 font-bold shrink-0">Lớp / Khóa học:</span>
+                                            <span className="font-semibold text-gray-900 text-right truncate pl-2">
+                                                {studentInfo.studentClass}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-baseline justify-between border-b border-dotted border-stone-400 pb-1">
+                                            <span className="text-stone-600 font-bold shrink-0">Số lượng bài ghi:</span>
+                                            <span className="font-bold text-stone-800 text-right truncate pl-2">
+                                                {sortedLogs.length} buổi học ghi chép
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Pedagogical Slogan & Footer */}
-                        <div className="space-y-2 w-full border-t-2 border-stone-700 pt-5">
-                            <p className="text-xs sm:text-sm italic text-stone-600">
-                                &ldquo;Dạy học là nghề sáng tạo nhất trong các nghề sáng tạo vì nó sáng tạo ra những con người sáng tạo.&rdquo;
-                            </p>
-                            <p className="text-xs font-bold uppercase tracking-widest text-stone-700">
-                                NIÊN KHÓA {studentInfo.schoolYear} &bull; THÀNH PHỐ HỒ CHÍ MINH
-                            </p>
+                            {/* Pedagogical Slogan & Footer */}
+                            <div className="space-y-2 w-full border-t-2 border-stone-700 pt-5">
+                                <p className="text-xs sm:text-sm italic text-stone-600">
+                                    &ldquo;Dạy học là nghề sáng tạo nhất trong các nghề sáng tạo vì nó sáng tạo ra những con người sáng tạo.&rdquo;
+                                </p>
+                                <p className="text-xs font-bold uppercase tracking-widest text-stone-700">
+                                    NIÊN KHÓA {studentInfo.schoolYear} &bull; THÀNH PHỐ HỒ CHÍ MINH
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* 2. TRANG MỤC LỤC TẬP BÀI GHI (TABLE OF CONTENTS) */}
+                {/* 2. TRANG MỤC LỤC TẬP BÀI GHI (TABLE OF CONTENTS SHEET) */}
                 {includeToc && sortedLogs.length > 1 && (
-                    <div className="notebook-break-before space-y-6 pt-4 min-h-[250mm]">
+                    <div
+                        className="notebook-page-sheet notebook-break-before w-full bg-white text-gray-900 border border-stone-300 shadow-2xl rounded-sm p-6 sm:p-10 md:p-12 relative font-serif space-y-6"
+                        style={{ backgroundColor: '#ffffff', minHeight: '270mm' }}
+                    >
                         <div className="text-center border-b-2 border-stone-800 pb-3">
                             <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-wider text-brand-cerulean">
                                 MỤC LỤC TẬP BÀI GHI HỌC TẬP
@@ -505,7 +515,7 @@ export const StudyLogNotebookPdfModal = ({
                     </div>
                 )}
 
-                {/* 3. CÁC BÀI GHI TRONG TẬP (INDIVIDUAL NOTEBOOK LESSON SHEETS) */}
+                {/* 3. CÁC TRANG BÀI GHI TRONG TẬP (EACH LESSON ON ITS OWN DISTINCT A4 SHEET) */}
                 {sortedLogs.map((log, lIdx) => {
                     const mod = (modules || []).find(m => m.id === log.moduleId) || currentModule;
                     const homeworkItems = parseHomeworkItems(log.homework);
@@ -516,7 +526,8 @@ export const StudyLogNotebookPdfModal = ({
                     return (
                         <div
                             key={log.id || lIdx}
-                            className={`space-y-6 pt-2 ${(includeCover || lIdx > 0) ? 'notebook-break-before' : ''}`}
+                            className={`notebook-page-sheet w-full bg-white text-gray-900 border border-stone-300 shadow-2xl rounded-sm p-6 sm:p-10 md:p-12 relative font-serif space-y-6 ${(includeCover || lIdx > 0) ? 'notebook-break-before' : ''}`}
+                            style={{ backgroundColor: '#ffffff', minHeight: '270mm' }}
                         >
                             {/* NOTEBOOK PAGE TOP HEADER LINE */}
                             <div className="flex items-center justify-between border-b-2 border-stone-800 pb-2 text-xs font-sans text-stone-700">
@@ -551,23 +562,26 @@ export const StudyLogNotebookPdfModal = ({
 
                             {/* NOTEBOOK BODY: CORNELL 2 COLUMNS WITH RED MARGIN & RULED PAPER */}
                             <div
-                                className={`border border-stone-300 rounded-sm overflow-hidden ${
+                                className={`border border-stone-300 rounded-sm overflow-hidden bg-white ${
                                     paperStyle === 'ruled'
                                         ? 'notebook-ruled-bg'
                                         : paperStyle === 'grid'
                                         ? 'notebook-grid-bg'
                                         : 'bg-white'
                                 }`}
-                                style={paperStyle === 'ruled' ? {
-                                    backgroundImage: 'repeating-linear-gradient(transparent, transparent 27px, #cbd5e1 28px)'
-                                } : paperStyle === 'grid' ? {
-                                    backgroundSize: '20px 20px',
-                                    backgroundImage: 'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)'
-                                } : {}}
+                                style={{
+                                    backgroundColor: '#ffffff',
+                                    ...(paperStyle === 'ruled' ? {
+                                        backgroundImage: 'repeating-linear-gradient(#ffffff, #ffffff 27px, #cbd5e1 28px)'
+                                    } : paperStyle === 'grid' ? {
+                                        backgroundSize: '20px 20px',
+                                        backgroundImage: 'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)'
+                                    } : {})
+                                }}
                             >
                                 {/* HEADER OF COLUMNS */}
-                                <div className="grid grid-cols-12 border-b-2 border-stone-800 bg-stone-100/90 text-xs font-bold uppercase tracking-wider">
-                                    <div className="col-span-4 p-2.5 text-brand-jasper border-r-2 border-red-400 notebook-red-margin flex items-center gap-1">
+                                <div className="grid grid-cols-12 border-b-2 border-stone-800 bg-stone-100 text-xs font-bold uppercase tracking-wider">
+                                    <div className="col-span-4 p-2.5 text-brand-jasper border-r-2 border-red-500 notebook-red-margin flex items-center gap-1">
                                         <Lightbulb size={13} className="text-amber-600 shrink-0" />
                                         <span>Cột Lề: Từ Khóa &amp; Gợi Ý (Cues)</span>
                                     </div>
@@ -585,7 +599,7 @@ export const StudyLogNotebookPdfModal = ({
                                             <div key={sec.id || sIdx} className="space-y-0">
                                                 {/* SECTION HEADING BAR (IF MULTIPLE SECTIONS) */}
                                                 {(sec.title || sections.length > 1) && (
-                                                    <div className="bg-stone-100/80 px-3.5 py-1.5 border-b border-stone-300 flex items-center gap-2">
+                                                    <div className="bg-stone-100 px-3.5 py-1.5 border-b border-stone-300 flex items-center gap-2">
                                                         <span className="px-2 py-0.5 bg-brand-cerulean text-white font-serif font-bold text-xs uppercase rounded-xs">
                                                             Mục {sIdx + 1}
                                                         </span>
@@ -600,7 +614,7 @@ export const StudyLogNotebookPdfModal = ({
                                                     {secParts.map((part, pIdx) => (
                                                         <div key={part.id || pIdx} className="grid grid-cols-12">
                                                             {/* CUES (LEFT OF RED MARGIN ~33%) */}
-                                                            <div className="col-span-4 p-3 sm:p-4 border-r-2 border-red-400 notebook-red-margin bg-[#fffcf7]/60 space-y-1.5">
+                                                            <div className="col-span-4 p-3 sm:p-4 border-r-2 border-red-500 notebook-red-margin bg-[#fffcf7] space-y-1.5">
                                                                 {secParts.length > 1 && (
                                                                     <span className="text-[10px] font-bold text-brand-jasper uppercase tracking-wider block">
                                                                         Từ khóa Phần {pIdx + 1}:
@@ -612,7 +626,7 @@ export const StudyLogNotebookPdfModal = ({
                                                             </div>
 
                                                             {/* NOTES (RIGHT OF RED MARGIN ~67%) */}
-                                                            <div className="col-span-8 p-3 sm:p-4 bg-white/70 space-y-1.5 pl-3.5 sm:pl-5">
+                                                            <div className="col-span-8 p-3 sm:p-4 bg-white space-y-1.5 pl-3.5 sm:pl-5">
                                                                 {secParts.length > 1 && (
                                                                     <span className="text-[10px] font-bold text-brand-cerulean uppercase tracking-wider block">
                                                                         Ghi chép Phần {pIdx + 1}:
@@ -636,7 +650,7 @@ export const StudyLogNotebookPdfModal = ({
 
                                                 {/* SECTION CONCLUSION (TIỂU KẾT SƯ PHẠM / GHI NHỚ MỤC) */}
                                                 {sec.conclusion && (
-                                                    <div className="p-3 bg-amber-50/80 border-t border-amber-300 flex items-start gap-2 text-xs sm:text-sm">
+                                                    <div className="p-3 bg-amber-50 border-t border-amber-300 flex items-start gap-2 text-xs sm:text-sm">
                                                         <Sparkles size={14} className="text-amber-600 shrink-0 mt-0.5" />
                                                         <div className="space-y-0.5">
                                                             <span className="font-bold text-amber-900 uppercase text-[11px] tracking-wider block">
@@ -656,7 +670,7 @@ export const StudyLogNotebookPdfModal = ({
 
                             {/* OVERALL LESSON SUMMARY BOX (BÀI HỌC RÚT RA TOÀN BUỔI) */}
                             {log.summary && (
-                                <div className="border-2 border-brand-cerulean/60 rounded p-3.5 sm:p-4 bg-amber-50/40 space-y-1">
+                                <div className="border-2 border-brand-cerulean/60 rounded p-3.5 sm:p-4 bg-amber-50/70 space-y-1">
                                     <div className="flex items-center gap-1.5 text-xs font-bold text-brand-cerulean uppercase tracking-wider border-b border-brand-cerulean/20 pb-1">
                                         <Sparkles size={14} className="text-brand-jasper" />
                                         <span>✦ Bài học rút ra &amp; Tổng kết toàn buổi (Summary):</span>
@@ -669,7 +683,7 @@ export const StudyLogNotebookPdfModal = ({
 
                             {/* HOMEWORK CHECKLIST BOX (DẶN DÒ BÀI TẬP VỀ NHÀ) */}
                             {homeworkItems.length > 0 && (
-                                <div className="border border-stone-400 border-dashed rounded p-3.5 bg-stone-50/80 space-y-2 text-xs sm:text-sm">
+                                <div className="border border-stone-400 border-dashed rounded p-3.5 bg-stone-50 space-y-2 text-xs sm:text-sm">
                                     <div className="flex items-center gap-1.5 font-bold text-stone-800 uppercase text-xs tracking-wider border-b border-stone-300 pb-1">
                                         <ListChecks size={14} className="text-brand-jasper" />
                                         <span>✦ Dặn dò của Giảng viên &amp; Bài tập về nhà:</span>

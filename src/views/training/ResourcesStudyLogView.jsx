@@ -214,6 +214,7 @@ export const ResourcesStudyLogView = ({
     };
 
     const handleOpenSingleLogPdf = (log) => {
+        setViewingLog(null);
         setNotebookExportLogs([log]);
     };
 
