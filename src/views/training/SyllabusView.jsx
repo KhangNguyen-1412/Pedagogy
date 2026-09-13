@@ -546,17 +546,6 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
                                         <ArrowRight size={12} className="opacity-70 ml-0.5" />
                                     </button>
                                 )}
-                                {findNvspMasterModule(currentModule) && (
-                                    <button
-                                        type="button"
-                                        onClick={handleResetToMaster}
-                                        className="px-3.5 py-1.5 border border-brand-jasper/40 text-brand-jasper hover:bg-brand-jasper hover:text-white font-serif-title text-xs font-bold rounded-md flex items-center gap-1.5 transition-all shadow-xs"
-                                        title="Khôi phục nguyên bản đề cương chi tiết chuẩn văn bản PDF của ĐH Sư phạm TP.HCM"
-                                    >
-                                        <RefreshCw size={14} />
-                                        <span>Khôi phục chuẩn HCMUE</span>
-                                    </button>
-                                )}
                             </div>
                             <button
                                 type="button"

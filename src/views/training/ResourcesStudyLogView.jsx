@@ -169,14 +169,15 @@ export const ResourcesStudyLogView = ({
     const [viewingLog, setViewingLog] = useState(null);
 
     // Helper to create a new empty Cornell section
-    const createNewSection = (title = '', cues = '', note = '') => ({
+    const createNewSection = (title = '', cues = '', note = '', conclusion = '') => ({
         id: 'sec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
         title,
         cues,
-        note
+        note,
+        conclusion
     });
 
-    // Initial empty log form (Cornell structure with per-section Cues & Notes)
+    // Initial empty log form (Cornell structure with per-section Cues, Notes & Conclusion)
     const initialLogForm = {
         programId: activePrograms[0]?.id || '',
         moduleId: availableModules[0]?.id || allActiveModules[0]?.id || '',
@@ -193,7 +194,8 @@ export const ResourcesStudyLogView = ({
                 id: 'sec_1',
                 title: '',
                 cues: '',
-                note: ''
+                note: '',
+                conclusion: ''
             }
         ],
         summary: '',     // Khung Tóm tắt / Summary
@@ -455,21 +457,24 @@ export const ResourcesStudyLogView = ({
                 id: s.id || `sec_${Date.now()}_${idx}`,
                 title: s.title || '',
                 cues: s.cues || '',
-                note: s.note || s.content || ''
+                note: s.note || s.content || '',
+                conclusion: s.conclusion || ''
             }));
         } else if (log.content || log.cues) {
             parsedSections = [{
                 id: `sec_${Date.now()}`,
                 title: '',
                 cues: log.cues || '',
-                note: log.content || ''
+                note: log.content || '',
+                conclusion: ''
             }];
         } else {
             parsedSections = [{
                 id: `sec_${Date.now()}`,
                 title: '',
                 cues: '',
-                note: ''
+                note: '',
+                conclusion: ''
             }];
         }
 
@@ -510,7 +515,8 @@ export const ResourcesStudyLogView = ({
                 id: 'sec_' + Date.now(),
                 title: '',
                 cues: draftFormData.cues || '',
-                note: draftFormData.content || ''
+                note: draftFormData.content || '',
+                conclusion: ''
             }];
         }
         setLogForm({ ...draftFormData, sections });
@@ -542,12 +548,13 @@ export const ResourcesStudyLogView = ({
             id: 'sec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
             title: '',
             cues: '',
-            note: ''
+            note: '',
+            conclusion: ''
         };
         setLogForm(prev => {
             const currentSections = (prev.sections && prev.sections.length > 0)
                 ? [...prev.sections]
-                : [{ id: 'sec_1', title: '', cues: prev.cues || '', note: prev.content || '' }];
+                : [{ id: 'sec_1', title: '', cues: prev.cues || '', note: prev.content || '', conclusion: '' }];
 
             if (afterIndex !== null && afterIndex >= 0) {
                 currentSections.splice(afterIndex + 1, 0, newSection);
@@ -562,7 +569,7 @@ export const ResourcesStudyLogView = ({
         setLogForm(prev => {
             const currentSections = (prev.sections && prev.sections.length > 0)
                 ? [...prev.sections]
-                : [{ id: 'sec_1', title: '', cues: prev.cues || '', note: prev.content || '' }];
+                : [{ id: 'sec_1', title: '', cues: prev.cues || '', note: prev.content || '', conclusion: '' }];
 
             if (!currentSections[index]) return prev;
             currentSections[index] = {
@@ -582,7 +589,8 @@ export const ResourcesStudyLogView = ({
             const target = prev.sections[index];
             const hasContent = (target.title && target.title.trim()) ||
                                (target.cues && target.cues.trim()) ||
-                               (target.note && target.note.trim());
+                               (target.note && target.note.trim()) ||
+                               (target.conclusion && target.conclusion.trim());
             if (hasContent && !window.confirm(`Bạn có chắc muốn xóa Mục ${index + 1}? Nội dung của mục này sẽ bị xóa.`)) {
                 return prev;
             }
@@ -709,7 +717,7 @@ export const ResourcesStudyLogView = ({
 
         const validSections = (logForm.sections && logForm.sections.length > 0)
             ? logForm.sections
-            : [{ id: 'sec_1', title: '', cues: logForm.cues || '', note: logForm.content || '' }];
+            : [{ id: 'sec_1', title: '', cues: logForm.cues || '', note: logForm.content || '', conclusion: '' }];
 
         const combinedCues = validSections
             .map(s => s.cues?.trim())
@@ -719,7 +727,8 @@ export const ResourcesStudyLogView = ({
         const combinedContent = validSections
             .map(s => {
                 const titleHtml = s.title ? `<h3>${s.title}</h3>` : '';
-                return titleHtml + (s.note || '');
+                const conclusionHtml = s.conclusion ? `<blockquote class="my-2 p-2.5 bg-amber-50 border-l-4 border-amber-500 text-sm"><strong>Kết luận Mục:</strong> ${s.conclusion}</blockquote>` : '';
+                return [titleHtml, s.note || '', conclusionHtml].filter(Boolean).join('<br/>');
             })
             .filter(Boolean)
             .join('<br/><hr/><br/>');
@@ -1390,6 +1399,24 @@ export const ResourcesStudyLogView = ({
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                {/* PHẦN KẾT LUẬN & TIỂU KẾT SƯ PHẠM CỦA MỤC */}
+                                                <div className="border-t-2 border-brand-cerulean/25 bg-amber-50/50 p-3.5 sm:p-4 space-y-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <label className="text-xs font-serif-title text-brand-jasper font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                                                            <Sparkles size={14} className="text-brand-jasper" />
+                                                            <span>Phần kết luận & Tiểu kết sư phạm (Mục {sIdx + 1})</span>
+                                                        </label>
+                                                        <span className="text-[11px] font-sans text-gray-500 italic">Đúc kết cốt lõi rút ra từ mục {sIdx + 1}</span>
+                                                    </div>
+                                                    <textarea
+                                                        rows="2"
+                                                        className="input-editorial w-full resize-y text-xs sm:text-sm font-body leading-relaxed p-3 bg-white border border-brand-cerulean/25 rounded-xs shadow-inner"
+                                                        value={section.conclusion || ''}
+                                                        onChange={e => handleUpdateSection(sIdx, 'conclusion', e.target.value)}
+                                                        placeholder={`Nhập kết luận sư phạm, luận điểm đúc kết hoặc quy tắc cần ghi nhớ của Mục ${sIdx + 1}...`}
+                                                    />
+                                                </div>
                                             </div>
 
                                             {/* In-between Add Section Button */}
@@ -1428,7 +1455,7 @@ export const ResourcesStudyLogView = ({
                                         <div className="flex items-center justify-between">
                                             <label className="text-sm font-serif-title text-brand-cerulean font-bold flex items-center gap-1.5">
                                                 <Sparkles size={16} className="text-brand-jasper" />
-                                                <span>SUMMARY / TÓM TẮT CỐT LÕI BÀI HỌC (BOTTOM)</span>
+                                                <span>TỔNG KẾT TOÀN BỘ BÀI HỌC (OVERALL SUMMARY)</span>
                                             </label>
                                             <span className="text-xs text-gray-500 font-sans italic">2 - 4 câu đúc kết</span>
                                         </div>
@@ -1979,6 +2006,21 @@ export const ResourcesStudyLogView = ({
                                                                     </div>
                                                                 </div>
                                                             </div>
+
+                                                            {/* PHẦN KẾT LUẬN CỦA MỤC TRONG THẺ */}
+                                                            {sec.conclusion && (
+                                                                <div className="p-3 bg-amber-50/70 border-t border-brand-cerulean/20 flex items-start gap-2 text-xs sm:text-sm">
+                                                                    <Sparkles size={14} className="text-brand-jasper shrink-0 mt-0.5" />
+                                                                    <div className="space-y-0.5 flex-1">
+                                                                        <span className="font-serif-title font-bold text-brand-cerulean block uppercase text-[10px] tracking-wider">
+                                                                            Kết luận Mục {sIdx + 1}:
+                                                                        </span>
+                                                                        <p className="text-gray-800 font-body leading-relaxed italic">
+                                                                            "{sec.conclusion}"
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -2516,6 +2558,21 @@ export const ResourcesStudyLogView = ({
                                                             )}
                                                         </div>
                                                     </div>
+
+                                                    {/* PHẦN KẾT LUẬN CỦA MỤC TRONG MODAL ĐỐI CHIẾU */}
+                                                    {sec.conclusion && (
+                                                        <div className="p-3.5 bg-amber-50/70 border-t border-brand-cerulean/25 flex items-start gap-2.5 text-xs sm:text-sm">
+                                                            <Sparkles size={15} className="text-brand-jasper shrink-0 mt-0.5" />
+                                                            <div className="space-y-0.5 flex-1">
+                                                                <h5 className="font-serif-title font-bold text-brand-cerulean text-xs uppercase tracking-wider flex items-center gap-1.5">
+                                                                    <span>Phần kết luận & Tiểu kết (Mục {sIdx + 1})</span>
+                                                                </h5>
+                                                                <p className="text-gray-800 font-body leading-relaxed italic">
+                                                                    {sec.conclusion}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             );
                                         })}
