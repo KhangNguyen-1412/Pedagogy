@@ -181,6 +181,7 @@ export const ResourcesStudyLogView = ({
 
     // Reading Focus Modal State
     const [viewingLog, setViewingLog] = useState(null);
+    const [logToDelete, setLogToDelete] = useState(null);
 
     // Helper to create a new content item (Phần nội dung có từ khóa riêng)
     const createContentItem = (cues = '', note = '') => ({
@@ -1204,712 +1205,537 @@ export const ResourcesStudyLogView = ({
     // =========================================================================
     if (editorMode) {
         return (
-            <div className="max-w-6xl mx-auto space-y-6 pb-24 animate-page-enter">
-                {/* STICKY EDITORIAL TOPBAR */}
-                <header className="sticky top-0 z-30 bg-brand-cream/95 backdrop-blur border-b border-brand-cerulean/20 px-4 py-3 flex items-center justify-between gap-4 shadow-sm">
-                    <div className="flex items-center gap-3">
+            <div className="max-w-4xl mx-auto space-y-5 pb-20 animate-page-enter">
+                {/* STICKY MINIMALIST TOPBAR */}
+                <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-stone-200 px-4 py-2.5 flex items-center justify-between gap-3 shadow-2xs">
+                    <div className="flex items-center gap-2.5 min-w-0">
                         <button
                             type="button"
                             onClick={handleExitEditor}
-                            className="p-1.5 text-brand-cerulean hover:bg-white border border-brand-cerulean/30 rounded-xs transition-colors flex items-center gap-1 text-xs font-serif-title font-bold"
-                            title="Quay lại danh sách bài học"
+                            className="p-1.5 text-stone-600 hover:text-brand-cerulean hover:bg-stone-100 rounded-xs transition-colors flex items-center gap-1 text-xs font-serif-title font-medium shrink-0"
+                            title="Quay lại danh sách bài ghi"
                         >
-                            <ArrowLeft size={16} />
-                            <span className="hidden sm:inline">Quay lại danh sách</span>
+                            <ArrowLeft size={15} />
+                            <span className="hidden sm:inline">Danh sách bài ghi</span>
                         </button>
-                        <div className="h-5 w-[1px] bg-brand-cerulean/20"></div>
-                        <div>
-                            <span className="text-[10px] uppercase font-bold tracking-wider text-brand-jasper block">
-                                {editingLogId ? 'Chỉnh sửa ghi chép Cornell' : 'Tạo mới ghi chép theo Cornell'}
-                            </span>
-                            <h2 className="text-sm sm:text-base font-serif-title font-bold text-brand-cerulean truncate max-w-[200px] sm:max-w-md">
-                                {logForm.title || 'Chưa đặt tiêu đề bài học'}
-                            </h2>
-                        </div>
+                        <div className="h-4 w-[1px] bg-stone-200 shrink-0"></div>
+                        <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-700 font-serif-title font-bold rounded-2xs shrink-0">
+                            {editingLogId ? 'Chỉnh sửa' : 'Tạo mới'}
+                        </span>
+                        <h2 className="text-xs sm:text-sm font-serif-title font-bold text-gray-800 truncate" title={logForm.title}>
+                            {logForm.title || 'Chưa đặt tiêu đề'}
+                        </h2>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        {/* Auto-save status indicator */}
-                        {lastSavedDraftTime && (
-                            <span className="hidden md:flex items-center gap-1 text-[11px] font-sans text-gray-500 italic">
+                    <div className="flex items-center gap-2 shrink-0">
+                        {/* Auto-save status */}
+                        {lastSavedDraftTime ? (
+                            <span className="hidden md:flex items-center gap-1 text-[11px] font-sans text-stone-500">
                                 <Check size={12} className="text-emerald-600" />
                                 <span>Đã lưu nháp {lastSavedDraftTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                            </span>
+                        ) : (
+                            <span className="hidden md:inline text-[11px] font-sans text-stone-400 italic">
+                                Tự động lưu nháp
                             </span>
                         )}
 
                         {/* Reference slides toggle */}
-                        <button
-                            type="button"
-                            onClick={() => setShowReferenceSidebar(!showReferenceSidebar)}
-                            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-serif-title transition-all rounded-xs ${
-                                showReferenceSidebar
-                                    ? 'bg-brand-cerulean/10 text-brand-cerulean font-bold border border-brand-cerulean/30'
-                                    : 'text-gray-600 hover:text-brand-cerulean hover:bg-white border border-transparent'
-                            }`}
-                            title="Bật/Tắt tra cứu slide & tài liệu học phần"
-                        >
-                            <FolderOpen size={14} className="text-brand-jasper" />
-                            <span className="hidden sm:inline">Slide ({moduleResources.length})</span>
-                        </button>
+                        {moduleResources.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => setShowReferenceSidebar(!showReferenceSidebar)}
+                                className={`px-2.5 py-1 text-xs font-serif-title rounded-xs flex items-center gap-1 transition-all ${
+                                    showReferenceSidebar
+                                        ? 'bg-brand-cerulean/10 text-brand-cerulean font-bold border border-brand-cerulean/30'
+                                        : 'text-stone-600 hover:bg-stone-100 border border-transparent'
+                                }`}
+                                title="Xem slide bài học của môn"
+                            >
+                                <FolderOpen size={13} className="text-brand-jasper" />
+                                <span className="hidden sm:inline">Slide ({moduleResources.length})</span>
+                            </button>
+                        )}
 
-                        {/* Discard draft icon */}
+                        {/* Discard draft */}
                         <button
                             type="button"
                             onClick={handleDiscardDraft}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded transition-colors"
-                            title="Xóa nháp và làm mới"
+                            className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Làm mới form"
                         >
-                            <RotateCcw size={14} />
+                            <RotateCcw size={13} />
                         </button>
 
-                        {/* Save Button */}
+                        {/* Save button */}
                         <button
                             type="button"
                             onClick={handleSaveLog}
-                            className="px-4 py-1.5 bg-brand-cerulean text-white font-serif-title text-xs sm:text-sm font-bold shadow-sm hover:bg-brand-cerulean/90 transition-all flex items-center gap-1.5"
+                            className="px-3.5 py-1.5 bg-brand-cerulean text-white font-serif-title font-bold text-xs rounded-xs hover:bg-brand-cerulean/90 shadow-2xs flex items-center gap-1.5 transition-all"
                         >
-                            <Save size={14} />
-                            <span>{editingLogId ? 'Cập nhật' : 'Lưu bài học'}</span>
+                            <Save size={13} />
+                            <span>{editingLogId ? 'Cập nhật' : 'Lưu bài'}</span>
                         </button>
                     </div>
                 </header>
 
-                {/* MAIN EDITOR FORM + REFERENCE SIDEBAR LAYOUT */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                    {/* LEFT CANVAS: MAIN CORNELL NOTE FORM */}
-                    <div className={`space-y-6 ${showReferenceSidebar ? 'lg:col-span-8' : 'lg:col-span-12'}`}>
-                        {/* 1. SESSION METADATA CARD */}
-                        <div className="bg-white border-editorial p-6 shadow-editorial space-y-4">
-                            <div className="flex items-center justify-between pb-3 border-b border-brand-cerulean/20">
-                                <h3 className="text-xl font-serif-title text-brand-cerulean font-bold flex items-center gap-2">
-                                    <CalendarDays size={18} className="text-brand-jasper" />
-                                    <span>Thông tin Buổi học & Giảng viên</span>
-                                </h3>
-                                <span className="text-xs text-gray-500 font-sans italic">Buổi số & Ca học</span>
-                            </div>
-
-                            {/* Optional quick link from calendar */}
-                            {events.length > 0 && !editingLogId && (
-                                <div className="p-3 bg-brand-cream border border-brand-cerulean/30 rounded-xs space-y-1">
-                                    <label className="block text-xs font-serif-title font-bold text-brand-cerulean">
-                                        Nạp nhanh thông tin từ một buổi trong Thời khóa biểu:
-                                    </label>
-                                    <EditorialSelect
-                                        value={selectedCalendarEventId}
-                                        onChange={handleSelectCalendarEvent}
-                                        options={eventOptions}
-                                        placeholder="Chọn một buổi học từ lịch biểu..."
-                                    />
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {activePrograms.length > 1 && (
-                                    <div>
-                                        <EditorialSelect
-                                            label="Chương trình đào tạo *"
-                                            value={logForm.programId}
-                                            onChange={val => {
-                                                const candidateMods = (modules || []).filter(m => isModuleInProgram(m, val));
-                                                setLogForm(prev => ({
-                                                    ...prev,
-                                                    programId: val,
-                                                    moduleId: candidateMods[0]?.id || ''
-                                                }));
-                                            }}
-                                            options={activePrograms.map(p => ({ label: p.name, value: p.id }))}
-                                        />
-                                    </div>
-                                )}
-                                <div className={activePrograms.length > 1 ? '' : 'sm:col-span-2'}>
-                                    <EditorialSelect
-                                        label="Học phần *"
-                                        value={logForm.moduleId}
-                                        onChange={val => {
-                                            const mod = (modules || []).find(m => m.id === val);
-                                            setLogForm(prev => ({
-                                                ...prev,
-                                                moduleId: val,
-                                                instructor: mod?.instructor || prev.instructor
-                                            }));
-                                        }}
-                                        options={editorModuleOptions}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-serif-title text-brand-cerulean mb-1 font-bold">
-                                        Buổi học số *
-                                    </label>
-                                    <input
-                                        required
-                                        type="text"
-                                        className="input-editorial w-full font-bold"
-                                        value={logForm.sessionNumber}
-                                        onChange={e => setLogForm({ ...logForm, sessionNumber: e.target.value })}
-                                        placeholder="VD: 1, 2, 3..."
-                                    />
-                                </div>
-                                <div>
-                                    <EditorialDatePicker
-                                        label="Ngày học *"
-                                        value={logForm.date}
-                                        onChange={val => setLogForm({ ...logForm, date: val })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <EditorialSelect
-                                        label="Ca học trong ngày"
-                                        value={logForm.sessionTime}
-                                        onChange={val => setLogForm({ ...logForm, sessionTime: val })}
-                                        options={[
-                                            { label: 'Ca Sáng (07:30 - 11:30)', value: 'morning' },
-                                            { label: 'Ca Chiều (13:30 - 17:00)', value: 'afternoon' },
-                                            { label: 'Cả ngày (Cả 2 ca Sáng & Chiều)', value: 'both' },
-                                            { label: 'Ca Tối (18:00 - 21:00)', value: 'evening' }
-                                        ]}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-serif-title text-brand-cerulean mb-1">
-                                        Giảng viên đứng lớp buổi này
-                                    </label>
-                                    <input
-                                        type="text"
-                                        className="input-editorial w-full"
-                                        value={logForm.instructor}
-                                        onChange={e => setLogForm({ ...logForm, instructor: e.target.value })}
-                                        placeholder="VD: PGS.TS Nguyễn Văn A"
-                                    />
-                                </div>
-                            </div>
+                {/* OPTIONAL SLIDES DRAWER */}
+                {showReferenceSidebar && moduleResources.length > 0 && (
+                    <div className="bg-stone-50 border border-stone-200 rounded-xs p-3 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="font-serif-title font-bold text-gray-700 flex items-center gap-1.5">
+                                <FolderOpen size={14} className="text-brand-jasper" />
+                                <span>Slide &amp; Học liệu môn ({moduleResources.length}):</span>
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setShowReferenceSidebar(false)}
+                                className="text-stone-400 hover:text-stone-600 p-0.5"
+                            >
+                                <X size={13} />
+                            </button>
                         </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {moduleResources.map(r => (
+                                <a
+                                    key={r.id}
+                                    href={r.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-2 bg-white border border-stone-200 hover:border-brand-cerulean rounded-xs flex items-center justify-between gap-2 text-xs transition-colors"
+                                >
+                                    <span className="font-medium text-gray-800 truncate" title={r.title}>{r.title}</span>
+                                    <ExternalLink size={11} className="text-brand-jasper shrink-0" />
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
-                        {/* 2. CORNELL NOTE SHEET CANVAS */}
-                        <div className="bg-white border-editorial p-6 sm:p-8 shadow-editorial space-y-6">
-                            {/* Header of Cornell Sheet */}
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b-2 border-brand-cerulean/30">
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="px-2.5 py-0.5 bg-brand-cerulean text-white font-serif-title font-bold text-[11px] uppercase tracking-wider rounded-xs">
-                                            Cornell Method
-                                        </span>
-                                        <span className="text-xs font-serif-title text-brand-jasper font-semibold">
-                                            Phương pháp ghi chép Cornell tiêu chuẩn
-                                        </span>
-                                    </div>
-                                    <h3 className="text-xl sm:text-2xl font-serif-title font-bold text-brand-cerulean mt-1">
-                                        Bảng ghi chép bài học Cornell
-                                    </h3>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
-                                    <input
-                                        ref={wordFileInputRef}
-                                        type="file"
-                                        accept=".docx"
-                                        onChange={handleImportWordDocx}
-                                        className="hidden"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => wordFileInputRef.current?.click()}
-                                        className="px-3 py-1.5 text-xs font-serif-title font-bold text-brand-cerulean bg-brand-cream/80 hover:bg-brand-cerulean hover:text-white border border-brand-cerulean/30 rounded-xs flex items-center gap-1.5 transition-all shadow-xs"
-                                        title="Nhập file Word (.docx) - Tự động tách theo các đề mục lớn"
-                                    >
-                                        <FileUp size={14} />
-                                        <span>Nhập file Word (.docx)</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleAddSection()}
-                                        className="px-3.5 py-1.5 text-xs font-serif-title font-bold text-white bg-brand-cerulean hover:bg-brand-cerulean/90 rounded-xs flex items-center gap-1.5 shadow-xs transition-all"
-                                        title="Thêm một mục ghi chép mới"
-                                    >
-                                        <Plus size={14} />
-                                        <span>Thêm mục mới</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Topic / Lesson Title */}
-                            <div>
-                                <label className="block text-sm font-serif-title text-brand-cerulean mb-1 font-bold">
-                                    Chủ đề / Tên bài học của buổi này *
-                                </label>
-                                <input
-                                    required
-                                    type="text"
-                                    className="input-editorial w-full text-xl sm:text-2xl font-serif-title font-bold text-brand-cerulean"
-                                    value={logForm.title}
-                                    onChange={e => setLogForm({ ...logForm, title: e.target.value })}
-                                    placeholder="VD: Chương 2: Các quy luật nhận thức & tư duy trong dạy học THPT"
+                {/* 1. METADATA STRIP (COMPACT & MINIMALIST) */}
+                <div className="bg-white border border-stone-200 rounded-xs p-3 sm:p-4 space-y-3 shadow-2xs">
+                    {events.length > 0 && !editingLogId && (
+                        <div className="flex items-center gap-2 text-xs flex-wrap">
+                            <span className="text-stone-500 font-sans shrink-0">Lấy thông tin từ TKB:</span>
+                            <div className="flex-1 min-w-[200px]">
+                                <EditorialSelect
+                                    value={selectedCalendarEventId}
+                                    onChange={handleSelectCalendarEvent}
+                                    options={eventOptions}
+                                    placeholder="Chọn một buổi từ lịch biểu để điền nhanh..."
                                 />
                             </div>
+                        </div>
+                    )}
 
-                            {/* CORNELL MULTI-SECTION SHEET CONTAINER */}
-                            <div className="space-y-6">
-                                {/* Top Column Headers */}
-                                <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-brand-cream/60 border border-brand-cerulean/25 rounded-xs text-xs font-serif-title font-bold">
-                                    <div className="col-span-5 text-brand-jasper flex items-center gap-1.5">
-                                        <Lightbulb size={15} />
-                                        <span>CỘT GỢI Ý & TỪ KHÓA (CUES / RECITE) ~35%</span>
-                                    </div>
-                                    <div className="col-span-7 text-brand-cerulean flex items-center gap-1.5">
-                                        <FileText size={15} />
-                                        <span>CỘT GHI CHÉP CHI TIẾT BÀI GIẢNG (NOTES) ~65%</span>
-                                    </div>
-                                </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                        {activePrograms.length > 1 && (
+                            <div>
+                                <EditorialSelect
+                                    label="CTĐT *"
+                                    value={logForm.programId}
+                                    onChange={val => {
+                                        const candidateMods = (modules || []).filter(m => isModuleInProgram(m, val));
+                                        setLogForm(prev => ({
+                                            ...prev,
+                                            programId: val,
+                                            moduleId: candidateMods[0]?.id || ''
+                                        }));
+                                    }}
+                                    options={activePrograms.map(p => ({ label: p.name, value: p.id }))}
+                                />
+                            </div>
+                        )}
+                        <div className={activePrograms.length > 1 ? '' : 'sm:col-span-2'}>
+                            <EditorialSelect
+                                label="Học phần *"
+                                value={logForm.moduleId}
+                                onChange={val => {
+                                    const mod = (modules || []).find(m => m.id === val);
+                                    setLogForm(prev => ({
+                                        ...prev,
+                                        moduleId: val,
+                                        instructor: mod?.instructor || prev.instructor
+                                    }));
+                                }}
+                                options={editorModuleOptions}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-serif-title text-gray-700 mb-1 font-bold">
+                                Buổi học số *
+                            </label>
+                            <input
+                                required
+                                type="text"
+                                className="input-editorial w-full text-xs font-bold"
+                                value={logForm.sessionNumber}
+                                onChange={e => setLogForm({ ...logForm, sessionNumber: e.target.value })}
+                                placeholder="VD: 1, 2..."
+                            />
+                        </div>
+                        <div>
+                            <EditorialDatePicker
+                                label="Ngày học *"
+                                value={logForm.date}
+                                onChange={val => setLogForm({ ...logForm, date: val })}
+                            />
+                        </div>
+                    </div>
 
-                                {/* List of Cornell Sections */}
-                                {(logForm.sections && logForm.sections.length > 0
-                                    ? logForm.sections
-                                    : [{ id: 'sec_1', title: '', cues: logForm.cues || '', note: logForm.content || '' }]
-                                ).map((section, sIdx) => {
-                                    const totalSections = logForm.sections?.length || 1;
-                                    return (
-                                        <div key={section.id || sIdx} className="space-y-3">
-                                            {/* Section Card */}
-                                            <div className="border-2 border-brand-cerulean/30 rounded-xs overflow-hidden shadow-xs bg-white transition-all hover:border-brand-cerulean/50">
-                                                {/* SECTION BAR: BADGE, TITLE INPUT, ACTIONS */}
-                                                <div className="bg-brand-cream/70 border-b border-brand-cerulean/25 px-3 sm:px-4 py-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-                                                    <div className="flex items-center gap-2 flex-1">
-                                                        <span className="px-2.5 py-1 bg-brand-cerulean text-white font-serif-title font-bold text-xs uppercase tracking-wider rounded-xs shrink-0 shadow-xs">
-                                                            Mục {sIdx + 1}
-                                                        </span>
-                                                        <input
-                                                            type="text"
-                                                            value={section.title || ''}
-                                                            onChange={e => handleUpdateSection(sIdx, 'title', e.target.value)}
-                                                            placeholder={`Tiêu đề mục ${sIdx + 1} (VD: 1.1.1. Những quan niệm sai lầm về sự phát triển tâm lý cá nhân)...`}
-                                                            className="input-editorial flex-1 font-serif-title font-bold text-brand-cerulean text-sm sm:text-base py-1 px-2.5 bg-white border border-brand-cerulean/25 rounded-xs focus:bg-white"
-                                                        />
-                                                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 border-t border-stone-100">
+                        <div>
+                            <EditorialSelect
+                                label="Ca học"
+                                value={logForm.sessionTime}
+                                onChange={val => setLogForm({ ...logForm, sessionTime: val })}
+                                options={[
+                                    { label: 'Ca Sáng (07:30 - 11:30)', value: 'morning' },
+                                    { label: 'Ca Chiều (13:30 - 17:00)', value: 'afternoon' },
+                                    { label: 'Cả ngày (Sáng & Chiều)', value: 'both' },
+                                    { label: 'Ca Tối (18:00 - 21:00)', value: 'evening' }
+                                ]}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-serif-title text-gray-700 mb-1 font-bold">
+                                Giảng viên
+                            </label>
+                            <input
+                                type="text"
+                                className="input-editorial w-full text-xs"
+                                value={logForm.instructor}
+                                onChange={e => setLogForm({ ...logForm, instructor: e.target.value })}
+                                placeholder="VD: ThS. Nguyễn Văn A"
+                            />
+                        </div>
+                    </div>
+                </div>
 
-                                                    <div className="flex items-center gap-1 self-end sm:self-center shrink-0">
-                                                        <button
-                                                            type="button"
-                                                            disabled={sIdx === 0}
-                                                            onClick={() => handleMoveSection(sIdx, 'up')}
-                                                            className={`p-1.5 rounded transition-colors ${
-                                                                sIdx === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-brand-cerulean hover:bg-brand-cream'
-                                                            }`}
-                                                            title="Di chuyển mục lên trên"
-                                                        >
-                                                            <ArrowUp size={14} />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            disabled={sIdx === totalSections - 1}
-                                                            onClick={() => handleMoveSection(sIdx, 'down')}
-                                                            className={`p-1.5 rounded transition-colors ${
-                                                                sIdx === totalSections - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-brand-cerulean hover:bg-brand-cream'
-                                                            }`}
-                                                            title="Di chuyển mục xuống dưới"
-                                                        >
-                                                            <ArrowDown size={14} />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleDuplicateSection(sIdx)}
-                                                            className="p-1.5 text-gray-600 hover:text-brand-cerulean hover:bg-brand-cream rounded transition-colors"
-                                                            title="Nhân bản mục này"
-                                                        >
-                                                            <Copy size={14} />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            disabled={totalSections <= 1}
-                                                            onClick={() => handleRemoveSection(sIdx)}
-                                                            className={`p-1.5 rounded transition-colors ${
-                                                                totalSections <= 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
-                                                            }`}
-                                                            title={totalSections <= 1 ? 'Phải có ít nhất 1 mục' : 'Xóa mục này'}
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </div>
-                                                </div>
+                {/* 2. CORNELL NOTE CANVAS (MINIMALIST DOCUMENT SHEET) */}
+                <div className="bg-white border border-stone-200 rounded-xs p-4 sm:p-6 space-y-5 shadow-2xs">
+                    {/* CANVAS SUB-HEADER */}
+                    <div className="flex items-center justify-between pb-3 border-b border-stone-200 flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean font-serif-title font-bold text-xs rounded-2xs">
+                                Chuẩn Cornell
+                            </span>
+                            <span className="text-xs text-stone-500 font-sans hidden sm:inline">
+                                Gợi nhớ &bull; Ghi chép &bull; Tóm tắt
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <input
+                                ref={wordFileInputRef}
+                                type="file"
+                                accept=".docx"
+                                onChange={handleImportWordDocx}
+                                className="hidden"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => wordFileInputRef.current?.click()}
+                                className="px-2.5 py-1 text-xs font-serif-title text-stone-600 hover:text-brand-cerulean hover:bg-stone-50 border border-stone-200 rounded-xs flex items-center gap-1 transition-all"
+                                title="Nhập file Word (.docx) để tự động điền"
+                            >
+                                <FileUp size={13} />
+                                <span className="hidden sm:inline">Nhập Word (.docx)</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleAddSection()}
+                                className="px-2.5 py-1 text-xs font-serif-title font-bold text-brand-cerulean hover:bg-brand-cerulean/10 border border-brand-cerulean/30 rounded-xs flex items-center gap-1 transition-all"
+                            >
+                                <Plus size={13} />
+                                <span>Thêm mục mới</span>
+                            </button>
+                        </div>
+                    </div>
 
-                                                {/* LIST OF CONTENT PARTS WITH INDIVIDUAL KEYWORDS */}
-                                                <div className="divide-y-2 divide-brand-cerulean/20">
-                                                    {getSectionItems(section).map((part, pIdx) => {
-                                                        const sectionItems = getSectionItems(section);
-                                                        const totalParts = sectionItems.length;
-                                                        return (
-                                                            <div key={part.id || pIdx} className="relative group/part">
-                                                                {/* Part header bar */}
-                                                                <div className="bg-brand-cream/50 px-3.5 sm:px-4.5 py-1.5 border-b border-brand-cerulean/15 flex items-center justify-between">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="px-2 py-0.5 bg-brand-cerulean text-white font-serif-title font-bold text-[10px] uppercase rounded-xs">
-                                                                            Phần {pIdx + 1}
-                                                                        </span>
-                                                                        <span className="text-[11px] font-sans text-brand-cerulean/80 font-medium">
-                                                                            Nội dung & Từ khóa riêng
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-1">
-                                                                        <button
-                                                                            type="button"
-                                                                            disabled={pIdx === 0}
-                                                                            onClick={() => handleMoveContentItem(sIdx, pIdx, 'up')}
-                                                                            className={`p-1 rounded transition-colors ${
-                                                                                pIdx === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-brand-cerulean hover:bg-white'
-                                                                            }`}
-                                                                            title="Di chuyển phần này lên"
-                                                                        >
-                                                                            <ArrowUp size={12} />
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            disabled={pIdx === totalParts - 1}
-                                                                            onClick={() => handleMoveContentItem(sIdx, pIdx, 'down')}
-                                                                            className={`p-1 rounded transition-colors ${
-                                                                                pIdx === totalParts - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-brand-cerulean hover:bg-white'
-                                                                            }`}
-                                                                            title="Di chuyển phần này xuống"
-                                                                        >
-                                                                            <ArrowDown size={12} />
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            disabled={totalParts <= 1}
-                                                                            onClick={() => handleRemoveContentItem(sIdx, pIdx)}
-                                                                            className={`p-1 rounded transition-colors ml-1 ${
-                                                                                totalParts <= 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
-                                                                            }`}
-                                                                            title={totalParts <= 1 ? 'Mục phải có ít nhất 1 phần nội dung' : 'Xóa phần nội dung này'}
-                                                                        >
-                                                                            <Trash2 size={12} />
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
+                    {/* TOPIC / LESSON TITLE */}
+                    <div className="pt-1">
+                        <input
+                            required
+                            type="text"
+                            className="w-full text-lg sm:text-xl font-serif-title font-bold text-gray-900 placeholder:text-stone-300 border-b border-stone-200 pb-2 focus:border-brand-cerulean focus:outline-none transition-colors"
+                            value={logForm.title}
+                            onChange={e => setLogForm({ ...logForm, title: e.target.value })}
+                            placeholder="Chủ đề / Tên bài học của buổi..."
+                        />
+                    </div>
 
-                                                                {/* 2-COLUMN PART BODY */}
-                                                                <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-brand-cerulean/25 bg-brand-cream/10">
-                                                                    {/* CUES / KEYWORDS COLUMN (~38% or 5/12 cols) */}
-                                                                    <div className="md:col-span-5 p-3.5 sm:p-4.5 flex flex-col justify-between space-y-2.5 bg-brand-cream/30">
-                                                                        <div className="flex items-center justify-between pb-1.5 border-b border-brand-cerulean/20">
-                                                                            <label className="text-xs font-serif-title text-brand-jasper font-bold flex items-center gap-1.5">
-                                                                                <Lightbulb size={14} />
-                                                                                <span>CUES / TỪ KHÓA & GỢI NHỚ (PHẦN {pIdx + 1})</span>
-                                                                            </label>
-                                                                            <span className="text-[10px] font-sans text-brand-jasper font-semibold uppercase">30% - 35%</span>
-                                                                        </div>
-
-                                                                        <div className="flex-1">
-                                                                            <textarea
-                                                                                rows="6"
-                                                                                className="input-editorial w-full resize-y text-sm font-body leading-relaxed p-3 bg-white border border-brand-cerulean/30 rounded-xs shadow-inner editor-scrollbar overflow-y-auto"
-                                                                                style={{ minHeight: '180px', maxHeight: '340px' }}
-                                                                                value={part.cues || ''}
-                                                                                onChange={e => handleUpdateContentItem(sIdx, pIdx, 'cues', e.target.value)}
-                                                                                placeholder={`• TỪ KHÓA RIÊNG (Phần ${pIdx + 1} - Mục ${sIdx + 1}):
-- Thuật ngữ / Khái niệm chính
-- Mối liên hệ logic
-
-• CÂU HỎI TỰ VẤN (RECITE):
-? Trọng tâm của phần này là gì?`}
-                                                                            />
-                                                                        </div>
-
-                                                                        <div className="text-[11px] font-sans text-gray-500 bg-white/80 p-2 border border-brand-cerulean/15 rounded-lg leading-normal">
-                                                                            <span className="font-semibold text-brand-cerulean flex items-center gap-1 mb-0.5">
-                                                                                <Lightbulb size={13} className="text-amber-600 shrink-0" />
-                                                                                <span>Mẹo ôn tập:</span>
-                                                                            </span>
-                                                                            Từ khóa tương ứng trực tiếp với nội dung phần {pIdx + 1} bên phải.
-                                                                        </div>
-                                                                    </div>
-
-                                                                    {/* NOTES / DETAILED LECTURE NOTES COLUMN (~62% or 7/12 cols) */}
-                                                                    <div className="md:col-span-7 p-3.5 sm:p-4.5 flex flex-col space-y-2 bg-white">
-                                                                        <div className="flex items-center justify-between pb-1.5 border-b border-brand-cerulean/20">
-                                                                            <label className="text-xs font-serif-title text-brand-cerulean font-bold flex items-center gap-1.5">
-                                                                                <FileText size={14} />
-                                                                                <span>NOTES / NỘI DUNG CHI TIẾT (PHẦN {pIdx + 1})</span>
-                                                                            </label>
-                                                                            <span className="text-[10px] font-sans text-brand-cerulean font-semibold uppercase">65% - 70%</span>
-                                                                        </div>
-
-                                                                        <div className="flex-1">
-                                                                            <WordRichTextEditor
-                                                                                value={part.note || ''}
-                                                                                onChange={html => handleUpdateContentItem(sIdx, pIdx, 'note', html)}
-                                                                                placeholder={`Soạn thảo nội dung ghi chép của Phần ${pIdx + 1} (Mục ${sIdx + 1})...`}
-                                                                                minHeight="180px"
-                                                                                maxHeight="340px"
-                                                                                compact={true}
-                                                                                hideImport={true}
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-
-                                                {/* ADD PART BUTTON INSIDE SECTION */}
-                                                <div className="p-2.5 bg-brand-cream/25 border-t border-brand-cerulean/20 flex justify-center">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleAddContentItem(sIdx)}
-                                                        className="px-3.5 py-1.5 bg-white hover:bg-brand-cream border border-brand-cerulean/30 hover:border-brand-jasper text-brand-cerulean hover:text-brand-jasper text-xs font-serif-title font-bold rounded-xs flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
-                                                    >
-                                                        <Plus size={13} />
-                                                        <span>+ Thêm phần nội dung & từ khóa vào Mục {sIdx + 1}</span>
-                                                    </button>
-                                                </div>
-
-                                                {/* PHẦN KẾT LUẬN & TIỂU KẾT SƯ PHẠM CỦA MỤC */}
-                                                <div className="border-t-2 border-brand-cerulean/25 bg-amber-50/50 p-3.5 sm:p-4 space-y-2">
-                                                    <div className="flex items-center justify-between">
-                                                        <label className="text-xs font-serif-title text-brand-jasper font-bold flex items-center gap-1.5 uppercase tracking-wide">
-                                                            <Sparkles size={14} className="text-brand-jasper" />
-                                                            <span>Phần kết luận & Tiểu kết sư phạm (Mục {sIdx + 1})</span>
-                                                        </label>
-                                                        <span className="text-[11px] font-sans text-gray-500 italic">Đúc kết cốt lõi rút ra từ mục {sIdx + 1}</span>
-                                                    </div>
-                                                    <textarea
-                                                        rows="2"
-                                                        className="input-editorial w-full resize-y text-xs sm:text-sm font-body leading-relaxed p-3 bg-white border border-brand-cerulean/25 rounded-xs shadow-inner"
-                                                        value={section.conclusion || ''}
-                                                        onChange={e => handleUpdateSection(sIdx, 'conclusion', e.target.value)}
-                                                        placeholder={`Nhập kết luận sư phạm, luận điểm đúc kết hoặc quy tắc cần ghi nhớ của Mục ${sIdx + 1}...`}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* In-between Add Section Button */}
-                                            {sIdx < totalSections - 1 && (
-                                                <div className="flex items-center justify-center py-1">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleAddSection(sIdx)}
-                                                        className="px-3 py-1 text-[11px] font-serif-title font-bold text-brand-cerulean/70 hover:text-brand-jasper border border-dashed border-brand-cerulean/25 hover:border-brand-jasper hover:bg-brand-cream/50 rounded-xs flex items-center gap-1 transition-all"
-                                                        title="Chèn thêm 1 mục vào vị trí này"
-                                                    >
-                                                        <Plus size={12} />
-                                                        <span>Chèn mục vào giữa đây</span>
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-
-                                {/* ADD NEW SECTION BOTTOM CTA */}
-                                <button
-                                    type="button"
-                                    onClick={() => handleAddSection()}
-                                    className="w-full py-3.5 px-4 border-2 border-dashed border-brand-cerulean/40 hover:border-brand-jasper hover:bg-brand-cream/40 text-brand-cerulean hover:text-brand-jasper font-serif-title font-bold text-sm sm:text-base flex items-center justify-center gap-2 rounded-xs shadow-xs transition-all group cursor-pointer"
-                                >
-                                    <div className="w-6 h-6 rounded-full bg-brand-cerulean/10 group-hover:bg-brand-jasper/10 flex items-center justify-center transition-colors">
-                                        <Plus size={16} className="text-brand-cerulean group-hover:text-brand-jasper group-hover:rotate-90 transition-all duration-200" />
-                                    </div>
-                                    <span>+ Thêm mục ghi chép mới (Mục {(logForm.sections?.length || 0) + 1})</span>
-                                </button>
-
-                                {/* BOTTOM CORNELL SUMMARY SECTION (FULL WIDTH) */}
-                                <div className="border border-brand-cerulean/30 rounded-xs overflow-hidden shadow-xs">
-                                    <div className="p-4 sm:p-5 bg-amber-50/50 border-brand-cerulean/25 space-y-2">
-                                        <div className="flex items-center justify-between">
-                                            <label className="text-sm font-serif-title text-brand-cerulean font-bold flex items-center gap-1.5">
-                                                <Sparkles size={16} className="text-brand-jasper" />
-                                                <span>TỔNG KẾT TOÀN BỘ BÀI HỌC (OVERALL SUMMARY)</span>
-                                            </label>
-                                            <span className="text-xs text-gray-500 font-sans italic">2 - 4 câu đúc kết</span>
-                                        </div>
-                                        <p className="text-xs font-sans text-gray-600 leading-relaxed">
-                                            Tóm lược toàn bộ bài học bằng chính ngôn từ súc tích của bạn ngay sau khi kết thúc buổi giảng để khắc sâu kiến thức.
-                                        </p>
-                                        <textarea
-                                            rows="4"
-                                            className="input-editorial w-full resize-y text-sm font-body leading-relaxed p-3.5 bg-white border border-brand-cerulean/30 rounded-xs shadow-inner"
-                                            value={logForm.summary}
-                                            onChange={e => setLogForm({ ...logForm, summary: e.target.value })}
-                                            placeholder="VD: Buổi học đúc kết 6 mức độ nhận thức theo thang Bloom và cách vận dụng vùng phát triển gần (ZPD) vào thiết kế hoạt động học tập. Điểm cốt lõi là giáo viên cần chuyển từ thuyết giảng sang đặt câu hỏi gợi mở để kích hoạt tư duy bậc cao của học sinh."
-                                        />
-                                    </div>
-                                </div>
+                    {/* CORNELL MULTI-SECTION SHEET */}
+                    <div className="space-y-4">
+                        {/* COLUMN HEADERS */}
+                        <div className="grid grid-cols-12 gap-3 px-3 py-1.5 bg-stone-50 border border-stone-200 rounded-xs text-xs font-serif-title font-bold">
+                            <div className="col-span-12 md:col-span-4 text-brand-jasper flex items-center gap-1">
+                                <Lightbulb size={13} />
+                                <span>GỢI NHỚ &amp; TỪ KHÓA (CUES ~35%)</span>
+                            </div>
+                            <div className="hidden md:flex md:col-span-8 text-brand-cerulean items-center gap-1">
+                                <FileText size={13} />
+                                <span>GHI CHÉP CHI TIẾT (NOTES ~65%)</span>
                             </div>
                         </div>
 
-                        {/* 3. HOMEWORK & ATTACHMENTS */}
-                        <div className="bg-white border-editorial p-6 shadow-editorial space-y-6">
-                            {/* Homework & Action items */}
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <label className="block text-sm font-serif-title text-brand-cerulean font-bold flex items-center gap-1.5">
-                                        <ListChecks size={16} className="text-brand-jasper" />
-                                        <span>Dặn dò & Việc cần làm trước buổi sau (Bài tập về nhà)</span>
-                                    </label>
-                                    <span className="text-xs text-gray-500 font-sans italic">Mỗi dòng là một việc cần làm</span>
+                        {/* LIST OF SECTIONS */}
+                        {(logForm.sections && logForm.sections.length > 0
+                            ? logForm.sections
+                            : [{ id: 'sec_1', title: '', cues: logForm.cues || '', note: logForm.content || '' }]
+                        ).map((section, sIdx) => {
+                            const totalSections = logForm.sections?.length || 1;
+                            return (
+                                <div key={section.id || sIdx} className="border border-stone-200 rounded-xs overflow-hidden bg-white shadow-2xs hover:border-stone-300 transition-all space-y-0">
+                                    {/* SECTION BAR */}
+                                    <div className="bg-stone-50/80 px-3 py-1.5 border-b border-stone-200 flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <span className="px-2 py-0.5 bg-brand-cerulean text-white font-serif-title font-bold text-xs rounded-2xs shrink-0">
+                                                Mục {sIdx + 1}
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={section.title || ''}
+                                                onChange={e => handleUpdateSection(sIdx, 'title', e.target.value)}
+                                                placeholder={`Tiêu đề mục ${sIdx + 1}...`}
+                                                className="w-full bg-transparent font-serif-title font-bold text-sm text-gray-800 placeholder:text-stone-400 focus:outline-none"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-0.5 shrink-0">
+                                            <button
+                                                type="button"
+                                                disabled={sIdx === 0}
+                                                onClick={() => handleMoveSection(sIdx, 'up')}
+                                                className={`p-1 rounded ${sIdx === 0 ? 'text-stone-300 cursor-not-allowed' : 'text-stone-500 hover:text-brand-cerulean hover:bg-stone-100'}`}
+                                                title="Di chuyển lên"
+                                            >
+                                                <ArrowUp size={13} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={sIdx === totalSections - 1}
+                                                onClick={() => handleMoveSection(sIdx, 'down')}
+                                                className={`p-1 rounded ${sIdx === totalSections - 1 ? 'text-stone-300 cursor-not-allowed' : 'text-stone-500 hover:text-brand-cerulean hover:bg-stone-100'}`}
+                                                title="Di chuyển xuống"
+                                            >
+                                                <ArrowDown size={13} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDuplicateSection(sIdx)}
+                                                className="p-1 text-stone-500 hover:text-brand-cerulean hover:bg-stone-100 rounded"
+                                                title="Nhân bản mục"
+                                            >
+                                                <Copy size={13} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={totalSections <= 1}
+                                                onClick={() => handleRemoveSection(sIdx)}
+                                                className={`p-1 rounded ${totalSections <= 1 ? 'text-stone-300 cursor-not-allowed' : 'text-stone-400 hover:text-red-600 hover:bg-red-50'}`}
+                                                title="Xóa mục"
+                                            >
+                                                <Trash2 size={13} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* PARTS IN SECTION */}
+                                    <div className="divide-y divide-stone-200">
+                                        {getSectionItems(section).map((part, pIdx) => {
+                                            const secParts = getSectionItems(section);
+                                            return (
+                                                <div key={part.id || pIdx} className="space-y-0">
+                                                    {secParts.length > 1 && (
+                                                        <div className="bg-stone-50/40 px-3 py-1 border-b border-stone-200/60 flex items-center justify-between text-xs">
+                                                            <span className="font-serif-title font-semibold text-brand-cerulean text-[11px]">
+                                                                Phần {pIdx + 1} &bull; Từ khóa &amp; Nội dung riêng
+                                                            </span>
+                                                            <div className="flex items-center gap-0.5">
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={pIdx === 0}
+                                                                    onClick={() => handleMoveContentItem(sIdx, pIdx, 'up')}
+                                                                    className={`p-0.5 rounded ${pIdx === 0 ? 'text-stone-300' : 'text-stone-400 hover:text-brand-cerulean'}`}
+                                                                >
+                                                                    <ArrowUp size={11} />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={pIdx === secParts.length - 1}
+                                                                    onClick={() => handleMoveContentItem(sIdx, pIdx, 'down')}
+                                                                    className={`p-0.5 rounded ${pIdx === secParts.length - 1 ? 'text-stone-300' : 'text-stone-400 hover:text-brand-cerulean'}`}
+                                                                >
+                                                                    <ArrowDown size={11} />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={secParts.length <= 1}
+                                                                    onClick={() => handleRemoveContentItem(sIdx, pIdx)}
+                                                                    className={`p-0.5 rounded ${secParts.length <= 1 ? 'text-stone-300' : 'text-stone-400 hover:text-red-600'}`}
+                                                                >
+                                                                    <Trash2 size={11} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-stone-200">
+                                                        {/* CUES */}
+                                                        <div className="md:col-span-4 p-3 bg-stone-50/30 flex flex-col space-y-1.5">
+                                                            <textarea
+                                                                rows="5"
+                                                                className="w-full text-xs sm:text-sm font-body leading-relaxed p-2.5 bg-white border border-stone-200 rounded-xs focus:border-brand-cerulean focus:outline-none resize-y editor-scrollbar"
+                                                                style={{ minHeight: '140px' }}
+                                                                value={part.cues || ''}
+                                                                onChange={e => handleUpdateContentItem(sIdx, pIdx, 'cues', e.target.value)}
+                                                                placeholder={`• Thuật ngữ / Từ khóa chính\n• Câu hỏi tự vấn (Recite)...`}
+                                                            />
+                                                        </div>
+                                                        {/* NOTES */}
+                                                        <div className="md:col-span-8 p-3 bg-white">
+                                                            <WordRichTextEditor
+                                                                value={part.note || ''}
+                                                                onChange={html => handleUpdateContentItem(sIdx, pIdx, 'note', html)}
+                                                                placeholder={`Ghi chép chi tiết Phần ${pIdx + 1}...`}
+                                                                minHeight="140px"
+                                                                maxHeight="320px"
+                                                                compact={true}
+                                                                hideImport={true}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* ADD PART BUTTON */}
+                                    <div className="px-3 py-1.5 bg-stone-50/40 border-t border-stone-200 flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleAddContentItem(sIdx)}
+                                            className="text-[11px] font-serif-title font-semibold text-brand-cerulean hover:text-brand-jasper flex items-center gap-1 px-2 py-0.5 rounded hover:bg-white transition-colors"
+                                        >
+                                            <Plus size={11} />
+                                            <span>Thêm phần nội dung &amp; từ khóa riêng</span>
+                                        </button>
+                                    </div>
+
+                                    {/* SECTION CONCLUSION */}
+                                    <div className="p-3 bg-amber-50/40 border-t border-amber-200/60 space-y-1">
+                                        <label className="text-xs font-serif-title font-bold text-amber-900 flex items-center gap-1.5 uppercase tracking-wide">
+                                            <Sparkles size={13} className="text-amber-600" />
+                                            <span>Kết luận Mục {sIdx + 1}:</span>
+                                        </label>
+                                        <textarea
+                                            rows="2"
+                                            className="w-full text-xs sm:text-sm font-body leading-relaxed p-2 bg-white border border-amber-200 rounded-xs focus:border-amber-400 focus:outline-none resize-y"
+                                            value={section.conclusion || ''}
+                                            onChange={e => handleUpdateSection(sIdx, 'conclusion', e.target.value)}
+                                            placeholder={`Đúc kết sư phạm, luận điểm cốt lõi của Mục ${sIdx + 1}...`}
+                                        />
+                                    </div>
                                 </div>
+                            );
+                        })}
+
+                        {/* ADD SECTION BUTTON */}
+                        <button
+                            type="button"
+                            onClick={() => handleAddSection()}
+                            className="w-full py-2.5 px-3 border border-dashed border-stone-300 hover:border-brand-cerulean text-stone-600 hover:text-brand-cerulean text-xs font-serif-title font-bold rounded-xs flex items-center justify-center gap-1.5 transition-colors"
+                        >
+                            <Plus size={14} />
+                            <span>Thêm mục ghi chép mới (Mục {(logForm.sections?.length || 0) + 1})</span>
+                        </button>
+                    </div>
+
+                    {/* 3. OVERALL SUMMARY */}
+                    <div className="border border-stone-200 rounded-xs overflow-hidden bg-white">
+                        <div className="p-4 bg-brand-cream/30 space-y-1.5">
+                            <label className="text-xs font-serif-title font-bold text-brand-cerulean flex items-center gap-1.5 uppercase tracking-wide">
+                                <Sparkles size={14} className="text-brand-jasper" />
+                                <span>Summary / Tóm tắt cốt lõi bài học:</span>
+                            </label>
+                            <p className="text-[11px] text-stone-500 font-sans">
+                                Đúc kết ngắn gọn toàn bộ buổi học bằng chính ngôn từ của bạn ngay sau khi kết thúc buổi học.
+                            </p>
+                            <textarea
+                                rows="3"
+                                className="w-full text-xs sm:text-sm font-body leading-relaxed p-2.5 bg-white border border-stone-200 rounded-xs focus:border-brand-cerulean focus:outline-none resize-y"
+                                value={logForm.summary}
+                                onChange={e => setLogForm({ ...logForm, summary: e.target.value })}
+                                placeholder="VD: Buổi học đúc kết các quy luật nhận thức..."
+                            />
+                        </div>
+                    </div>
+
+                    {/* 4. HOMEWORK & ATTACHMENTS */}
+                    <div className="border border-stone-200 rounded-xs p-4 bg-white space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Homework */}
+                            <div className="space-y-1">
+                                <label className="text-xs font-serif-title font-bold text-gray-800 flex items-center gap-1">
+                                    <ListChecks size={13} className="text-brand-jasper" />
+                                    <span>Việc cần làm / Bài tập về nhà</span>
+                                </label>
                                 <textarea
-                                    rows="4"
-                                    className="input-editorial w-full resize-y text-sm font-sans p-3 bg-brand-cream/30 border border-brand-cerulean/30 rounded-xs"
+                                    rows="3"
+                                    className="w-full text-xs font-sans p-2 bg-stone-50 border border-stone-200 rounded-xs focus:border-brand-cerulean focus:outline-none resize-y"
                                     value={logForm.homework}
                                     onChange={e => setLogForm({ ...logForm, homework: e.target.value })}
-                                    placeholder={`- Đọc trước chương 3: Động lực học tập (trang 45 - 60)
-- Soạn đề cương bài tập nhóm số 1 (Hạn nộp: Thứ 6 tuần tới)
-- Chuẩn bị 2 câu hỏi thảo luận về kế hoạch bài dạy theo Công văn 5555`}
+                                    placeholder="- Đọc trước tài liệu&#10;- Hoàn thành bài tập..."
                                 />
-
-                                {/* Live preview of checklist */}
-                                {parseHomeworkItems(logForm.homework).length > 0 && (
-                                    <div className="p-3 bg-amber-50/60 border border-amber-200/80 rounded space-y-1.5 text-xs text-gray-800">
-                                        <span className="font-serif-title font-bold text-amber-900 block">Xem trước danh sách việc cần làm:</span>
-                                        {parseHomeworkItems(logForm.homework).map((hw, idx) => (
-                                            <div key={idx} className="flex items-center gap-2">
-                                                <Square size={13} className="text-amber-600" />
-                                                <span>{hw}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
 
                             {/* Attachments */}
-                            <div className="pt-4 border-t border-brand-cerulean/15">
-                                <label className="block text-sm font-serif-title text-brand-cerulean mb-1 font-semibold flex items-center gap-1">
-                                    <FolderOpen size={14} className="text-brand-jasper" />
-                                    <span>Đường dẫn tài liệu / Slide bài học trực tuyến (Google Drive / OneDrive / LMS)</span>
+                            <div className="space-y-1">
+                                <label className="text-xs font-serif-title font-bold text-gray-800 flex items-center gap-1">
+                                    <FolderOpen size={13} className="text-brand-jasper" />
+                                    <span>Link slide / Tài liệu đính kèm</span>
                                 </label>
                                 <input
                                     type="url"
-                                    className="input-editorial w-full text-sm font-mono"
+                                    className="input-editorial w-full text-xs font-mono"
                                     value={logForm.attachments}
                                     onChange={e => setLogForm({ ...logForm, attachments: e.target.value })}
-                                    placeholder="https://drive.google.com/file/d/..."
+                                    placeholder="https://drive.google.com/..."
                                 />
+                                {logForm.attachments && (
+                                    <a
+                                        href={logForm.attachments}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 text-[11px] text-brand-jasper hover:underline pt-0.5"
+                                    >
+                                        Kiểm tra đường dẫn <ExternalLink size={10} />
+                                    </a>
+                                )}
                             </div>
                         </div>
                     </div>
-
-                    {/* RIGHT SIDEBAR: REFERENCE SLIDES & CORNELL CHEATSHEET */}
-                    {showReferenceSidebar && (
-                        <aside className="lg:col-span-4 space-y-6 sticky top-20">
-                            {/* MODULE SLIDES / RESOURCES VIEWER */}
-                            <div className="bg-white border-editorial p-5 shadow-editorial space-y-4">
-                                <div className="flex items-center justify-between pb-2 border-b border-brand-cerulean/20">
-                                    <h4 className="font-serif-title text-brand-cerulean font-bold text-sm flex items-center gap-1.5">
-                                        <FolderOpen size={16} className="text-brand-jasper" />
-                                        <span>Slide & Tài liệu môn học này</span>
-                                    </h4>
-                                    <span className="text-xs px-2 py-0.5 bg-brand-cerulean/10 text-brand-cerulean font-bold rounded-full">
-                                        {moduleResources.length}
-                                    </span>
-                                </div>
-
-                                <div className="text-xs font-serif-title text-gray-500">
-                                    Môn: <strong className="text-brand-cerulean">{currentEditorModule ? `${currentEditorModule.code} - ${currentEditorModule.name}` : 'Chưa chọn'}</strong>
-                                </div>
-
-                                {moduleResources.length > 0 ? (
-                                    <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
-                                        {moduleResources.map(r => (
-                                            <div key={r.id} className="p-3 bg-brand-cream/40 border border-brand-cerulean/20 rounded-xs space-y-1 hover:border-brand-jasper transition-colors">
-                                                <div className="text-xs font-serif-title font-bold text-brand-cerulean truncate" title={r.title}>
-                                                    {r.title}
-                                                </div>
-                                                <div className="flex items-center justify-between gap-2 text-[11px] font-sans">
-                                                    <span className="px-1.5 py-0.2 bg-brand-cream border border-brand-cerulean/30 text-gray-600 rounded">
-                                                        {r.type || 'Tài liệu'}
-                                                    </span>
-                                                    <a
-                                                        href={r.url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="text-brand-jasper hover:underline font-bold flex items-center gap-0.5"
-                                                    >
-                                                        Mở link <ExternalLink size={10} />
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="p-4 bg-brand-cream/30 border border-dashed border-brand-cerulean/20 text-center text-xs text-gray-500 space-y-1">
-                                        <p>Chưa có slide / tài liệu nào cho môn này.</p>
-                                        <p className="text-[11px] text-gray-400">Bạn có thể thêm ở Tab "Tài liệu học phần".</p>
-                                    </div>
-                                )}
-
-                                <div className="pt-2 border-t border-brand-cerulean/10">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (window.confirm('Chuyển sang Tab Tài liệu môn để thêm slide mới? (Bản nháp bài học hiện tại vẫn được bảo lưu tự động)')) {
-                                                setEditorMode(false);
-                                                setActiveTab('resources');
-                                            }
-                                        }}
-                                        className="w-full py-1.5 text-xs font-serif-title font-bold text-brand-cerulean border border-brand-cerulean/30 hover:bg-brand-cream transition-colors text-center block"
-                                    >
-                                        Quản lý tất cả học liệu &rarr;
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* CORNELL 5R PEDAGOGICAL CHEATSHEET */}
-                            <div className="bg-brand-cream border border-brand-cerulean/30 p-5 rounded-xs space-y-3 shadow-xs">
-                                <h4 className="font-serif-title text-brand-cerulean font-bold text-sm flex items-center gap-1.5">
-                                    <Bookmark size={15} className="text-brand-jasper" />
-                                    <span>Quy trình ghi chép Cornell 5R</span>
-                                </h4>
-                                <ul className="text-xs font-sans text-gray-700 space-y-2 list-none pl-0 leading-relaxed">
-                                    <li className="flex items-start gap-1.5">
-                                        <span className="font-bold text-brand-cerulean shrink-0">1. Record (Ghi chép):</span>
-                                        <span>Trong buổi học, ghi luận điểm chính, định nghĩa, ví dụ vào cột Notes bên phải.</span>
-                                    </li>
-                                    <li className="flex items-start gap-1.5">
-                                        <span className="font-bold text-brand-cerulean shrink-0">2. Reduce (Thu gọn):</span>
-                                        <span>Sau buổi học, cô đọng thành từ khóa và câu hỏi ôn tập vào cột Cues bên trái.</span>
-                                    </li>
-                                    <li className="flex items-start gap-1.5">
-                                        <span className="font-bold text-brand-cerulean shrink-0">3. Recite (Tự vấn):</span>
-                                        <span>Che cột Notes, nhìn vào câu hỏi ở cột Cues để tự trả lời và tái hiện kiến thức.</span>
-                                    </li>
-                                    <li className="flex items-start gap-1.5">
-                                        <span className="font-bold text-brand-cerulean shrink-0">4. Reflect (Phản tư):</span>
-                                        <span>Liên hệ kiến thức với phương pháp sư phạm và bối cảnh học sinh thực tế.</span>
-                                    </li>
-                                    <li className="flex items-start gap-1.5">
-                                        <span className="font-bold text-brand-cerulean shrink-0">5. Review (Tóm tắt):</span>
-                                        <span>Viết 2-4 câu đúc kết cốt lõi vào khung Summary ở chân trang.</span>
-                                    </li>
-                                </ul>
-                            </div>
-                        </aside>
-                    )}
                 </div>
 
-                {/* BOTTOM IN-FLOW ACTION CARD */}
-                <div className="bg-white border-editorial p-5 shadow-editorial flex flex-col sm:flex-row justify-between items-center gap-4 mt-8">
-                    <div className="text-xs text-gray-600 font-sans">
-                        <span>Đang soạn: <strong className="text-brand-cerulean font-serif-title text-sm">{logForm.title || 'Chưa có tiêu đề'}</strong></span>
-                        {lastSavedDraftTime && (
-                            <span className="text-emerald-700 font-semibold ml-2">&bull; Bản nháp an toàn trong bộ nhớ máy</span>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                {/* BOTTOM ACTION BAR */}
+                <div className="flex items-center justify-between text-xs pt-1 px-1">
+                    <span className="text-stone-500 truncate max-w-xs">
+                        Đang soạn: <strong>{logForm.title || 'Chưa có tiêu đề'}</strong>
+                    </span>
+                    <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={handleExitEditor}
-                            className="px-4 py-2 text-xs font-serif-title text-gray-600 hover:text-brand-jasper transition-colors"
+                            className="px-3 py-1.5 text-xs font-serif-title text-stone-600 hover:text-stone-800 transition-colors"
                         >
-                            Thoát ra danh sách (Đã lưu nháp)
+                            Thoát (Đã lưu nháp)
                         </button>
                         <button
                             type="button"
                             onClick={handleSaveLog}
-                            className="px-6 py-2.5 bg-brand-cerulean text-white font-serif-title text-sm font-bold shadow-editorial hover:bg-brand-cerulean/90 transition-all flex items-center gap-2"
+                            className="px-4 py-1.5 bg-brand-cerulean text-white font-serif-title font-bold text-xs rounded-xs hover:bg-brand-cerulean/90 shadow-2xs flex items-center gap-1.5 transition-all"
                         >
-                            <Save size={15} />
-                            <span>{editingLogId ? 'Lưu Thay Đổi Bài Học' : 'Lưu Vào Sổ Bài Học'}</span>
+                            <Save size={13} />
+                            <span>{editingLogId ? 'Lưu thay đổi' : 'Lưu bài học'}</span>
                         </button>
                     </div>
                 </div>
@@ -2032,112 +1858,99 @@ export const ResourcesStudyLogView = ({
                         </div>
                     )}
 
-                    {/* TOOLBAR: PROGRAM FILTER, MODULE FILTER, SEARCH & FULL-PAGE NEW NOTE BUTTON */}
-                    <div className="bg-white border-editorial p-3.5 sm:p-5 shadow-editorial flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 flex-1">
-                            {/* Program filter (nếu có > 1 CTĐT đang học) */}
-                            {activePrograms.length > 1 && (
+                    {/* MINIMALIST TOOLBAR: FILTERS, SEARCH & NEW NOTE CTA */}
+                    <div className="bg-white border border-stone-200 rounded-xs p-3 sm:p-3.5 shadow-2xs space-y-2.5">
+                        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+                                {/* Program filter (nếu có > 1 CTĐT đang học) */}
+                                {activePrograms.length > 1 && (
+                                    <div className="w-full sm:w-48">
+                                        <EditorialSelect
+                                            label="CTĐT"
+                                            value={selectedProgramFilter}
+                                            onChange={val => {
+                                                setSelectedProgramFilter(val);
+                                                setSelectedModuleFilter('all');
+                                            }}
+                                            options={programOptions}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Module filter */}
                                 <div className="w-full sm:w-56">
                                     <EditorialSelect
-                                        label="Lọc theo CTĐT đang học"
-                                        value={selectedProgramFilter}
-                                        onChange={val => {
-                                            setSelectedProgramFilter(val);
-                                            setSelectedModuleFilter('all');
-                                        }}
-                                        options={programOptions}
+                                        label="Học phần"
+                                        value={selectedModuleFilter}
+                                        onChange={setSelectedModuleFilter}
+                                        options={filterModuleOptions}
                                     />
                                 </div>
-                            )}
 
-                            {/* Module filter */}
-                            <div className="w-full sm:w-60">
-                                <EditorialSelect
-                                    label="Lọc theo Học phần"
-                                    value={selectedModuleFilter}
-                                    onChange={setSelectedModuleFilter}
-                                    options={filterModuleOptions}
-                                />
+                                {/* Search input */}
+                                <div className="flex-1 relative">
+                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={e => setSearchQuery(e.target.value)}
+                                        placeholder="Tìm theo tên bài, từ khóa, tóm tắt..."
+                                        className="input-editorial w-full pl-9 pr-8 text-xs py-1.5"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery('')}
+                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-0.5"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
-                            {/* Search input */}
-                            <div className="flex-1 relative">
-                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={e => setSearchQuery(e.target.value)}
-                                    placeholder="Tìm theo tên bài, từ khóa, câu hỏi ôn tập, tóm tắt..."
-                                    className="input-editorial w-full pl-10 pr-9 text-xs sm:text-sm"
-                                />
-                                {searchQuery && (
-                                    <button
-                                        onClick={() => setSearchQuery('')}
-                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
-                                    >
-                                        <X size={14} />
-                                    </button>
+                            {/* Create New Study Log Button */}
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    onClick={() => handleOpenAddLog(selectedModuleFilter !== 'all' ? selectedModuleFilter : null)}
+                                    className="w-full sm:w-auto px-3.5 py-1.5 bg-brand-cerulean text-white font-serif-title font-bold text-xs rounded-xs hover:bg-brand-cerulean/90 shadow-2xs transition-all flex items-center justify-center gap-1.5 group"
+                                >
+                                    <Plus size={14} className="group-hover:rotate-90 transition-transform duration-200" />
+                                    <span>Tạo bài ghi mới</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* MINIMALIST SUMMARY STRIP */}
+                        <div className="flex items-center justify-between text-xs text-stone-500 pt-2 border-t border-stone-100 flex-wrap gap-2">
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <span className="inline-flex items-center gap-1 font-medium text-stone-700">
+                                    <BookOpen size={12} className="text-brand-cerulean" />
+                                    <span>{studyLogs.length} bài ghi</span>
+                                </span>
+                                <span className="text-stone-300">&bull;</span>
+                                <span className="inline-flex items-center gap-1 font-medium text-stone-700">
+                                    <GraduationCap size={12} className="text-brand-jasper" />
+                                    <span>{availableModules.length} môn học</span>
+                                </span>
+                                {selectedModuleFilter !== 'all' && (
+                                    <>
+                                        <span className="text-stone-300">&bull;</span>
+                                        <span className="text-brand-cerulean font-medium">
+                                            Hiển thị {filteredLogs.length} bài
+                                        </span>
+                                    </>
                                 )}
                             </div>
-                        </div>
 
-                        {/* CTA: Full-page note editor button */}
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => handleOpenAddLog()}
-                                className="w-full md:w-auto px-4 py-2.5 bg-brand-cerulean text-white font-serif-title font-bold text-xs sm:text-sm shadow-editorial hover:bg-brand-cerulean/90 transition-all flex items-center justify-center gap-2 shrink-0 group"
-                            >
-                                <Plus size={16} className="group-hover:rotate-90 transition-transform duration-200" />
-                                <span>Ghi chép Cornell mới</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* STATS STRIP */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
-                        <div className="bg-white border-editorial p-3 sm:p-4 shadow-editorial flex items-center gap-2.5 sm:gap-3">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-brand-cerulean/10 text-brand-cerulean flex items-center justify-center shrink-0">
-                                <BookOpen size={18} />
-                            </div>
-                            <div>
-                                <span className="text-[10px] sm:text-xs uppercase text-gray-500 font-bold block">Tổng số buổi</span>
-                                <h4 className="text-lg sm:text-2xl font-serif-title font-bold text-brand-cerulean">{studyLogs.length} buổi</h4>
-                            </div>
-                        </div>
-
-                        <div className="bg-white border-editorial p-4 shadow-editorial flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-brand-cream text-brand-jasper flex items-center justify-center shrink-0 border border-brand-jasper/30">
-                                <GraduationCap size={20} />
-                            </div>
-                            <div>
-                                <span className="text-xs uppercase text-gray-500 font-bold block">Học phần khả dụng</span>
-                                <h4 className="text-2xl font-serif-title font-bold text-brand-jasper">{availableModules.length} môn</h4>
-                            </div>
-                        </div>
-
-                        <div className="bg-white border-editorial p-4 shadow-editorial flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-brand-cerulean/10 text-brand-cerulean flex items-center justify-center shrink-0">
-                                <ListChecks size={20} />
-                            </div>
-                            <div>
-                                <span className="text-xs uppercase text-gray-500 font-bold block">Đang xem theo lọc</span>
-                                <h4 className="text-2xl font-serif-title font-bold text-brand-cerulean">{filteredLogs.length} bài ghi</h4>
-                            </div>
-                        </div>
-
-                        <div className="bg-white border-editorial p-4 shadow-editorial flex items-center justify-between">
-                            <div>
-                                <span className="text-xs uppercase text-gray-500 font-bold block">Thời khóa biểu</span>
-                                <span className="text-xs font-serif-title text-brand-cerulean mt-0.5 block">Đồng bộ lịch ca học</span>
-                            </div>
                             {navigate && (
                                 <button
                                     type="button"
                                     onClick={() => navigate('calendar')}
-                                    className="p-2 text-brand-jasper hover:bg-brand-cream border border-brand-jasper/30 rounded transition-colors"
-                                    title="Chuyển đến Lịch biểu"
+                                    className="text-[11px] font-sans text-stone-500 hover:text-brand-cerulean flex items-center gap-1 transition-colors"
+                                    title="Chuyển đến Lịch biểu ca học"
                                 >
-                                    <Calendar size={18} />
+                                    <Calendar size={11} className="text-brand-jasper" />
+                                    <span>Thời khóa biểu</span>
                                 </button>
                             )}
                         </div>
@@ -2259,11 +2072,7 @@ export const ResourcesStudyLogView = ({
 
                                                 <button
                                                     type="button"
-                                                    onClick={() => {
-                                                        if (window.confirm(`Bạn có chắc chắn muốn xóa bài ghi chép: "${log.title}"?`)) {
-                                                            onDeleteStudyLog(log.id);
-                                                        }
-                                                    }}
+                                                    onClick={() => setLogToDelete(log)}
                                                     className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xs transition-colors"
                                                     title="Xóa bài ghi chép"
                                                 >
@@ -2560,19 +2369,19 @@ export const ResourcesStudyLogView = ({
                                         Cornell Notes
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-2 flex-wrap">
+                                <div className="flex items-center gap-1.5 flex-wrap">
                                     <button
                                         type="button"
                                         onClick={() => setIsReciteMode(!isReciteMode)}
-                                        className={`px-3 py-1 text-xs font-serif-title font-bold rounded flex items-center gap-1.5 transition-all ${
+                                        className={`px-2.5 py-1 text-xs font-serif-title font-bold rounded-xs flex items-center gap-1 transition-all ${
                                             isReciteMode
-                                                ? 'bg-brand-jasper text-white shadow-xs'
+                                                ? 'bg-brand-jasper text-white shadow-2xs'
                                                 : 'text-brand-jasper bg-amber-50 border border-brand-jasper/30 hover:bg-amber-100'
                                         }`}
                                         title="Che cột ghi chép để tự ôn tập theo cột gợi ý bên trái"
                                     >
-                                        {isReciteMode ? <Eye size={13} /> : <EyeOff size={13} />}
-                                        <span>{isReciteMode ? 'Hiện tất cả ghi chép' : 'Chế độ ôn tập Recite'}</span>
+                                        {isReciteMode ? <Eye size={12} /> : <EyeOff size={12} />}
+                                        <span>{isReciteMode ? 'Hiện ghi chép' : 'Chế độ Recite'}</span>
                                     </button>
                                     <button
                                         type="button"
@@ -2581,16 +2390,27 @@ export const ResourcesStudyLogView = ({
                                             setViewingLog(null);
                                             handleOpenEditLog(target);
                                         }}
-                                        className="px-3 py-1 text-xs font-serif-title font-bold text-brand-cerulean border border-brand-cerulean/30 hover:bg-brand-cerulean hover:text-white rounded flex items-center gap-1"
+                                        className="px-2.5 py-1 text-xs font-serif-title font-medium text-brand-cerulean border border-brand-cerulean/30 hover:bg-brand-cerulean hover:text-white rounded-xs flex items-center gap-1 transition-colors"
                                     >
-                                        <Pencil size={13} /> Sửa bài học này
+                                        <Pencil size={12} />
+                                        <span>Sửa</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setLogToDelete(viewingLog)}
+                                        className="px-2.5 py-1 text-xs font-serif-title font-medium text-stone-500 hover:text-red-600 hover:bg-red-50 border border-stone-200 rounded-xs flex items-center gap-1 transition-colors"
+                                        title="Xóa bài ghi này"
+                                    >
+                                        <Trash2 size={12} />
+                                        <span>Xóa</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => window.print()}
-                                        className="px-3 py-1 text-xs font-serif-title font-bold text-brand-jasper border border-brand-jasper/40 hover:bg-brand-cream rounded flex items-center gap-1.5"
+                                        className="px-2.5 py-1 text-xs font-serif-title font-medium text-brand-jasper border border-brand-jasper/30 hover:bg-brand-cream rounded-xs flex items-center gap-1 transition-colors"
                                     >
-                                        <Printer size={14} /> In phiếu Cornell
+                                        <Printer size={12} />
+                                        <span>In</span>
                                     </button>
                                 </div>
                             </div>
@@ -2871,6 +2691,55 @@ export const ResourcesStudyLogView = ({
                     );
                 })()}
             </Modal>
+
+            {/* MINIMALIST STUDY LOG DELETE CONFIRMATION MODAL */}
+            {logToDelete && (
+                <Modal
+                    isOpen={!!logToDelete}
+                    onClose={() => setLogToDelete(null)}
+                    title="Xác nhận xóa bài ghi"
+                    maxWidth="max-w-md"
+                >
+                    <div className="space-y-3.5 pt-1">
+                        <p className="text-xs sm:text-sm text-gray-700">
+                            Bạn có chắc chắn muốn xóa bài ghi chép này khỏi sổ không?
+                        </p>
+                        <div className="p-3 bg-stone-50 border border-stone-200 rounded-xs space-y-1">
+                            <span className="text-[11px] font-serif-title font-bold text-brand-jasper block">
+                                Buổi {logToDelete.sessionNumber || '01'} &bull; {logToDelete.date}
+                            </span>
+                            <p className="text-sm font-serif-title font-bold text-gray-900 leading-snug">
+                                {logToDelete.title}
+                            </p>
+                        </div>
+                        <p className="text-xs text-stone-500 font-sans">
+                            Hành động này không thể hoàn tác. Toàn bộ nội dung ghi chép và từ khóa sẽ bị xóa vĩnh viễn.
+                        </p>
+                        <div className="flex items-center justify-end gap-2 pt-2.5 border-t border-stone-200">
+                            <button
+                                type="button"
+                                onClick={() => setLogToDelete(null)}
+                                className="px-3 py-1.5 text-xs font-serif-title font-medium text-stone-600 hover:bg-stone-100 rounded-xs transition-colors"
+                            >
+                                Hủy bỏ
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    onDeleteStudyLog(logToDelete.id);
+                                    if (viewingLog?.id === logToDelete.id) {
+                                        setViewingLog(null);
+                                    }
+                                    setLogToDelete(null);
+                                }}
+                                className="px-3.5 py-1.5 text-xs font-serif-title font-bold text-white bg-red-600 hover:bg-red-700 rounded-xs transition-colors shadow-2xs"
+                            >
+                                Xác nhận xóa
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
 
             {/* RESOURCE CRUD MODAL (THÊM / SỬA TÀI LIỆU HỌC PHẦN) */}
             <Modal
