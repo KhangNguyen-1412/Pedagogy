@@ -168,16 +168,41 @@ export const ResourcesStudyLogView = ({
     // Reading Focus Modal State
     const [viewingLog, setViewingLog] = useState(null);
 
-    // Helper to create a new empty Cornell section
-    const createNewSection = (title = '', cues = '', note = '', conclusion = '') => ({
-        id: 'sec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
-        title,
+    // Helper to create a new content item (Phần nội dung có từ khóa riêng)
+    const createContentItem = (cues = '', note = '') => ({
+        id: 'part_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
         cues,
-        note,
-        conclusion
+        note
     });
 
-    // Initial empty log form (Cornell structure with per-section Cues, Notes & Conclusion)
+    // Helper to extract items from a section with full backward compatibility
+    const getSectionItems = (sec) => {
+        if (Array.isArray(sec?.items) && sec.items.length > 0) {
+            return sec.items;
+        }
+        return [{
+            id: 'part_' + (sec?.id || '1') + '_0',
+            cues: sec?.cues || '',
+            note: sec?.note || sec?.content || ''
+        }];
+    };
+
+    // Helper to create a new empty Cornell section
+    const createNewSection = (title = '', cues = '', note = '', conclusion = '', items = null) => {
+        const initialItems = (Array.isArray(items) && items.length > 0)
+            ? items
+            : [createContentItem(cues, note)];
+        return {
+            id: 'sec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+            title,
+            cues,
+            note,
+            conclusion,
+            items: initialItems
+        };
+    };
+
+    // Initial empty log form (Cornell structure with per-section Cues, Notes & Conclusion, and per-content-part Cues & Notes)
     const initialLogForm = {
         programId: activePrograms[0]?.id || '',
         moduleId: availableModules[0]?.id || allActiveModules[0]?.id || '',
@@ -195,7 +220,14 @@ export const ResourcesStudyLogView = ({
                 title: '',
                 cues: '',
                 note: '',
-                conclusion: ''
+                conclusion: '',
+                items: [
+                    {
+                        id: 'part_1_1',
+                        cues: '',
+                        note: ''
+                    }
+                ]
             }
         ],
         summary: '',     // Khung Tóm tắt / Summary
@@ -453,20 +485,33 @@ export const ResourcesStudyLogView = ({
 
         let parsedSections = [];
         if (Array.isArray(log.sections) && log.sections.length > 0) {
-            parsedSections = log.sections.map((s, idx) => ({
-                id: s.id || `sec_${Date.now()}_${idx}`,
-                title: s.title || '',
-                cues: s.cues || '',
-                note: s.note || s.content || '',
-                conclusion: s.conclusion || ''
-            }));
+            parsedSections = log.sections.map((s, idx) => {
+                const items = getSectionItems(s).map((it, pIdx) => ({
+                    id: it.id || `part_${s.id || idx}_${pIdx}`,
+                    cues: it.cues || '',
+                    note: it.note || it.content || ''
+                }));
+                return {
+                    id: s.id || `sec_${Date.now()}_${idx}`,
+                    title: s.title || '',
+                    cues: s.cues || '',
+                    note: s.note || s.content || '',
+                    conclusion: s.conclusion || '',
+                    items
+                };
+            });
         } else if (log.content || log.cues) {
             parsedSections = [{
                 id: `sec_${Date.now()}`,
                 title: '',
                 cues: log.cues || '',
                 note: log.content || '',
-                conclusion: ''
+                conclusion: '',
+                items: [{
+                    id: `part_${Date.now()}_0`,
+                    cues: log.cues || '',
+                    note: log.content || ''
+                }]
             }];
         } else {
             parsedSections = [{
@@ -474,7 +519,12 @@ export const ResourcesStudyLogView = ({
                 title: '',
                 cues: '',
                 note: '',
-                conclusion: ''
+                conclusion: '',
+                items: [{
+                    id: `part_${Date.now()}_0`,
+                    cues: '',
+                    note: ''
+                }]
             }];
         }
 
@@ -516,8 +566,22 @@ export const ResourcesStudyLogView = ({
                 title: '',
                 cues: draftFormData.cues || '',
                 note: draftFormData.content || '',
-                conclusion: ''
+                conclusion: '',
+                items: [{
+                    id: 'part_' + Date.now() + '_0',
+                    cues: draftFormData.cues || '',
+                    note: draftFormData.content || ''
+                }]
             }];
+        } else {
+            sections = sections.map((s, idx) => ({
+                ...s,
+                items: getSectionItems(s).map((it, pIdx) => ({
+                    id: it.id || `part_${s.id || idx}_${pIdx}`,
+                    cues: it.cues || '',
+                    note: it.note || it.content || ''
+                }))
+            }));
         }
         setLogForm({ ...draftFormData, sections });
         setActiveTab('logs');
@@ -544,17 +608,11 @@ export const ResourcesStudyLogView = ({
 
     // Section manipulation handlers
     const handleAddSection = (afterIndex = null) => {
-        const newSection = {
-            id: 'sec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-            title: '',
-            cues: '',
-            note: '',
-            conclusion: ''
-        };
+        const newSection = createNewSection();
         setLogForm(prev => {
             const currentSections = (prev.sections && prev.sections.length > 0)
                 ? [...prev.sections]
-                : [{ id: 'sec_1', title: '', cues: prev.cues || '', note: prev.content || '', conclusion: '' }];
+                : [createNewSection('', prev.cues || '', prev.content || '', '')];
 
             if (afterIndex !== null && afterIndex >= 0) {
                 currentSections.splice(afterIndex + 1, 0, newSection);
@@ -565,11 +623,90 @@ export const ResourcesStudyLogView = ({
         });
     };
 
+    // Part / Content item manipulation handlers within a section
+    const handleAddContentItem = (sectionIndex, afterItemIndex = null) => {
+        setLogForm(prev => {
+            const sections = [...(prev.sections || [])];
+            if (!sections[sectionIndex]) return prev;
+            const currentItems = [...getSectionItems(sections[sectionIndex])];
+            const newItem = createContentItem();
+            if (afterItemIndex !== null && afterItemIndex >= 0) {
+                currentItems.splice(afterItemIndex + 1, 0, newItem);
+            } else {
+                currentItems.push(newItem);
+            }
+            sections[sectionIndex] = {
+                ...sections[sectionIndex],
+                items: currentItems
+            };
+            return { ...prev, sections };
+        });
+    };
+
+    const handleUpdateContentItem = (sectionIndex, itemIndex, field, value) => {
+        setLogForm(prev => {
+            const sections = [...(prev.sections || [])];
+            if (!sections[sectionIndex]) return prev;
+            const currentItems = [...getSectionItems(sections[sectionIndex])];
+            if (!currentItems[itemIndex]) return prev;
+            currentItems[itemIndex] = {
+                ...currentItems[itemIndex],
+                [field]: value
+            };
+            sections[sectionIndex] = {
+                ...sections[sectionIndex],
+                items: currentItems
+            };
+            return { ...prev, sections };
+        });
+    };
+
+    const handleRemoveContentItem = (sectionIndex, itemIndex) => {
+        setLogForm(prev => {
+            const sections = [...(prev.sections || [])];
+            if (!sections[sectionIndex]) return prev;
+            const currentItems = [...getSectionItems(sections[sectionIndex])];
+            if (currentItems.length <= 1) {
+                alert('Mỗi mục cần có ít nhất 1 phần nội dung & từ khóa.');
+                return prev;
+            }
+            const target = currentItems[itemIndex];
+            const hasContent = (target.cues && target.cues.trim()) || (target.note && target.note.trim());
+            if (hasContent && !window.confirm(`Bạn có chắc muốn xóa Phần ${itemIndex + 1}? Nội dung và từ khóa của phần này sẽ bị xóa.`)) {
+                return prev;
+            }
+            currentItems.splice(itemIndex, 1);
+            sections[sectionIndex] = {
+                ...sections[sectionIndex],
+                items: currentItems
+            };
+            return { ...prev, sections };
+        });
+    };
+
+    const handleMoveContentItem = (sectionIndex, itemIndex, direction) => {
+        setLogForm(prev => {
+            const sections = [...(prev.sections || [])];
+            if (!sections[sectionIndex]) return prev;
+            const currentItems = [...getSectionItems(sections[sectionIndex])];
+            const targetIndex = direction === 'up' ? itemIndex - 1 : itemIndex + 1;
+            if (targetIndex < 0 || targetIndex >= currentItems.length) return prev;
+            const temp = currentItems[itemIndex];
+            currentItems[itemIndex] = currentItems[targetIndex];
+            currentItems[targetIndex] = temp;
+            sections[sectionIndex] = {
+                ...sections[sectionIndex],
+                items: currentItems
+            };
+            return { ...prev, sections };
+        });
+    };
+
     const handleUpdateSection = (index, field, value) => {
         setLogForm(prev => {
             const currentSections = (prev.sections && prev.sections.length > 0)
                 ? [...prev.sections]
-                : [{ id: 'sec_1', title: '', cues: prev.cues || '', note: prev.content || '', conclusion: '' }];
+                : [createNewSection('', prev.cues || '', prev.content || '', '')];
 
             if (!currentSections[index]) return prev;
             currentSections[index] = {
@@ -587,7 +724,10 @@ export const ResourcesStudyLogView = ({
                 return prev;
             }
             const target = prev.sections[index];
+            const targetItems = getSectionItems(target);
+            const hasItemContent = targetItems.some(it => (it.cues && it.cues.trim()) || (it.note && it.note.trim()));
             const hasContent = (target.title && target.title.trim()) ||
+                               hasItemContent ||
                                (target.cues && target.cues.trim()) ||
                                (target.note && target.note.trim()) ||
                                (target.conclusion && target.conclusion.trim());
@@ -616,10 +756,15 @@ export const ResourcesStudyLogView = ({
             const currentSections = [...(prev.sections || [])];
             const target = currentSections[index];
             if (!target) return prev;
+            const clonedItems = getSectionItems(target).map(item => ({
+                ...item,
+                id: 'part_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)
+            }));
             const cloned = {
                 ...target,
                 id: 'sec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-                title: target.title ? `${target.title} (Bản sao)` : ''
+                title: target.title ? `${target.title} (Bản sao)` : '',
+                items: clonedItems
             };
             currentSections.splice(index + 1, 0, cloned);
             return { ...prev, sections: currentSections };
@@ -651,7 +796,13 @@ export const ResourcesStudyLogView = ({
                                     id: 'sec_' + Date.now() + '_' + newSections.length,
                                     title: currentTitle,
                                     cues: '',
-                                    note: currentContent
+                                    note: currentContent,
+                                    conclusion: '',
+                                    items: [{
+                                        id: 'part_' + Date.now() + '_' + newSections.length + '_0',
+                                        cues: '',
+                                        note: currentContent
+                                    }]
                                 });
                             }
                             currentTitle = child.innerText.trim();
@@ -666,7 +817,13 @@ export const ResourcesStudyLogView = ({
                             id: 'sec_' + Date.now() + '_' + newSections.length,
                             title: currentTitle,
                             cues: '',
-                            note: currentContent
+                            note: currentContent,
+                            conclusion: '',
+                            items: [{
+                                id: 'part_' + Date.now() + '_' + newSections.length + '_0',
+                                cues: '',
+                                note: currentContent
+                            }]
                         });
                     }
 
@@ -684,10 +841,18 @@ export const ResourcesStudyLogView = ({
                 setLogForm(prev => {
                     const currentSections = (prev.sections && prev.sections.length > 0)
                         ? [...prev.sections]
-                        : [{ id: 'sec_1', title: '', cues: '', note: '' }];
+                        : [createNewSection('', '', '', '')];
+                    const firstItems = getSectionItems(currentSections[0]);
                     currentSections[0] = {
                         ...currentSections[0],
-                        note: html
+                        note: html,
+                        items: [
+                            {
+                                ...firstItems[0],
+                                note: html
+                            },
+                            ...firstItems.slice(1)
+                        ]
                     };
                     return { ...prev, sections: currentSections };
                 });
@@ -715,9 +880,20 @@ export const ResourcesStudyLogView = ({
             return;
         }
 
-        const validSections = (logForm.sections && logForm.sections.length > 0)
+        const validSections = ((logForm.sections && logForm.sections.length > 0)
             ? logForm.sections
-            : [{ id: 'sec_1', title: '', cues: logForm.cues || '', note: logForm.content || '', conclusion: '' }];
+            : [createNewSection('', logForm.cues || '', logForm.content || '', '')]
+        ).map(s => {
+            const items = getSectionItems(s);
+            const secCues = items.map(it => it.cues?.trim()).filter(Boolean).join('\n\n') || s.cues || '';
+            const secNote = items.map(it => it.note?.trim()).filter(Boolean).join('<br/>') || s.note || '';
+            return {
+                ...s,
+                cues: secCues,
+                note: secNote,
+                items
+            };
+        });
 
         const combinedCues = validSections
             .map(s => s.cues?.trim())
@@ -727,8 +903,14 @@ export const ResourcesStudyLogView = ({
         const combinedContent = validSections
             .map(s => {
                 const titleHtml = s.title ? `<h3>${s.title}</h3>` : '';
+                const itemsHtml = (s.items && s.items.length > 0)
+                    ? s.items.map((it, itIdx) => {
+                        const itemHeader = s.items.length > 1 ? `<h4>Phần ${itIdx + 1}</h4>` : '';
+                        return [itemHeader, it.note || ''].filter(Boolean).join('<br/>');
+                    }).join('<br/>')
+                    : (s.note || '');
                 const conclusionHtml = s.conclusion ? `<blockquote class="my-2 p-2.5 bg-amber-50 border-l-4 border-amber-500 text-sm"><strong>Kết luận Mục:</strong> ${s.conclusion}</blockquote>` : '';
-                return [titleHtml, s.note || '', conclusionHtml].filter(Boolean).join('<br/>');
+                return [titleHtml, itemsHtml, conclusionHtml].filter(Boolean).join('<br/>');
             })
             .filter(Boolean)
             .join('<br/><hr/><br/>');
@@ -1339,65 +1521,135 @@ export const ResourcesStudyLogView = ({
                                                     </div>
                                                 </div>
 
-                                                {/* 2-COLUMN SECTION BODY */}
-                                                <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-brand-cerulean/25 bg-brand-cream/10">
-                                                    {/* CUES / KEYWORDS COLUMN (~38% or 5/12 cols) */}
-                                                    <div className="md:col-span-5 p-3.5 sm:p-4.5 flex flex-col justify-between space-y-2.5 bg-brand-cream/30">
-                                                        <div className="flex items-center justify-between pb-1.5 border-b border-brand-cerulean/20">
-                                                            <label className="text-xs font-serif-title text-brand-jasper font-bold flex items-center gap-1.5">
-                                                                <Lightbulb size={14} />
-                                                                <span>CUES / TỪ KHÓA & GỢI NHỚ (MỤC {sIdx + 1})</span>
-                                                            </label>
-                                                            <span className="text-[10px] font-sans text-brand-jasper font-semibold uppercase">30% - 35%</span>
-                                                        </div>
+                                                {/* LIST OF CONTENT PARTS WITH INDIVIDUAL KEYWORDS */}
+                                                <div className="divide-y-2 divide-brand-cerulean/20">
+                                                    {getSectionItems(section).map((part, pIdx) => {
+                                                        const sectionItems = getSectionItems(section);
+                                                        const totalParts = sectionItems.length;
+                                                        return (
+                                                            <div key={part.id || pIdx} className="relative group/part">
+                                                                {/* Part header bar */}
+                                                                <div className="bg-brand-cream/50 px-3.5 sm:px-4.5 py-1.5 border-b border-brand-cerulean/15 flex items-center justify-between">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="px-2 py-0.5 bg-brand-cerulean text-white font-serif-title font-bold text-[10px] uppercase rounded-xs">
+                                                                            Phần {pIdx + 1}
+                                                                        </span>
+                                                                        <span className="text-[11px] font-sans text-brand-cerulean/80 font-medium">
+                                                                            Nội dung & Từ khóa riêng
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <button
+                                                                            type="button"
+                                                                            disabled={pIdx === 0}
+                                                                            onClick={() => handleMoveContentItem(sIdx, pIdx, 'up')}
+                                                                            className={`p-1 rounded transition-colors ${
+                                                                                pIdx === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-brand-cerulean hover:bg-white'
+                                                                            }`}
+                                                                            title="Di chuyển phần này lên"
+                                                                        >
+                                                                            <ArrowUp size={12} />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            disabled={pIdx === totalParts - 1}
+                                                                            onClick={() => handleMoveContentItem(sIdx, pIdx, 'down')}
+                                                                            className={`p-1 rounded transition-colors ${
+                                                                                pIdx === totalParts - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-brand-cerulean hover:bg-white'
+                                                                            }`}
+                                                                            title="Di chuyển phần này xuống"
+                                                                        >
+                                                                            <ArrowDown size={12} />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            disabled={totalParts <= 1}
+                                                                            onClick={() => handleRemoveContentItem(sIdx, pIdx)}
+                                                                            className={`p-1 rounded transition-colors ml-1 ${
+                                                                                totalParts <= 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                                                                            }`}
+                                                                            title={totalParts <= 1 ? 'Mục phải có ít nhất 1 phần nội dung' : 'Xóa phần nội dung này'}
+                                                                        >
+                                                                            <Trash2 size={12} />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
 
-                                                        <div className="flex-1">
-                                                            <textarea
-                                                                rows="8"
-                                                                className="input-editorial w-full resize-y text-sm font-body leading-relaxed p-3 bg-white border border-brand-cerulean/30 rounded-xs shadow-inner editor-scrollbar overflow-y-auto"
-                                                                style={{ minHeight: '200px', maxHeight: '380px' }}
-                                                                value={section.cues || ''}
-                                                                onChange={e => handleUpdateSection(sIdx, 'cues', e.target.value)}
-                                                                placeholder={`• TỪ KHÓA CỐT LÕI (Mục ${sIdx + 1}):
-- Thuyết tiền định
-- Thuyết duy cảm
+                                                                {/* 2-COLUMN PART BODY */}
+                                                                <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-brand-cerulean/25 bg-brand-cream/10">
+                                                                    {/* CUES / KEYWORDS COLUMN (~38% or 5/12 cols) */}
+                                                                    <div className="md:col-span-5 p-3.5 sm:p-4.5 flex flex-col justify-between space-y-2.5 bg-brand-cream/30">
+                                                                        <div className="flex items-center justify-between pb-1.5 border-b border-brand-cerulean/20">
+                                                                            <label className="text-xs font-serif-title text-brand-jasper font-bold flex items-center gap-1.5">
+                                                                                <Lightbulb size={14} />
+                                                                                <span>CUES / TỪ KHÓA & GỢI NHỚ (PHẦN {pIdx + 1})</span>
+                                                                            </label>
+                                                                            <span className="text-[10px] font-sans text-brand-jasper font-semibold uppercase">30% - 35%</span>
+                                                                        </div>
+
+                                                                        <div className="flex-1">
+                                                                            <textarea
+                                                                                rows="6"
+                                                                                className="input-editorial w-full resize-y text-sm font-body leading-relaxed p-3 bg-white border border-brand-cerulean/30 rounded-xs shadow-inner editor-scrollbar overflow-y-auto"
+                                                                                style={{ minHeight: '180px', maxHeight: '340px' }}
+                                                                                value={part.cues || ''}
+                                                                                onChange={e => handleUpdateContentItem(sIdx, pIdx, 'cues', e.target.value)}
+                                                                                placeholder={`• TỪ KHÓA RIÊNG (Phần ${pIdx + 1} - Mục ${sIdx + 1}):
+- Thuật ngữ / Khái niệm chính
+- Mối liên hệ logic
 
 • CÂU HỎI TỰ VẤN (RECITE):
-? Điểm sai lầm cốt lõi là gì?`}
-                                                            />
-                                                        </div>
+? Trọng tâm của phần này là gì?`}
+                                                                            />
+                                                                        </div>
 
-                                                        <div className="text-[11px] font-sans text-gray-500 bg-white/80 p-2 border border-brand-cerulean/15 rounded-lg leading-normal">
-                                                            <span className="font-semibold text-brand-cerulean flex items-center gap-1 mb-0.5">
-                                                                <Lightbulb size={13} className="text-amber-600 shrink-0" />
-                                                                <span>Mẹo tự kiểm tra:</span>
-                                                            </span>
-                                                            Dùng từ khóa/câu hỏi ở đây để che phần ghi chép bên phải và tự nhẩm lại.
-                                                        </div>
-                                                    </div>
+                                                                        <div className="text-[11px] font-sans text-gray-500 bg-white/80 p-2 border border-brand-cerulean/15 rounded-lg leading-normal">
+                                                                            <span className="font-semibold text-brand-cerulean flex items-center gap-1 mb-0.5">
+                                                                                <Lightbulb size={13} className="text-amber-600 shrink-0" />
+                                                                                <span>Mẹo ôn tập:</span>
+                                                                            </span>
+                                                                            Từ khóa tương ứng trực tiếp với nội dung phần {pIdx + 1} bên phải.
+                                                                        </div>
+                                                                    </div>
 
-                                                    {/* NOTES / DETAILED LECTURE NOTES COLUMN (~62% or 7/12 cols) */}
-                                                    <div className="md:col-span-7 p-3.5 sm:p-4.5 flex flex-col space-y-2 bg-white">
-                                                        <div className="flex items-center justify-between pb-1.5 border-b border-brand-cerulean/20">
-                                                            <label className="text-xs font-serif-title text-brand-cerulean font-bold flex items-center gap-1.5">
-                                                                <FileText size={14} />
-                                                                <span>NOTES / GHI CHÉP CHI TIẾT (MỤC {sIdx + 1})</span>
-                                                            </label>
-                                                            <span className="text-[10px] font-sans text-brand-cerulean font-semibold uppercase">65% - 70%</span>
-                                                        </div>
+                                                                    {/* NOTES / DETAILED LECTURE NOTES COLUMN (~62% or 7/12 cols) */}
+                                                                    <div className="md:col-span-7 p-3.5 sm:p-4.5 flex flex-col space-y-2 bg-white">
+                                                                        <div className="flex items-center justify-between pb-1.5 border-b border-brand-cerulean/20">
+                                                                            <label className="text-xs font-serif-title text-brand-cerulean font-bold flex items-center gap-1.5">
+                                                                                <FileText size={14} />
+                                                                                <span>NOTES / NỘI DUNG CHI TIẾT (PHẦN {pIdx + 1})</span>
+                                                                            </label>
+                                                                            <span className="text-[10px] font-sans text-brand-cerulean font-semibold uppercase">65% - 70%</span>
+                                                                        </div>
 
-                                                        <div className="flex-1">
-                                                            <WordRichTextEditor
-                                                                value={section.note || ''}
-                                                                onChange={html => handleUpdateSection(sIdx, 'note', html)}
-                                                                placeholder={`Soạn thảo nội dung ghi chép chi tiết của Mục ${sIdx + 1} (sử dụng thanh công cụ bên trên để định dạng in đậm, danh sách, màu chữ, bảng biểu)...`}
-                                                                minHeight="200px"
-                                                                maxHeight="360px"
-                                                                compact={true}
-                                                                hideImport={true}
-                                                            />
-                                                        </div>
-                                                    </div>
+                                                                        <div className="flex-1">
+                                                                            <WordRichTextEditor
+                                                                                value={part.note || ''}
+                                                                                onChange={html => handleUpdateContentItem(sIdx, pIdx, 'note', html)}
+                                                                                placeholder={`Soạn thảo nội dung ghi chép của Phần ${pIdx + 1} (Mục ${sIdx + 1})...`}
+                                                                                minHeight="180px"
+                                                                                maxHeight="340px"
+                                                                                compact={true}
+                                                                                hideImport={true}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+
+                                                {/* ADD PART BUTTON INSIDE SECTION */}
+                                                <div className="p-2.5 bg-brand-cream/25 border-t border-brand-cerulean/20 flex justify-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleAddContentItem(sIdx)}
+                                                        className="px-3.5 py-1.5 bg-white hover:bg-brand-cream border border-brand-cerulean/30 hover:border-brand-jasper text-brand-cerulean hover:text-brand-jasper text-xs font-serif-title font-bold rounded-xs flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                                                    >
+                                                        <Plus size={13} />
+                                                        <span>+ Thêm phần nội dung & từ khóa vào Mục {sIdx + 1}</span>
+                                                    </button>
                                                 </div>
 
                                                 {/* PHẦN KẾT LUẬN & TIỂU KẾT SƯ PHẠM CỦA MỤC */}
@@ -1967,45 +2219,67 @@ export const ResourcesStudyLogView = ({
                                                                     )}
                                                                 </div>
                                                             )}
-                                                            <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-brand-cerulean/20">
-                                                                {/* CUES / KEYWORDS */}
-                                                                <div className="md:col-span-4 p-3.5 bg-brand-cream/35 space-y-1.5 flex flex-col">
-                                                                    <div className="flex items-center gap-1.5 text-xs font-serif-title font-bold text-brand-jasper uppercase tracking-wider pb-1 border-b border-brand-cerulean/20 shrink-0">
-                                                                        <Lightbulb size={13} />
-                                                                        <span>Cues & Từ khóa (Mục {sIdx + 1})</span>
-                                                                    </div>
-                                                                    <div className="max-h-56 sm:max-h-72 overflow-y-auto pr-1">
-                                                                        {sec.cues ? (
-                                                                            <div className="text-xs sm:text-sm font-body text-gray-700 leading-relaxed whitespace-pre-line">
-                                                                                {sec.cues}
-                                                                            </div>
-                                                                        ) : (
-                                                                            <div className="text-xs text-gray-400 italic">
-                                                                                Chưa ghi từ khóa gợi nhớ.
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
+                                                            {/* PARTS LIST IN CARD VIEW */}
+                                                            {(() => {
+                                                                const secParts = getSectionItems(sec);
+                                                                return (
+                                                                    <div className="divide-y divide-brand-cerulean/20">
+                                                                        {secParts.map((part, pIdx) => (
+                                                                            <div key={part.id || pIdx}>
+                                                                                {secParts.length > 1 && (
+                                                                                    <div className="bg-brand-cream/40 px-3.5 py-1 border-b border-brand-cerulean/15 flex items-center gap-2">
+                                                                                        <span className="text-[10px] font-serif-title font-bold text-brand-cerulean uppercase px-1.5 py-0.2 bg-white border border-brand-cerulean/20 rounded-2xs">
+                                                                                            Phần {pIdx + 1}
+                                                                                        </span>
+                                                                                        <span className="text-[11px] font-sans text-gray-600 italic">
+                                                                                            Từ khóa & Nội dung riêng
+                                                                                        </span>
+                                                                                    </div>
+                                                                                )}
+                                                                                <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-brand-cerulean/20">
+                                                                                    {/* CUES / KEYWORDS */}
+                                                                                    <div className="md:col-span-4 p-3.5 bg-brand-cream/35 space-y-1.5 flex flex-col">
+                                                                                        <div className="flex items-center gap-1.5 text-xs font-serif-title font-bold text-brand-jasper uppercase tracking-wider pb-1 border-b border-brand-cerulean/20 shrink-0">
+                                                                                            <Lightbulb size={13} />
+                                                                                            <span>Cues & Từ khóa {secParts.length > 1 ? `(Phần ${pIdx + 1})` : `(Mục ${sIdx + 1})`}</span>
+                                                                                        </div>
+                                                                                        <div className="max-h-56 sm:max-h-72 overflow-y-auto pr-1">
+                                                                                            {part.cues ? (
+                                                                                                <div className="text-xs sm:text-sm font-body text-gray-700 leading-relaxed whitespace-pre-line">
+                                                                                                    {part.cues}
+                                                                                                </div>
+                                                                                            ) : (
+                                                                                                <div className="text-xs text-gray-400 italic">
+                                                                                                    Chưa ghi từ khóa gợi nhớ.
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
 
-                                                                {/* NOTES / CONTENT */}
-                                                                <div className="md:col-span-8 p-3.5 bg-white space-y-1.5 flex flex-col">
-                                                                    <div className="flex items-center gap-1.5 text-xs font-serif-title font-bold text-brand-cerulean uppercase tracking-wider pb-1 border-b border-brand-cerulean/20 shrink-0">
-                                                                        <FileText size={13} />
-                                                                        <span>Notes / Ghi chép chi tiết</span>
+                                                                                    {/* NOTES / CONTENT */}
+                                                                                    <div className="md:col-span-8 p-3.5 bg-white space-y-1.5 flex flex-col">
+                                                                                        <div className="flex items-center gap-1.5 text-xs font-serif-title font-bold text-brand-cerulean uppercase tracking-wider pb-1 border-b border-brand-cerulean/20 shrink-0">
+                                                                                            <FileText size={13} />
+                                                                                            <span>Notes / Ghi chép chi tiết {secParts.length > 1 ? `(Phần ${pIdx + 1})` : ''}</span>
+                                                                                        </div>
+                                                                                        <div className="text-gray-800 font-body text-sm sm:text-base leading-relaxed max-h-56 sm:max-h-72 overflow-y-auto editor-scrollbar pr-2">
+                                                                                            {part.note ? (
+                                                                                                /<[a-z][\s\S]*>/i.test(part.note) ? (
+                                                                                                    <div className="word-content" dangerouslySetInnerHTML={{ __html: part.note }} />
+                                                                                                ) : (
+                                                                                                    <div className="whitespace-pre-line">{part.note}</div>
+                                                                                                )
+                                                                                            ) : (
+                                                                                                <span className="text-gray-400 italic">Chưa có nội dung ghi chép cho phần này.</span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
                                                                     </div>
-                                                                    <div className="text-gray-800 font-body text-sm sm:text-base leading-relaxed max-h-56 sm:max-h-72 overflow-y-auto editor-scrollbar pr-2">
-                                                                        {sec.note ? (
-                                                                            /<[a-z][\s\S]*>/i.test(sec.note) ? (
-                                                                                <div className="word-content" dangerouslySetInnerHTML={{ __html: sec.note }} />
-                                                                            ) : (
-                                                                                <div className="whitespace-pre-line">{sec.note}</div>
-                                                                            )
-                                                                        ) : (
-                                                                            <span className="text-gray-400 italic">Chưa có nội dung ghi chép cho mục này.</span>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
+                                                                );
+                                                            })()}
 
                                                             {/* PHẦN KẾT LUẬN CỦA MỤC TRONG THẺ */}
                                                             {sec.conclusion && (
@@ -2480,7 +2754,7 @@ export const ResourcesStudyLogView = ({
                                 {Array.isArray(viewingLog.sections) && viewingLog.sections.length > 0 ? (
                                     <div className="divide-y divide-brand-cerulean/20">
                                         {viewingLog.sections.map((sec, sIdx) => {
-                                            const isMasked = isReciteMode && !revealedSectionNotes[sec.id || sIdx];
+                                            const secParts = getSectionItems(sec);
                                             return (
                                                 <div key={sec.id || sIdx}>
                                                     {/* Section Header */}
@@ -2496,67 +2770,89 @@ export const ResourcesStudyLogView = ({
                                                             )}
                                                         </div>
                                                     )}
-                                                    <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-brand-cerulean/25">
-                                                        {/* CUES COLUMN (~35% or 4/12 cols) */}
-                                                        <div className="md:col-span-4 p-4 bg-brand-cream/35 space-y-3 flex flex-col">
-                                                            <h4 className="text-xs font-serif-title font-bold text-brand-jasper uppercase tracking-wider pb-1.5 border-b border-brand-cerulean/20 flex items-center gap-1 shrink-0">
-                                                                <Lightbulb size={14} />
-                                                                <span>Cues / Gợi ý & Từ khóa</span>
-                                                            </h4>
-                                                            <div className="text-xs sm:text-sm font-body text-gray-800 leading-relaxed whitespace-pre-line max-h-96 overflow-y-auto pr-1">
-                                                                {sec.cues || <span className="text-gray-400 italic">Chưa ghi chú từ khóa gợi nhớ.</span>}
-                                                            </div>
-                                                        </div>
-
-                                                        {/* NOTES COLUMN (~65% or 8/12 cols) */}
-                                                        <div className="md:col-span-8 p-4 sm:p-5 bg-white space-y-3 flex flex-col">
-                                                            <div className="flex items-center justify-between pb-1.5 border-b border-brand-cerulean/20 shrink-0">
-                                                                <h4 className="text-xs font-serif-title font-bold text-brand-cerulean uppercase tracking-wider flex items-center gap-1">
-                                                                    <FileText size={14} />
-                                                                    <span>Notes / Ghi chép chi tiết</span>
-                                                                </h4>
-                                                                {isReciteMode && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setRevealedSectionNotes(prev => ({
-                                                                            ...prev,
-                                                                            [sec.id || sIdx]: !prev[sec.id || sIdx]
-                                                                        }))}
-                                                                        className="text-[11px] font-sans font-semibold text-brand-jasper hover:underline flex items-center gap-1 print:hidden"
-                                                                    >
-                                                                        {isMasked ? <Eye size={12} /> : <EyeOff size={12} />}
-                                                                        <span>{isMasked ? 'Mở xem' : 'Che lại'}</span>
-                                                                    </button>
-                                                                )}
-                                                            </div>
-
-                                                            {isMasked ? (
-                                                                <div
-                                                                    onClick={() => setRevealedSectionNotes(prev => ({ ...prev, [sec.id || sIdx]: true }))}
-                                                                    className="p-8 bg-slate-100/90 border-2 border-dashed border-slate-300 rounded text-center cursor-pointer hover:bg-slate-200/80 transition-all select-none space-y-1.5 print:hidden my-2"
-                                                                >
-                                                                    <div className="text-slate-600 font-serif-title font-bold text-sm flex items-center justify-center gap-1.5">
-                                                                        <EyeOff size={16} className="text-brand-jasper" />
-                                                                        <span>Đang che phần ghi chép này</span>
-                                                                    </div>
-                                                                    <p className="text-xs text-slate-500 font-sans">
-                                                                        Nhìn cột từ khóa bên trái và tự nhẩm lại, sau đó bấm vào đây để mở đối chiếu kết quả.
-                                                                    </p>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="text-gray-800 text-base font-body leading-relaxed max-h-96 overflow-y-auto editor-scrollbar pr-2">
-                                                                    {sec.note ? (
-                                                                        /<[a-z][\s\S]*>/i.test(sec.note) ? (
-                                                                            <div className="word-content" dangerouslySetInnerHTML={{ __html: sec.note }} />
-                                                                        ) : (
-                                                                            <div className="whitespace-pre-line">{sec.note}</div>
-                                                                        )
-                                                                    ) : (
-                                                                        <span className="text-gray-400 italic">Chưa có nội dung ghi chép chi tiết.</span>
+                                                    
+                                                    {/* Parts List */}
+                                                    <div className="divide-y divide-brand-cerulean/20">
+                                                        {secParts.map((part, pIdx) => {
+                                                            const maskKey = `${sec.id || sIdx}_${part.id || pIdx}`;
+                                                            const isMasked = isReciteMode && !revealedSectionNotes[maskKey];
+                                                            return (
+                                                                <div key={part.id || pIdx}>
+                                                                    {secParts.length > 1 && (
+                                                                        <div className="bg-brand-cream/40 px-4 py-1 border-b border-brand-cerulean/15 flex items-center gap-2">
+                                                                            <span className="text-[10px] font-serif-title font-bold text-brand-cerulean uppercase px-1.5 py-0.2 bg-white border border-brand-cerulean/25 rounded-2xs">
+                                                                                Phần {pIdx + 1}
+                                                                            </span>
+                                                                            <span className="text-[11px] font-sans text-gray-600 italic">
+                                                                                Từ khóa gợi nhớ & Ghi chép riêng
+                                                                            </span>
+                                                                        </div>
                                                                     )}
+                                                                    <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-brand-cerulean/25">
+                                                                        {/* CUES COLUMN (~35% or 4/12 cols) */}
+                                                                        <div className="md:col-span-4 p-4 bg-brand-cream/35 space-y-3 flex flex-col">
+                                                                            <h4 className="text-xs font-serif-title font-bold text-brand-jasper uppercase tracking-wider pb-1.5 border-b border-brand-cerulean/20 flex items-center gap-1 shrink-0">
+                                                                                <Lightbulb size={14} />
+                                                                                <span>Cues / Gợi ý & Từ khóa {secParts.length > 1 ? `(Phần ${pIdx + 1})` : ''}</span>
+                                                                            </h4>
+                                                                            <div className="text-xs sm:text-sm font-body text-gray-800 leading-relaxed whitespace-pre-line max-h-96 overflow-y-auto pr-1">
+                                                                                {part.cues || <span className="text-gray-400 italic">Chưa ghi chú từ khóa gợi nhớ.</span>}
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* NOTES COLUMN (~65% or 8/12 cols) */}
+                                                                        <div className="md:col-span-8 p-4 sm:p-5 bg-white space-y-3 flex flex-col">
+                                                                            <div className="flex items-center justify-between pb-1.5 border-b border-brand-cerulean/20 shrink-0">
+                                                                                <h4 className="text-xs font-serif-title font-bold text-brand-cerulean uppercase tracking-wider flex items-center gap-1">
+                                                                                    <FileText size={14} />
+                                                                                    <span>Notes / Ghi chép chi tiết {secParts.length > 1 ? `(Phần ${pIdx + 1})` : ''}</span>
+                                                                                </h4>
+                                                                                {isReciteMode && (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => setRevealedSectionNotes(prev => ({
+                                                                                            ...prev,
+                                                                                            [maskKey]: !prev[maskKey]
+                                                                                        }))}
+                                                                                        className="text-[11px] font-sans font-semibold text-brand-jasper hover:underline flex items-center gap-1 print:hidden"
+                                                                                    >
+                                                                                        {isMasked ? <Eye size={12} /> : <EyeOff size={12} />}
+                                                                                        <span>{isMasked ? 'Mở xem' : 'Che lại'}</span>
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+
+                                                                            {isMasked ? (
+                                                                                <div
+                                                                                    onClick={() => setRevealedSectionNotes(prev => ({ ...prev, [maskKey]: true }))}
+                                                                                    className="p-8 bg-slate-100/90 border-2 border-dashed border-slate-300 rounded text-center cursor-pointer hover:bg-slate-200/80 transition-all select-none space-y-1.5 print:hidden my-2"
+                                                                                >
+                                                                                    <div className="text-slate-600 font-serif-title font-bold text-sm flex items-center justify-center gap-1.5">
+                                                                                        <EyeOff size={16} className="text-brand-jasper" />
+                                                                                        <span>Đang che phần ghi chép này</span>
+                                                                                    </div>
+                                                                                    <p className="text-xs text-slate-500 font-sans">
+                                                                                        Nhìn cột từ khóa bên trái và tự nhẩm lại, sau đó bấm vào đây để mở đối chiếu kết quả.
+                                                                                    </p>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="text-gray-800 text-base font-body leading-relaxed max-h-96 overflow-y-auto editor-scrollbar pr-2">
+                                                                                    {part.note ? (
+                                                                                        /<[a-z][\s\S]*>/i.test(part.note) ? (
+                                                                                            <div className="word-content" dangerouslySetInnerHTML={{ __html: part.note }} />
+                                                                                        ) : (
+                                                                                            <div className="whitespace-pre-line">{part.note}</div>
+                                                                                        )
+                                                                                    ) : (
+                                                                                        <span className="text-gray-400 italic">Chưa có nội dung ghi chép chi tiết.</span>
+                                                                                    )}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
-                                                            )}
-                                                        </div>
+                                                            );
+                                                        })}
                                                     </div>
 
                                                     {/* PHẦN KẾT LUẬN CỦA MỤC TRONG MODAL ĐỐI CHIẾU */}

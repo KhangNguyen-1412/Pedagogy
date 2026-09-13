@@ -100,4 +100,67 @@ describe('SyllabusView and ResourcesStudyLogView section conclusion tests', () =
         expect(html).toContain('Summary / Tóm tắt cốt lõi bài học:');
         expect(html).toContain('Tổng kết toàn bài học: Đạt mục tiêu đề ra.');
     });
+
+    it('ResourcesStudyLogView supports multiple content parts within 1 section, each part having its own keywords', () => {
+        const mockStudyLogsWithParts = [
+            {
+                id: 'log_parts_1',
+                programId: 'prog_1',
+                moduleId: 'mod_1',
+                sessionNumber: '2',
+                date: '2026-09-13',
+                title: 'Bài học: Kỹ thuật dạy học tích cực',
+                sections: [
+                    {
+                        id: 'sec_multi_parts',
+                        title: 'Mục 1: Các kỹ thuật dạy học cơ bản',
+                        items: [
+                            {
+                                id: 'part_1',
+                                cues: 'Từ khóa Phần 1: Kỹ thuật khăn trải bàn, Brainstorming',
+                                note: 'Nội dung Phần 1: Các bước chia nhóm và phân công ghi chép.'
+                            },
+                            {
+                                id: 'part_2',
+                                cues: 'Từ khóa Phần 2: Kỹ thuật mảnh ghép (Jigsaw), Đóng vai',
+                                note: 'Nội dung Phần 2: Nhóm chuyên sâu và nhóm mảnh ghép tổng hợp kiến thức.'
+                            }
+                        ],
+                        conclusion: 'Kết luận Mục 1: Lựa chọn kỹ thuật phù hợp với đặc thù đối tượng học sinh.'
+                    }
+                ],
+                summary: 'Tổng kết toàn bài: Đã nắm vững các kỹ thuật dạy học tích cực.'
+            }
+        ];
+
+        const html = renderToString(
+            <ScrollProvider isScrolled={false} scrollY={0}>
+                <ResourcesStudyLogView
+                    programs={mockPrograms}
+                    modules={mockModules}
+                    studyLogs={mockStudyLogsWithParts}
+                />
+            </ScrollProvider>
+        );
+
+        // Verify section header and title
+        expect(html).toContain('Mục 1: Các kỹ thuật dạy học cơ bản');
+
+        // Verify Part 1 has its own keywords and notes
+        expect(html).toContain('Phần 1');
+        expect(html).toContain('Từ khóa Phần 1: Kỹ thuật khăn trải bàn, Brainstorming');
+        expect(html).toContain('Nội dung Phần 1: Các bước chia nhóm và phân công ghi chép.');
+
+        // Verify Part 2 has its own keywords and notes
+        expect(html).toContain('Phần 2');
+        expect(html).toContain('Từ khóa Phần 2: Kỹ thuật mảnh ghép (Jigsaw), Đóng vai');
+        expect(html).toContain('Nội dung Phần 2: Nhóm chuyên sâu và nhóm mảnh ghép tổng hợp kiến thức.');
+
+        // Verify section conclusion at the bottom of the section
+        expect(html).toContain('Kết luận Mục 1:');
+        expect(html).toContain('Kết luận Mục 1: Lựa chọn kỹ thuật phù hợp với đặc thù đối tượng học sinh.');
+
+        // Verify overall summary
+        expect(html).toContain('Tổng kết toàn bài: Đã nắm vững các kỹ thuật dạy học tích cực.');
+    });
 });
