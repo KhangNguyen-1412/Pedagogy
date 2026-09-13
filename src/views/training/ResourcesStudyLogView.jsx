@@ -1389,9 +1389,6 @@ export const ResourcesStudyLogView = ({
                                     <h3 className="text-xl sm:text-2xl font-serif-title font-bold text-brand-cerulean mt-1">
                                         Bảng ghi chép bài học Cornell
                                     </h3>
-                                    <p className="text-xs text-gray-500 font-sans mt-0.5">
-                                        Mỗi mục gồm 1 phần <strong>Từ khóa / Gợi ý (Cues)</strong> và 1 phần <strong>Ghi chép chi tiết (Notes)</strong> song song tương ứng.
-                                    </p>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
                                     <input

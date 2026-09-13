@@ -38,6 +38,7 @@ import { CollapsiblePageHeader } from '../../components/common/CollapsiblePageHe
 import { getSelectedModules, getProgramStatus } from '../../utils/ruleValidators';
 import { generateHcmueLecturerEmail } from '../../utils/seoHelpers';
 import { enrichModuleWithNvspSyllabus, findNvspMasterModule } from '../../data/nvspSyllabusData';
+import { SyllabusPdfModal } from '../../components/training/SyllabusPdfModal';
 
 export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSelectModule, onUpdateModule, showToast, navigate }) => {
     const [selectedProgramFilter, setSelectedProgramFilter] = useState('all');
@@ -65,6 +66,9 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
 
     // Bộ lọc hình thức hoạt động: 'all' | 'online' | 'in_person'
     const [activityFilter, setActivityFilter] = useState('all');
+
+    // Modal xuất & xem trước PDF chuẩn A4
+    const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
     // Ref lưu giá trị activeModuleId đã đồng bộ, tránh đè lên thao tác người dùng vừa chọn môn khác
     const syncedActiveIdRef = useRef(activeModuleId);
@@ -103,6 +107,7 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
 
     const rawCurrentModule = selectedModules.find(m => m.id === selectedModuleId) || selectedModules[0];
     const currentModule = enrichModuleWithNvspSyllabus(rawCurrentModule);
+    const currentProgram = programs.find(p => currentModule?.programIds?.includes(p.id)) || enrolledPrograms[0] || programs[0];
 
     const defaultSyllabus = {
         instructor: '',
@@ -268,7 +273,7 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
     };
 
     const handlePrint = () => {
-        window.print();
+        setIsPdfModalOpen(true);
     };
 
     // Kiểm tra xem học phần hiện tại có dữ liệu Kế hoạch bồi dưỡng Sư phạm (Thông tư 12) hay không
@@ -528,12 +533,12 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
                             <div className="flex items-center gap-2 flex-wrap">
                                 <button
                                     type="button"
-                                    onClick={handlePrint}
-                                    className="px-3.5 py-1.5 border border-brand-cerulean/30 text-brand-cerulean font-serif-title text-xs font-bold hover:bg-brand-cerulean hover:text-white rounded-md flex items-center gap-1.5 transition-all shadow-xs"
-                                    title="In hoặc lưu dạng PDF đề cương chi tiết chuẩn văn bản"
+                                    onClick={() => setIsPdfModalOpen(true)}
+                                    className="px-3.5 py-1.5 bg-brand-cerulean text-white font-serif-title text-xs font-bold hover:bg-brand-jasper rounded-md flex items-center gap-1.5 transition-all shadow-xs"
+                                    title="Xem trước và tải file PDF đề cương chi tiết chuẩn A4 HCMUE"
                                 >
                                     <Printer size={14} />
-                                    <span>In / Xuất PDF A4</span>
+                                    <span>Tải file PDF Đề cương A4</span>
                                 </button>
                                 {navigate && (
                                     <button
@@ -1431,6 +1436,15 @@ export const SyllabusView = ({ modules = [], programs = [], activeModuleId, onSe
                     </div>
                 </form>
             )}
+
+            {/* SYLLABUS OFFICIAL A4 PDF EXPORT & PREVIEW MODAL */}
+            <SyllabusPdfModal
+                isOpen={isPdfModalOpen}
+                onClose={() => setIsPdfModalOpen(false)}
+                module={currentModule}
+                syllabusData={syllabusData}
+                program={currentProgram}
+            />
         </div>
     );
 };

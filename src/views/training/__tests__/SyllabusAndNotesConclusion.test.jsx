@@ -45,7 +45,7 @@ describe('SyllabusView and ResourcesStudyLogView section conclusion tests', () =
         );
 
         expect(html).not.toContain('Khôi phục chuẩn HCMUE');
-        expect(html).toContain('In / Xuất PDF A4');
+        expect(html).toContain('Tải file PDF Đề cương A4');
         expect(html).toContain('Chỉnh sửa đề cương');
     });
 
